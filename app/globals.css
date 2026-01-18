@@ -141,6 +141,10 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+  header {
+    background: var(--background);
+    height: 8px;
+  }
 }
 
 @layer components {

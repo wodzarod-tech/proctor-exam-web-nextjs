@@ -1,4 +1,5 @@
 'use client'
+import "./create.css"
 
 /*
   NOTE:
@@ -14,6 +15,9 @@
 import { useEffect, useRef, useState } from 'react'
 import Sortable from 'sortablejs'
 import { useRouter } from 'next/navigation'
+import ExamCard from '@/components/ExamCard'
+import TitleCard from '@/components/TitleCard'
+import QuestionCard from '@/components/QuestionCard'
 
 /* =====================
    Types
@@ -88,6 +92,14 @@ export default function CreatePage() {
   const [description, setDescription] = useState('')
   const [questions, setQuestions] = useState<Question[]>([])
   const [settings, setSettings] = useState<ProctorSettings | null>(null)
+
+  const [isProctorOpen, setIsProctorOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState("general")
+  const [showScoreMin, setShowScoreMin] = useState(false)
+  const [timerEnabled, setTimerEnabled] = useState(false)
+  const [hours, setHours] = useState(0)
+  const [minutes, setMinutes] = useState(0)
+const [scoreMinValue, setScoreMinValue] = useState(0)
 
   /* =====================
      Derived
@@ -195,13 +207,249 @@ export default function CreatePage() {
   ===================== */
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div>
+    {/*<div className="min-h-screen bg-background text-foreground">*/}
+
       <header className="h-2 bg-primary" />
 
-      <main className="mx-auto max-w-[820px] px-4 pb-32 pt-6">
+      <div className="container">
+
+        {/* Form header */}
+        <div className="card form-header">
+          <div className="form-header-row">
+            <div>
+              <input className="title-input" id="formTitle" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)}/>
+              <input className="desc-input" id="formDesc" placeholder="Form description" value={description} onChange={(e) => setDescription(e.target.value)} />
+            </div>
+
+            <div className="total-points">
+              <span>Total points</span>
+              <strong id="totalPoints">0</strong>
+            </div>
+          </div>
+        </div>
+
+          {/* Questions */}
+          <div id="questions"></div>
+      </div>
+
+      {/* Bottom toolbar */}
+      <div id="gformsToolbar" className="gforms-toolbar bottom">
+        {/* Handle */}
+        <div className="toolbar-handle g-tooltip" id="toolbarHandle" data-tooltip="Close panel" onClick={addQuestion}>▼</div>
+
+        <div className="toolbar-buttons">
+          <button className="g-tooltip" data-tooltip="Add question" onClick={addQuestion}>+</button>
+          <button className="g-tooltip" data-tooltip="Import Exam" onClick={addQuestion}>📂</button>
+          <button className="g-tooltip" data-tooltip="Export Exam" onClick={addQuestion}>💾</button>
+          <button className="g-tooltip" data-tooltip="Settings" onClick={() => setIsProctorOpen(true)}>⚙️</button>
+          <button className="g-tooltip" data-tooltip="Preview exam" onClick={addQuestion}>👁️</button>
+          <button className="g-tooltip" data-tooltip="Home" onClick={addQuestion}>🏠</button>
+        </div>
+      </div>
+
+      {/* hidden file input */}
+      <input
+        type="file"
+        id="jsonFileInput"
+        accept="application/json"
+        hidden
+      />
+
+      {/* Proctor Modal */}
+      <div className={`proctor-modal ${!isProctorOpen ? "hidden" : ""}`}>
+        <div className="proctor-card">
+
+          <div className="proctor-header">
+            <h3>Settings</h3>
+            <button className="btn-icon" onClick={() => setIsProctorOpen(false)}>✕</button>
+          </div>
+
+          {/* Settings Tabs */}
+          <div className="settings-tabs">
+            <button className={activeTab === "general" ? "tab active" : "tab"} onClick={() => setActiveTab("general")}>General</button>
+            <button className={activeTab === "proctor" ? "tab active" : "tab"} onClick={() => setActiveTab("proctor")}>Proctor 🛡️</button>
+          </div>
+
+          {/* Tab contents */}
+          <div className="settings-content">
+
+            {/* General Settings */}
+            {activeTab === "general" && (
+              <div className="tab-panel">
+              <label className="toggle-row"><strong>General:</strong></label>
+              <label className="toggle-row" style={{ display:"none" }}>
+                <input type="checkbox" data-proctor="shuffle-questions" />
+                <span>Shuffle questions</span>
+              </label>
+
+              <label className="toggle-row" style={{ display:"none" }}>
+                <input type="checkbox" data-proctor="shuffle-options" />
+                <span>Shuffle options</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" id="viewToggleQuestions" data-proctor="view-toggle-questions" />
+                <span>View toggle questions (One by One/All)</span>
+              </label>
+              
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="view-questions" />
+                <span>View questions One by One</span>
+              </label>
+
+              <div className="toggle-inline">
+                <label className="toggle-row">
+                  <input type="checkbox" data-proctor="score-min" checked={showScoreMin}
+                    onChange={(e) => setShowScoreMin(e.target.checked)} />
+                  <span>Points/Score minimum to pass</span>
+                </label>
+
+                <div
+                  className="score-row"
+                  style={{ display: showScoreMin ? "flex" : "none" }}>
+                    <input
+                      type="number"
+                      className="score-input"
+                      min="0"
+                      step="1"
+                      value={scoreMinValue}
+                      onChange={(e) => setScoreMinValue(Number(e.target.value) || 0)}
+                    /> points
+                </div>
+              </div>
+            </div>)}
+            
+            {/* Proctor Settings */}
+            {activeTab === "proctor" && (
+            <div className="tab-panel" id="tab-proctor">
+
+              {/* Timer */}
+              <label className="toggle-row"><strong>Timer:</strong></label>
+
+              <div className="toggle-inline">
+                <label className="toggle-row">
+                  <input type="checkbox" data-proctor="timer-enabled" checked={timerEnabled}
+                    onChange={(e) => setTimerEnabled(e.target.checked)}/>
+                  <span>Timer Left</span>
+                </label>
+
+                {timerEnabled && (
+                <div className="timer-row">
+                  <input
+                    type="number"
+                    className="timer-input timer-input-hours"
+                    min="0"
+                    max="24"
+                    step="1"
+                    value={hours}
+                    onChange={(e) => {
+                      const value = Math.max(0, Math.min(24, Number(e.target.value)))
+                      setHours(value)
+                    }}
+                  />hour
+                  <span>:</span>
+                  <input
+                    type="number"
+                    className="timer-input timer-input-mins"
+                    min="0"
+                    max="59"
+                    step="1"
+                    value={minutes}
+                    onChange={(e) => {
+                      const value = Math.max(0, Math.min(59, Number(e.target.value)))
+                      setMinutes(value)
+                    }}
+                  />min
+                </div>)}
+              </div>
+
+              {/* Camera */}
+              <label className="toggle-row"><strong>Camera:</strong></label>
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="camera-enabled" />
+                <span>Show camera</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="camera-face" />
+                <span>Face Detection: Detect Face absence</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="camera-eye" />
+                <span>Eye-Tracking: Gaze Direction</span>
+              </label>
+
+              {/* Microphone */}
+              <label className="toggle-row"><strong>Microphone:</strong></label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="microphone-enabled" />
+                <span>Show microphone</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="noise-loud" />
+                <span>Noise-detection: Detect loud background noise</span>
+              </label>
+
+              {/* Screen */}
+              <label className="toggle-row"><strong>Screen:</strong></label>
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-tab"/>
+                <span>Detect tab switching or minimize</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-fullscreen"/>
+                <span>Detect fullscreen exit</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-devtools"/>
+                <span>Detect DevTools Opening</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-leave"/>
+                <span>Detect leaving fullscreen</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-keyshortcuts"/>
+                <span>Block Keyboard Shortcuts</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-secondmonitor"/>
+                <span>Fake "Second Monitor Detection"</span>
+              </label>
+
+            </div>)}
+
+          </div>
+          {/*
+          <div className="proctor-footer">
+            <button className="btn-save" onClick={saveProctorSettings} disabled>💾 Save</button>
+          </div>
+          */}
+        </div>
+      </div>
+
+
+
+
+      {/*
+      <main className="mx-auto max-w-[820px] px-4 pb-32 pt-6">*/}
         {/* Header */}
+        
+        {/*<TitleCard />*/}
+        {/* <ExamCard /> */}
+{/*
         <div className="card mb-4">
           <div className="flex flex-col gap-2 sm:flex-row">
+            
             <div className="flex-1">
               <input
                 value={title}
@@ -221,9 +469,11 @@ export default function CreatePage() {
               Total points <strong>{totalPoints}</strong>
             </div>
           </div>
-        </div>
+        </div>*/}
 
         {/* Questions */}
+        {/*<QuestionCard />*/}
+{/*
         <div ref={questionsRef} className="space-y-4">
           {questions.map((q, i) => (
             <div key={q.id} className="card question">
@@ -305,9 +555,10 @@ export default function CreatePage() {
             </div>
           ))}
         </div>
-      </main>
+      </main>*/}
 
       {/* Bottom Toolbar */}
+      {/*
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 flex gap-2 bg-white border px-4 py-2 rounded-t-xl shadow">
         <button onClick={addQuestion}>＋</button>
         <button onClick={addQuestion}>≡</button>
@@ -316,7 +567,7 @@ export default function CreatePage() {
         <button onClick={addQuestion}>⚙️</button>
         <button onClick={addQuestion}>👁️</button>
         <button onClick={() => router.push('/')}>🏠</button>
-      </div>
+      </div>*/}
     </div>
   )
 }

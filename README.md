@@ -42,7 +42,11 @@ Proctor Exam Web with Nextjs.
 
 # Convert static web site into Nextjs
 
-run project: npm run dev
+- IDE: Visual Studio Code
+
+- run project: npm run dev
+
+- install libraries (folder node_modules, nextjs): npm install
 
 - Stack:
 App Router
@@ -52,7 +56,7 @@ No Tailwind (since you already use CSS)
 - Nextjs project structure:
 
 proctor-exam/
-  app/
+  app/ -> api router, server components
     page.js
     start/
       page.js
@@ -60,6 +64,7 @@ proctor-exam/
       page.js
     layout.js
     globals.css
+  components/ -> client components
   public/
     logo.png
 
@@ -90,4 +95,7 @@ Automatic Configuration:
 npx @sentry/wizard@latest -i nextjs --saas --org wodzarod --project proctor-exam-simulator
     Sentry authentication token:
         SENTRY_AUTH_TOKEN=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
+
+- Install Font Awesome:
+npm install @fortawesome/fontawesome-free
 

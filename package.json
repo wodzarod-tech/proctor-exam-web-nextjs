@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.8",
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "@opentelemetry/core": "^2.4.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@sentry/nextjs": "^10.34.0",

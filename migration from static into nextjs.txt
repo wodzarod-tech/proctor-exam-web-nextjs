@@ -1,0 +1,217 @@
+* Notes:
+
+Styling: Tailwind CSS v4
+
+Component Library: shadcn/ui. Components (buttons, modals, tables)
+
+Add comment in Nextjs: {/* Header */}
+
+*************************************************
+
+* Tips:
+
+1. Break HTML into components
+
+2. Use reusable UI (Shadcn)
+
+3. Use server components where possible
+
+4. Keep client components minimal
+
+Example structure:
+	components/
+	  Navbar.tsx
+	  ExamCard.tsx
+	  Question.tsx
+
+- Migration Checklist:
+Remove <html>, <head>, <body>
+
+Convert class → className
+
+Convert JS events → React events
+
+Move images to /public
+
+Move CSS to globals.css
+
+Replace links with <Link>
+ 
+*************************************************
+
+* Create a Next.js Project:
+
+npx create-next-app@latest my-app
+cd my-app
+npm run dev
+
+*************************************************
+
+* Mapping
+
+- Static site:
+index.html
+about.html
+contact.html
+styles.css
+script.js
+images/
+
+- Next.js:
+app/
+  page.tsx          → index.html
+  about/page.tsx    → about.html
+  contact/page.tsx  → contact.html
+public/
+  images/
+
+*************************************************
+
+* Convert HTML into JSX:
+
+- HTML:
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Website</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Hello World</h1>
+  <button onclick="showAlert()">Click</button>
+  <script src="script.js"></script>
+</body>
+</html>
+
+- Next.js:
+"use client"
+
+import { useEffect } from "react"
+
+export default function Home() {
+
+  function showAlert() {
+    alert("Hello!")
+  }
+
+  return (
+    <div>
+      <h1>Hello World</h1>
+      <button onClick={showAlert}>Click</button>
+    </div>
+  )
+}
+
+*************************************************
+
+* HTML	 	-->	NextJS
+
+class			className						: to call class CSS
+	example:
+		<div class="container"> -> <div className="container">
+
+onclick			onClick
+for				htmlFor
+<script>		useEffect or direct function
+<link> CSS		import in layout
+
+*************************************************
+
+* styles.css -> app/globals.css
+
+- For fast migration use CSS Modules
+	className={styles.cardtest}
+		cardtest is the CSS style in .css
+		
+- For scalable migration use Tailwind
+
+- style="display:none; -> style={{ display: "none" }}
+
+*************************************************
+
+* Move images:
+
+Move all images to /public
+
+Then use:
+	<img src="/images/photo.jpg" />
+
+or optimized:
+
+	import Image from "next/image"
+
+	<Image 
+	  src="/images/photo.jpg"
+	  width={500}
+	  height={300}
+	  alt="Photo"
+	/>
+
+*************************************************
+
+* Handle Vanilla JS:
+
+From:
+document.getElementById()
+addEventListener()
+
+Into:
+React state (useState)
+React effects (useEffect)
+React events (onClick, onChange, etc.)
+
+example:
+
+- Vanilla JS:
+document.querySelector("#btn").addEventListener("click", function() {
+  document.querySelector("#text").innerText = "Changed"
+})
+
+- React way:
+"use client"
+import { useState } from "react"
+
+export default function Home() {
+  const [text, setText] = useState("Hello")
+
+  return (
+    <div>
+      <p>{text}</p>
+      <button onClick={() => setText("Changed")}>
+        Click
+      </button>
+    </div>
+  )
+}
+
+*************************************************
+
+* Multiple Pages:
+about.html → app/about/page.tsx
+
+export default function About() {
+  return <h1>About Page</h1>
+}
+
+Navigation:
+	import Link from "next/link"
+
+	<Link href="/about">About</Link>
+
+*************************************************
+
+* Forms:
+
+HTML:
+	<form action="/submit" method="POST">
+
+Next.js:
+	Use API routes:
+	app/api/submit/route.ts
+
+	import { NextResponse } from "next/server"
+
+	export async function POST(request: Request) {
+	  const data = await request.json()
+	  return NextResponse.json({ success: true })
+	}

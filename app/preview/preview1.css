@@ -796,6 +796,36 @@ pre{
     cursor: pointer;
 }
 
+/* Timer */
+.timer-row{
+  display:flex;
+  align-items:center;
+  margin-left:4px;
+  /*margin-left:auto;*/
+}
+
+.timer-input{
+  width:42px;
+  text-align:center;
+  border:none;
+  border-bottom:1px solid transparent;
+  text-align:right;
+  font-size:13px;
+  color:#202124;
+  outline:none;
+  background:transparent;
+}
+
+.timer-input:focus{
+  border-bottom-color:#1a73e8;
+}
+
+/* keep native steppers */
+.timer-input::-webkit-inner-spin-button,
+.timer-input::-webkit-outer-spin-button{
+  opacity:1;
+}
+
 /* Save button */
 .proctor-footer{
     /*margin-top: 20px;*/
@@ -940,8 +970,92 @@ input[type="number"] {
     color: #5f6368;
 }
 
+/* Camera */
+#timer {
+  white-space: nowrap; /* ensures the text stays in one line */
+  width: auto;         /* automatically adjusts to content */
+  font-size: 10px;
+  color: #b22222;
+  font-weight:500;
+  /*margin-right: 35px;*/
+}
+
+#webcam {
+  position: fixed;
+  top: 40px;
+  right: 10px;
+  border: 2px solid #333;
+  width: 90px;
+  height: 78px;
+  overflow: hidden;
+}
+
+#camera {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+canvas.overlay{
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+}
+
+video { 
+  width: 100%; 
+  /*border-radius:6px;*/ 
+  background: #000 
+}
+
 /* Line separator */
 .option-separator {
   margin: 10px 0;
   border-top: 1px solid #e5e7eb; /* soft gray */
+}
+
+/* Previous / Next / Submit buttons */
+.question-nav{
+  position: relative;
+  display: flex;
+  justify-content: center; /* center Prev + Next */
+  align-items: center;
+  margin: 20px 0;
+}
+
+.nav-center{
+  display: flex;
+  gap: 10px;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: #f1f3f4;
+  border: 1px solid #dadce0;
+  cursor: pointer;
+}
+
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submit-btn{
+  position: absolute;
+  right: 0;
+
+  background: var(--purple);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 18px;
+  cursor: pointer;
+}
+
+.submit-btn:hover{
+  opacity: 0.9;
 }

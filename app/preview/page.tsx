@@ -1,5 +1,5 @@
 'use client'
-import "./start.css"
+import "./preview.css"
 
 import { useEffect, useRef, useState } from 'react'
 import Sortable from 'sortablejs'
@@ -86,7 +86,7 @@ const createEmptyQuestion = (): Question => ({
    Page
 ===================== */
 
-export default function StartExam() {
+export default function PreviewExam() {
   const router = useRouter()
   const questionsRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null) // when click outside question card
@@ -205,6 +205,21 @@ useEffect(() => {
      Actions
   ===================== */
 
+  function prevQuestion() {
+
+  }
+
+  function nextQuestion() {
+    
+  }
+
+  function submitExam() {
+
+  }
+
+  function filterResults(qid: string) {
+  }
+
   function addQuestion() {
     setQuestions(qs => [
       ...qs,
@@ -301,14 +316,45 @@ useEffect(() => {
 
       <header className="h-2 bg-primary" />
 
+      {/* Webcam */}
+      <div id="webcam">
+        <div id="timer">Time Left: --:--:--</div>
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="overlay" className="overlay"></canvas> {/* <!-- face detection */}
+      </div>
+
       <div className="container" ref={containerRef}>
+
+        {/* Options header */}
+        <div className="preview-topbar">
+          <button id="goBack" className="nav-btn" data-tooltip="Back to editor" onClick={() => router.push("/create")}>⬅ Back</button>
+          
+          <div id="resultFilters" style={{ display: "flex", margin: "12px 0", gap: "8px" }}>
+            <button onClick={() => filterResults('all')}>📋 All</button>
+            <button onClick={() => filterResults('correct')}>✅ Correct</button>
+            <button onClick={() => filterResults('incorrect')}>❌ Incorrect</button>
+          </div>
+
+          <button id="goResults" className="nav-btn" data-tooltip="Back to results" style={{ display: "flex" }} onClick={() => router.push("/result")}>Back to results ➡</button>
+
+          <div className="view-toggle" id="viewToggle" style={{ display: "flex" }}>
+            <span>View:</span>
+
+            <label className="switch"> 
+              <input type="checkbox" id="oneByOneToggle" />
+              <span className="slider"></span>
+            </label>
+
+            <span>One by one</span>
+          </div>
+        </div>
 
         {/* Form header */}
         <div className="card form-header">
           <div className="form-header-row">
             <div>
               <input className="title-input" id="formTitle" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)}/>
-              <input className="desc-input" id="formDesc" placeholder="Form description" value={description} onChange={(e) => setDescription(e.target.value)} />
+              <input className="desc-input" id="formDesc" placeholder="Form description 2" value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
 
             <div className="total-points">
@@ -450,36 +496,33 @@ useEffect(() => {
     
               <div className="option-separator" />
 
-              <div className="feedback collapsed">
-                
-                {/* Toggle header */}
-                {/*
-                <div className="feedback-toggle" onClick={() => toggleFeedback(q.id)}>
-                  <span className="feedback-toggle-icon">▼</span>
-                  <span className="feedback-toggle-text">Answer feedback</span>
-                </div>*/}
+              {/* Toggle header */}
+              {/*
+              <div className="feedback-toggle" onClick={() => toggleFeedback(q.id)}>
+                <span className="feedback-toggle-icon">▼</span>
+                <span className="feedback-toggle-text">Answer feedback</span>
+              </div>*/}
 
-                {/* Collapsible content */}
-                
-                <div className="feedback-content">
+              {/* Collapsible content */}
+              
+              <div className="feedback" style={{display:"none"}}>
 
-                  <div className="feedback-group ok">
-                    <div className="feedback-ok-label">
-                      <span className="feedback-icon">✔</span>
-                      <span>Correct:</span>
-                    </div>
-                    <textarea className="q-comment" placeholder="Feedback"></textarea>
+                <div className="feedback-group ok">
+                  <div className="feedback-ok-label">
+                    <span className="feedback-icon">✔</span>
+                    <span>Correct:</span>
                   </div>
-
-                  <div className="feedback-group error">
-                    <div className="feedback-error-label">
-                      <span className="feedback-icon">✖</span>
-                      <span>Incorrect:</span>
-                    </div>
-                    <textarea className="q-comment" placeholder="Feedback"></textarea>
-                  </div>
-
+                  <textarea className="q-comment" rows={1} placeholder="Feedback"></textarea>
                 </div>
+
+                <div className="feedback-group error">
+                  <div className="feedback-error-label">
+                    <span className="feedback-icon">✖</span>
+                    <span>Incorrect:</span>
+                  </div>
+                  <textarea className="q-comment" rows={1} placeholder="Feedback"></textarea>
+                </div>
+
               </div>
 
               <div className="actions">
@@ -494,6 +537,16 @@ useEffect(() => {
 
             </div>
           ))}
+        </div>
+
+        {/* Navigation Buttons */}
+        <div id="questionNav" className="question-nav">
+          <div id="navCenter" className="nav-center">
+            <button id="prevBtn" className="nav-btn" onClick={prevQuestion}>⬅ Previous</button>
+            <button id="nextBtn" className="nav-btn" onClick={nextQuestion}>Next ➡</button>
+          </div>
+
+          <button id="submitBtn" onClick={submitExam}>Submit</button>
         </div>
 
       </div>
@@ -517,7 +570,7 @@ useEffect(() => {
           <button className="g-tooltip" data-tooltip="Import Exam" onClick={addQuestion}>📂</button>
           <button className="g-tooltip" data-tooltip="Export Exam" onClick={addQuestion}>💾</button>
           <button className="g-tooltip" data-tooltip="Settings" onClick={() => setIsProctorOpen(true)}>⚙️</button>
-          <button className="g-tooltip" data-tooltip="Preview exam" onClick={addQuestion}>👁️</button>
+          <button className="g-tooltip" data-tooltip="Preview exam" onClick={() => router.push("/preview")}>👁️</button>
           <button className="g-tooltip" data-tooltip="Home" onClick={() => router.push('/')}>🏠</button>
         </div>
       </div>

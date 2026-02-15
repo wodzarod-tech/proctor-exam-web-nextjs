@@ -448,6 +448,8 @@ useEffect(() => {
                 <button className="btn-link" onClick={() => addOption(q.id)}>Add option</button>
               </div>
     
+              <div className="option-separator" />
+
               <div className="feedback collapsed">
                 
                 {/* Toggle header */}
@@ -458,7 +460,7 @@ useEffect(() => {
                 </div>*/}
 
                 {/* Collapsible content */}
-                {/*
+                
                 <div className="feedback-content">
 
                   <div className="feedback-group ok">
@@ -466,7 +468,7 @@ useEffect(() => {
                       <span className="feedback-icon">✔</span>
                       <span>Correct:</span>
                     </div>
-                    <textarea className="q-title q-comment-ok" placeholder="Feedback"></textarea>
+                    <textarea className="q-comment" placeholder="Feedback"></textarea>
                   </div>
 
                   <div className="feedback-group error">
@@ -474,10 +476,10 @@ useEffect(() => {
                       <span className="feedback-icon">✖</span>
                       <span>Incorrect:</span>
                     </div>
-                    <textarea className="q-title q-comment-error" placeholder="Feedback"></textarea>
+                    <textarea className="q-comment" placeholder="Feedback"></textarea>
                   </div>
 
-                </div>*/}
+                </div>
               </div>
 
               <div className="actions">
@@ -515,7 +517,7 @@ useEffect(() => {
           <button className="g-tooltip" data-tooltip="Import Exam" onClick={addQuestion}>📂</button>
           <button className="g-tooltip" data-tooltip="Export Exam" onClick={addQuestion}>💾</button>
           <button className="g-tooltip" data-tooltip="Settings" onClick={() => setIsProctorOpen(true)}>⚙️</button>
-          <button className="g-tooltip" data-tooltip="Preview exam" onClick={addQuestion}>👁️</button>
+          <button className="g-tooltip" data-tooltip="Preview exam" onClick={() => router.push("/preview")}>👁️</button>
           <button className="g-tooltip" data-tooltip="Home" onClick={() => router.push('/')}>🏠</button>
         </div>
       </div>

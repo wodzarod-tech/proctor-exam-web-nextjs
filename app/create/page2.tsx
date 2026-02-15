@@ -84,12 +84,9 @@ const uid = () => crypto.randomUUID()
    Page
 ===================== */
 
-export default function CreatePage() {
+export default function CreatePage2() {
   const router = useRouter()
   const questionsRef = useRef<HTMLDivElement>(null)
-
-  {/*enableOptionDrag (Sortable per question) */}
-  const optionRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -102,9 +99,7 @@ export default function CreatePage() {
   const [timerEnabled, setTimerEnabled] = useState(false)
   const [hours, setHours] = useState(0)
   const [minutes, setMinutes] = useState(0)
-  const [scoreMinValue, setScoreMinValue] = useState(0)
-
-  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null)
+const [scoreMinValue, setScoreMinValue] = useState(0)
 
   /* =====================
      Derived
@@ -138,54 +133,21 @@ export default function CreatePage() {
     return () => clearTimeout(timeout)
   }, [title, description, questions, settings])
 
-// Enable Sortable (questions): when drag & drop a question card
-useEffect(() => {
-  if (!questionsRef.current) return
+  // Enable Sortable (questions)
+  useEffect(() => {
+    if (!questionsRef.current) return
 
-  const sortable = new Sortable(questionsRef.current, {
-    handle: '.drag',
-    animation: 150,
-    onEnd: (evt) => {
-      setQuestions(prev => {
-        const reordered = [...prev]
+    new Sortable(questionsRef.current, {
+      handle: '.drag',
+      animation: 150,
+      onEnd: evt => {
+        const reordered = [...questions]
         const [moved] = reordered.splice(evt.oldIndex!, 1)
         reordered.splice(evt.newIndex!, 0, moved)
-        return reordered
-      })
-    }
-  })
-
-  return () => {
-    sortable.destroy()
-  }
-}, [])
-
-// Replace enableOptionDrag(opt) and options._sortable = new Sortable(...)
-useEffect(() => {
-  Object.entries(optionRefs.current).forEach(([qid, el]) => {
-    if (!el || (el as any)._sortable) return
-
-    const sortable = new Sortable(el, {
-      handle: '.opt-drag',
-      animation: 150,
-      onEnd: (evt) => {
-        setQuestions(prev =>
-          prev.map(q => {
-            if (q.id !== qid) return q
-
-            const reordered = [...q.options]
-            const [moved] = reordered.splice(evt.oldIndex!, 1)
-            reordered.splice(evt.newIndex!, 0, moved)
-
-            return { ...q, options: reordered }
-          })
-        )
+        setQuestions(reordered)
       }
     })
-
-    ;(el as any)._sortable = sortable
-  })
-}, [questions])
+  }, [questions])
 
   /* =====================
      Actions
@@ -212,30 +174,18 @@ useEffect(() => {
   }
 
   function addOption(qid: string) {
-    setQuestions(prev =>
-      prev.map(q => {
-        if (q.id !== qid) return q
-
-        const optionNumber = q.options.length + 1
-
-        return {
-          ...q,
-          options: [
-            ...q.options,
-            {
-              id: uid(),
-              text: "",
-              checked: false
-            }
-          ]
-        }
-      })
+    setQuestions(qs =>
+      qs.map(q =>
+        q.id === qid
+          ? { ...q, options: [...q.options, { id: uid(), text: '', checked: false }] }
+          : q
+      )
     )
   }
 
   function removeOption(qid: string, oid: string) {
-    setQuestions(prev =>
-      prev.map(q =>
+    setQuestions(qs =>
+      qs.map(q =>
         q.id === qid && q.options.length > 1
           ? { ...q, options: q.options.filter(o => o.id !== oid) }
           : q
@@ -282,178 +232,19 @@ useEffect(() => {
           {/* Questions */}
           {/*<div id="questions"></div>*/}
           <div ref={questionsRef} className="space-y-4">
-          {questions.map((q, index) => (
-            <div key={q.id} className={`card question ${activeQuestionId === q.id ? "active" : ""}`}
-              onClick={() => setActiveQuestionId(q.id)}>
-
-              <div className="drag">: : :</div>
-
-              <div className="question-header">
-
-                <div className="q-counter" style={{
-                  fontSize: "13px",
-                  color: "#5f6368",
-                  marginRight: "auto"
-                }}>
-                  {index + 1} de {questions.length}
-                </div>
-
-                <button
-                  className="btn-link g-tooltip delete-top"
-                  data-tooltip="Delete question"
-                  onClick={() =>
-                    setQuestions(prev => prev.filter(x => x.id !== q.id))
-                  }
-                ><i className="fa fa-trash"></i></button>
-
-                <div className="q-points">
-                  <input
-                    type="number"
-                    className="points-input"
-                    min="0"
-                    step="0.1"
-                    placeholder="0"
-                    value={q.points}
-                    onChange={(e) =>
-                      updateQuestion(q.id, {
-                        points: Number(e.target.value) || 0
-                      })
-                    }
-                  />
-                  <span>points</span>
-                </div>
-              </div>
-
-              <textarea
-                className="q-title"
-                placeholder="Question"
-                value={q.text}
-                onChange={(e) =>
-                  updateQuestion(q.id, { text: e.target.value })
+            {questions.map((q, index) => (
+              <QuestionCard
+                key={q.id}
+                question={q}
+                index={index}
+                total={questions.length}
+                updateQuestion={updateQuestion}
+                removeQuestion={(id) =>
+                  setQuestions(prev => prev.filter(q => q.id !== id))
                 }
               />
-
-              <select className="q-type"
-                value={q.type}
-                onChange={(e) =>
-                  updateQuestion(q.id, {
-                    type: e.target.value as QuestionType
-                  })
-                }
-              >
-                <option value="radio">◉ One choice</option>
-                <option value="checkbox">☑ Multiple choices</option>
-              </select>
-
-              {/*<div className="options"></div>*/}
-              <div
-                className="options"
-                ref={(el) => {
-                  optionRefs.current[q.id] = el
-                }}
-              >
-                {q.options.map((opt, index) => (
-                  <div key={opt.id} className="option">
-
-                    <div className="opt-drag">⋮⋮</div>
-
-                    <input
-                      className="opt-icon"
-                      type={q.type}
-                      name={q.type === 'radio' ? q.id : undefined}
-                      checked={opt.checked}
-                      onChange={() => {
-                        updateQuestion(q.id, {
-                          options: q.options.map(o =>
-                            q.type === 'radio'
-                              ? { ...o, checked: o.id === opt.id }
-                              : o.id === opt.id
-                                ? { ...o, checked: !o.checked }
-                                : o
-                          )
-                        })
-                      }}
-                    />
-
-                    <textarea
-                      className="opt-text"
-                      rows={1}
-                      placeholder={`Option ${index + 1}`}
-                      value={opt.text}
-                      onChange={(e) =>
-                        updateQuestion(q.id, {
-                          options: q.options.map(o =>
-                            o.id === opt.id
-                              ? { ...o, text: e.target.value }
-                              : o
-                          )
-                        })
-                      }
-                    />
-
-                    <button
-                      className="btn-link"
-                      onClick={() => removeOption(q.id, opt.id)}
-                    >
-                      ✕
-                    </button>
-
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <button className="btn-link" onClick={() => addOption(q.id)}>Add option</button>
-              </div>
-    
-              <div className="feedback collapsed">
-                
-                {/* Toggle header */}
-                {/*
-                <div className="feedback-toggle" onClick={() => toggleFeedback(q.id)}>
-                  <span className="feedback-toggle-icon">▼</span>
-                  <span className="feedback-toggle-text">Answer feedback</span>
-                </div>*/}
-
-                {/* Collapsible content */}
-                {/*
-                <div className="feedback-content">
-
-                  <div className="feedback-group ok">
-                    <div className="feedback-ok-label">
-                      <span className="feedback-icon">✔</span>
-                      <span>Correct:</span>
-                    </div>
-                    <textarea className="q-title q-comment-ok" placeholder="Feedback"></textarea>
-                  </div>
-
-                  <div className="feedback-group error">
-                    <div className="feedback-error-label">
-                      <span className="feedback-icon">✖</span>
-                      <span>Incorrect:</span>
-                    </div>
-                    <textarea className="q-title q-comment-error" placeholder="Feedback"></textarea>
-                  </div>
-
-                </div>*/}
-              </div>
-
-              <div className="actions">
-                <div className="required-toggle">
-                  <span>Required</span>
-                  <label className="switch">
-                    <input type="checkbox" className="q-required" onChange={(e) => updateQuestion(q.id, { required: e.target.checked })} />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-              </div>
-
-              {/* addOption */}
-              {/* addOption(q.querySelector('.btn-link')); */}
-
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
       </div>
 

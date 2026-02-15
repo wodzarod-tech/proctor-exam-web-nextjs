@@ -1,7 +1,7 @@
 "use client"
 import styles from "./QuestionCard.module.css"
 
-const QuestionCard = () => { 
+const QuestionCard1 = () => { 
   return (
     <div className={styles.card}>
 
@@ -87,4 +87,4 @@ const QuestionCard = () => {
   )
 }
 
-export default QuestionCard
+export default QuestionCard1

@@ -113,7 +113,7 @@ select{
     padding:6px;
     border:1px solid var(--border);
     border-radius:4px;
-    margin-bottom:12px;
+    margin-bottom:1px;
 }
 
 .option{
@@ -150,11 +150,11 @@ select{
     /*border:none;
     border-bottom:1px solid var(--border);*/
     outline:none;
-    margin-bottom:12px;
+    margin-bottom:1px;
     /* multiline */
     resize: none;
     overflow: hidden;
-    line-height: 1.4;
+    line-height: 0.8;
     caret-color: transparent;
 }
 
@@ -713,6 +713,7 @@ pre{
     align-items: center;
     padding: 1px 20px;
     border-bottom: 1px solid var(--border);
+    font-weight: bold;
 }
 
 .settings-tabs{

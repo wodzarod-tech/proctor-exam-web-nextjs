@@ -90,6 +90,7 @@ export default function PreviewExam() {
   const router = useRouter()
   const questionsRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null) // when click outside question card
+  const videoRef = useRef<HTMLVideoElement | null>(null) // Camera
 
   {/*enableOptionDrag (Sortable per question) */}
   const optionRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -122,6 +123,19 @@ export default function PreviewExam() {
   /* =====================
      Effects
   ===================== */
+
+  // Camera
+useEffect(() => {
+  startCamera()
+
+  // Stop camera on unmount: prevents camera staying active after leaving page
+  return () => {
+    if (videoRef.current?.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
+      tracks.forEach(track => track.stop())
+    }
+  }
+}, [])
 
   // Auto-save JSON
   useEffect(() => {
@@ -182,6 +196,7 @@ useEffect(() => {
 }, [questions])
 
 // Click-outside effect to deselect active question card
+/*
 useEffect(() => {
   function handleClickOutside(e: MouseEvent) {
     if (!containerRef.current) return
@@ -200,6 +215,45 @@ useEffect(() => {
     document.removeEventListener('mousedown', handleClickOutside)
   }
 }, [])
+*/
+
+window.onload = async function() {
+  // Apply Settings/Proctor/Camera
+  await applySettingsProctorCamera(true);
+}
+/***************************
+Proctor Settings
+***************************/
+// Proctor Camera Settings
+async function applySettingsProctorCamera(cameraSettings) {
+  if(!cameraSettings) return;
+  
+  await startCamera(cameraSettings);
+}
+
+/***************************
+Camera
+***************************/
+
+let camera = null;
+const video = document.getElementById('video');
+
+async function startCamera(){
+  if (!videoRef.current) return
+
+  try {
+    // Start camera
+    const cam = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false
+    })
+
+    videoRef.current.srcObject = cam
+  } catch(e) {
+    console.warn('Camera error', e);
+    alert('❌ Camera error');
+  }
+}
 
   /* =====================
      Actions
@@ -319,7 +373,12 @@ useEffect(() => {
       {/* Webcam */}
       <div id="webcam">
         <div id="timer">Time Left: --:--:--</div>
-        <video id="video" autoplay muted playsinline></video>
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+        ></video>
         <canvas id="overlay" className="overlay"></canvas> {/* <!-- face detection */}
       </div>
 
@@ -368,7 +427,7 @@ useEffect(() => {
           {/*<div id="questions"></div>*/}
           <div ref={questionsRef} className="space-y-4">
           {questions.map((q, index) => (
-            <div key={q.id} className={`card question ${activeQuestionId === q.id ? "active" : ""}`}
+            <div key={q.id} className="card question"
               onClick={() => setActiveQuestionId(q.id)}>
 
               <div className="drag">: : :</div>
@@ -494,7 +553,7 @@ useEffect(() => {
                 <button className="btn-link" onClick={() => addOption(q.id)}>Add option</button>
               </div>
     
-              <div className="option-separator" />
+              <div className="option-separator" style={{display:"none"}}/>
 
               {/* Toggle header */}
               {/*

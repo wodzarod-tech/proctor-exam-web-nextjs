@@ -6,6 +6,12 @@ Component Library: shadcn/ui. Components (buttons, modals, tables)
 
 Add comment in Nextjs: {/* Header */}
 
+-️ Important (Next.js + HTTPS):
+Camera only works if:
+	You are on https
+	OR localhost
+If you deploy without HTTPS → it won’t work.
+
 *************************************************
 
 * Tips:

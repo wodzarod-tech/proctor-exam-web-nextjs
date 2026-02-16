@@ -125,17 +125,35 @@ export default function PreviewExam() {
   ===================== */
 
   // Camera
-useEffect(() => {
-  startCamera()
+  useEffect(() => {
+    startCamera()
 
-  // Stop camera on unmount: prevents camera staying active after leaving page
-  return () => {
-    if (videoRef.current?.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
-      tracks.forEach(track => track.stop())
+    // Stop camera on unmount: prevents camera staying active after leaving page
+    return () => {
+      if (videoRef.current?.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
+        tracks.forEach(track => track.stop())
+      }
     }
-  }
-}, [])
+  }, [])
+
+  // Microphone
+  useEffect(() => {
+    startMicrophone()
+
+    return () => {
+      // Cleanup mic stream
+      micStreamRef.current?.getTracks().forEach(track => track.stop())
+
+      // Cleanup audio context
+      audioContextRef.current?.close()
+
+      // Stop animation loop
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [])
 
   // Auto-save JSON
   useEffect(() => {
@@ -216,32 +234,89 @@ useEffect(() => {
   }
 }, [])
 */
-
+/*
 window.onload = async function() {
   // Apply Settings/Proctor/Camera
   await applySettingsProctorCamera(true);
-}
+}*/
 /***************************
 Proctor Settings
 ***************************/
 // Proctor Camera Settings
+/*
 async function applySettingsProctorCamera(cameraSettings) {
   if(!cameraSettings) return;
   
   await startCamera(cameraSettings);
 }
+*/
+
+/***************************
+Timer
+***************************/
+const [timeLeft, setTimeLeft] = useState(0);
+
+const hoursTimer = Math.max(0, Math.floor(timeLeft / 3600));
+const minutesTimer = Math.max(0, Math.floor((timeLeft % 3600) / 60));
+const secondsTimer = Math.max(0, timeLeft % 60);
+
+const formattedTime = `Time Left: ${hoursTimer}:${
+  minutesTimer < 10 ? "0" : ""
+}${minutesTimer}:${secondsTimer < 10 ? "0" : ""}${secondsTimer}`;
+
+// Set initial time on load
+useEffect(() => {
+  const hours = 1;
+  const minutes = 20;
+  const seconds = 10;
+
+  const total =
+    Number(hours || 0) * 3600 +
+    Number(minutes || 0) * 60 +
+    Number(seconds || 0);
+
+  setTimeLeft(total);
+}, []);
+
+// Countdown Logic
+useEffect(() => {
+  if (timeLeft <= 0) return;
+
+  const interval = setInterval(() => {
+    setTimeLeft((prev) => prev - 1);
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [timeLeft]);
 
 /***************************
 Camera
 ***************************/
-
+/*
 let camera = null;
 const video = document.getElementById('video');
-
+*/
 async function startCamera(){
   if (!videoRef.current) return
 
   try {
+
+    // Config face absence and eye-tracking
+    // Eye-Tracking
+    faceMesh = new window.FaceMesh({
+      locateFile: (file) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+    });
+
+    faceMesh.setOptions({
+      maxNumFaces: 1, // face detection
+      refineLandmarks: true, // eye-tracking: gives iris landmarks (468-478)
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    });
+
+    faceMesh.onResults(onResults);
+
     // Start camera
     const cam = await navigator.mediaDevices.getUserMedia({
       video: true,
@@ -252,6 +327,88 @@ async function startCamera(){
   } catch(e) {
     console.warn('Camera error', e);
     alert('❌ Camera error');
+  }
+}
+
+/***************************
+Microphone
+***************************/
+// Config
+const NOISE_THRESHOLD = 0.16;   // When “too loud”
+const SPEAK_THRESHOLD = 0.18;   // When voice detected
+const MAX_NOISE_TIME = 5;       // Seconds before auto-fail
+
+const audioContextRef = useRef<AudioContext | null>(null)
+const micStreamRef = useRef<MediaStream | null>(null)
+const noiseSecondsRef = useRef(0)
+const lastNoiseTimeRef = useRef(0)
+const failedRef = useRef(false)
+const animationRef = useRef<number | null>(null)
+
+async function startMicrophone() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    micStreamRef.current = stream
+
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    audioContextRef.current = audioCtx
+
+    const analyser = audioCtx.createAnalyser()
+    analyser.fftSize = 2048
+
+    const freqAnalyser = audioCtx.createAnalyser()
+    freqAnalyser.fftSize = 512
+
+    const mic = audioCtx.createMediaStreamSource(stream)
+    mic.connect(analyser)
+    mic.connect(freqAnalyser)
+
+    const timeData = new Uint8Array(analyser.fftSize)
+    const freqData = new Uint8Array(freqAnalyser.frequencyBinCount)
+
+    function update() {
+      analyser.getByteTimeDomainData(timeData)
+      freqAnalyser.getByteFrequencyData(freqData)
+
+      // Calculate volume (RMS)
+      let sum = 0
+      for (let i = 0; i < timeData.length; i++) {
+        const v = (timeData[i] - 128) / 128
+        sum += v * v
+      }
+
+      const volume = Math.sqrt(sum / timeData.length)
+
+      // Check for noise / speaking
+      if (volume > SPEAK_THRESHOLD) {
+        console.log("🎤 Someone is speaking!")
+        alert('🎤 Someone is speaking!');
+        lastNoiseTimeRef.current = Date.now()
+      } else if (volume > NOISE_THRESHOLD) {
+        console.log("⚠ Too loud!")
+        alert('⚠ Too loud!');
+        lastNoiseTimeRef.current = Date.now()
+      }
+
+      // Count continuous noise time
+      if (Date.now() - lastNoiseTimeRef.current < 1000)
+        noiseSecondsRef.current++
+      else
+        noiseSecondsRef.current = 0
+
+      if (!failedRef.current && noiseSecondsRef.current >= MAX_NOISE_TIME) {
+        failedRef.current = true
+        alert("❌ Exam failed: too much noise.")
+      }
+
+      animationRef.current = requestAnimationFrame(update)
+    }
+
+    update()
+
+  } catch (e: any) {
+    console.warn("Microphone error:", e)
+    alert("❌ Microphone error: " + e.message)
   }
 }
 
@@ -372,7 +529,7 @@ async function startCamera(){
 
       {/* Webcam */}
       <div id="webcam">
-        <div id="timer">Time Left: --:--:--</div>
+        <div id="timer">{formattedTime}</div>
         <video
           ref={videoRef}
           autoPlay

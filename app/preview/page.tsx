@@ -90,7 +90,6 @@ export default function PreviewExam() {
   const router = useRouter()
   const questionsRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null) // when click outside question card
-  const videoRef = useRef<HTMLVideoElement | null>(null) // Camera
 
   {/*enableOptionDrag (Sortable per question) */}
   const optionRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -114,6 +113,15 @@ export default function PreviewExam() {
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null)
   const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false)
 
+  // Face absence detection and eye-tracking
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement | null>(null);
+
+//  const modelRef = useRef<any>(null);
+//  const detectLoopRef = useRef<any>(null);
+  const faceMeshRef = useRef<any>(null);
+  const lastFaceStateRef = useRef<string>("unknown");
+
   /* =====================
      Derived
   ===================== */
@@ -126,7 +134,12 @@ export default function PreviewExam() {
 
   // Camera
   useEffect(() => {
-    startCamera()
+    const cameraSettings = {
+      faceAbsence: true,
+      eyeTracking: true,
+    }
+
+    startCamera(cameraSettings)
 
     // Stop camera on unmount: prevents camera staying active after leaving page
     return () => {
@@ -290,40 +303,284 @@ useEffect(() => {
 }, [timeLeft]);
 
 /***************************
+Face detection
+***************************/
+async function loadScript(src: string) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+/*
+async function loadModelIfNeeded() {
+  if (modelRef.current) return;
+
+  console.log('Loading model (may take a few seconds)...');
+
+  // load TF.js
+  if (!(window as any).tf) {
+    await loadScript(
+      "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"
+    );
+  }
+
+  if (!(window as any).blazeface) {
+    await loadScript(
+      "https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"
+    );
+  }
+
+  // load model
+  modelRef.current = await (window as any).blazeface.load();
+  console.log('Model loaded');
+}
+*/
+// Face Absence Detection Loop
+/*
+function startDetectLoop() {
+  if (detectLoopRef.current) return;
+
+  detectLoopRef.current = setInterval(detectOnce, 700);
+
+  console.log('Detection started');
+}
+*/
+/*
+async function detectOnce() {
+  const video = videoRef.current;
+  const canvas = overlayRef.current;
+  if (!video || !canvas || !modelRef.current) return;
+  if (video.readyState < 2) return;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const predictions = await modelRef.current.estimateFaces(
+    video,
+    false
+  );
+
+  // predictions is array of face objects with topLeft, bottomRight, probability
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let state = "no_face";
+
+  if (!predictions || predictions.length === 0) {
+    state = "no_face";
+  } else if (predictions.length === 1) {
+    state = "one_face";
+
+    // draw box
+    const p = predictions[0];
+    const [x1, y1] = p.topLeft;
+    const [x2, y2] = p.bottomRight;
+
+    // label
+    ctx.strokeStyle = "rgba(6,182,212,0.9)";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+  } else {
+    state = "multi";
+  }
+
+  if (state !== lastFaceStateRef.current) {
+    if (state === "no_face") {
+      alert("No face detected. Stay in view.");
+    }
+    if (state === "multi") {
+      alert("Multiple faces detected.");
+    }
+
+    lastFaceStateRef.current = state;
+  }
+}
+*/
+
+// Eye-Tracking (MediaPipe FaceMesh)
+async function initFaceMesh(cameraSettings: any) {
+  if (!(window as any).FaceMesh) {
+    await loadScript(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"
+    )
+  }
+
+  if (!(window as any).Camera) {
+    await loadScript(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+    )
+  }
+
+  const video = videoRef.current
+  const canvas = overlayRef.current
+  if (!video || !canvas) return
+
+  const ctx = canvas.getContext("2d")
+  if (!ctx) return
+
+  const faceMesh = new (window as any).FaceMesh({
+    locateFile: (file: string) =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+  })
+
+  faceMesh.setOptions({
+    maxNumFaces: 2, // allow multi-face detection
+    refineLandmarks: true,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5,
+  })
+
+  faceMesh.onResults((results: any) => {
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    const faces = results.multiFaceLandmarks || []
+
+    /* =========================
+       FACE ABSENCE DETECTION
+    ========================== */
+
+    if (cameraSettings.faceAbsence) {
+      if (faces.length === 0) {
+        if (lastFaceStateRef.current !== "no_face") {
+          alert("❌ No face detected. Stay in view.")
+          lastFaceStateRef.current = "no_face"
+        }
+        return
+      }
+
+      if (faces.length > 1) {
+        if (lastFaceStateRef.current !== "multi_face") {
+          alert("❌ Multiple faces detected.")
+          lastFaceStateRef.current = "multi_face"
+        }
+        return
+      }
+
+      lastFaceStateRef.current = "one_face"
+    }
+
+    /* =========================
+       DRAW FACE BOX
+    ========================== */
+
+    const landmarks = faces[0]
+
+    const xs = landmarks.map((p: any) => p.x * canvas.width)
+    const ys = landmarks.map((p: any) => p.y * canvas.height)
+
+    const minX = Math.min(...xs)
+    const maxX = Math.max(...xs)
+    const minY = Math.min(...ys)
+    const maxY = Math.max(...ys)
+
+    ctx.strokeStyle = "rgba(6,182,212,0.9)"
+    ctx.lineWidth = 3
+    ctx.strokeRect(minX, minY, maxX - minX, maxY - minY)
+
+    /* =========================
+       EYE TRACKING
+    ========================== */
+
+    if (cameraSettings.eyeTracking) {
+      analyzeEyes(landmarks)
+      getGazeDirection(landmarks)
+    }
+  })
+
+  faceMeshRef.current = faceMesh
+
+  const camera = new (window as any).Camera(video, {
+    onFrame: async () => {
+      await faceMesh.send({ image: video })
+    },
+    width: 480,
+    height: 360,
+  })
+
+  camera.start()
+}
+
+// Eye Analysis Functions
+function distance(a: any, b: any) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function analyzeEyes(landmarks: any[]) {
+  const LEFT_TOP = 159;
+  const LEFT_BOTTOM = 145;
+  const RIGHT_TOP = 386;
+  const RIGHT_BOTTOM = 374;
+
+  const left =
+    distance(landmarks[LEFT_TOP], landmarks[LEFT_BOTTOM]);
+  const right =
+    distance(landmarks[RIGHT_TOP], landmarks[RIGHT_BOTTOM]);
+
+  const avg = (left + right) / 2;
+
+  if (avg < 0.01) {
+    console.log("BLINK");
+  }
+}
+
+function getGazeDirection(landmarks: any[]) {
+  const leftEyeLeft = landmarks[33];
+  const leftEyeRight = landmarks[133];
+  const leftPupil = landmarks[468];
+
+  const eyeWidth = distance(leftEyeLeft, leftEyeRight);
+  const offset =
+    (leftPupil.x - leftEyeLeft.x) / eyeWidth;
+
+  if (offset < 0.32) {
+    alert("Looking right detected");
+  }
+
+  if (offset > 0.68) {
+    alert("Looking left detected");
+  }
+}
+
+/***************************
 Camera
 ***************************/
 /*
 let camera = null;
 const video = document.getElementById('video');
 */
-async function startCamera(){
+async function startCamera(cameraSettings?: any) {
   if (!videoRef.current) return
 
+  const faceAbsence = cameraSettings?.faceAbsence ?? false
+  const eyeTracking = cameraSettings?.eyeTracking ?? false
+
   try {
-
-    // Config face absence and eye-tracking
-    // Eye-Tracking
-    faceMesh = new window.FaceMesh({
-      locateFile: (file) =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
-    });
-
-    faceMesh.setOptions({
-      maxNumFaces: 1, // face detection
-      refineLandmarks: true, // eye-tracking: gives iris landmarks (468-478)
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
-
-    faceMesh.onResults(onResults);
-
     // Start camera
-    const cam = await navigator.mediaDevices.getUserMedia({
+    const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: false
     })
 
-    videoRef.current.srcObject = cam
+    videoRef.current.srcObject = stream;
+
+    await videoRef.current.play();
+
+    if (faceAbsence || eyeTracking) {
+      //await loadModelIfNeeded();
+      //startDetectLoop();
+
+      //if (eyeTracking) {
+        initFaceMesh(cameraSettings)
+      //}
+    }
   } catch(e) {
     console.warn('Camera error', e);
     alert('❌ Camera error');
@@ -534,9 +791,9 @@ async function startMicrophone() {
           ref={videoRef}
           autoPlay
           muted
-          playsInline
+          playsInline width={480} height={360}
         ></video>
-        <canvas id="overlay" className="overlay"></canvas> {/* <!-- face detection */}
+        <canvas ref={overlayRef} className="overlay"></canvas> {/* <!-- face detection */}
       </div>
 
       <div className="container" ref={containerRef}>

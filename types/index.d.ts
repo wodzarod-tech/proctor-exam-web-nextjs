@@ -34,6 +34,34 @@ interface CreateCompanion {
   duration: number;
 }
 
+/* CreateExam */
+type Option = {
+  id: string
+  text: string
+  checked: boolean
+}
+
+type QuestionType = 'radio' | 'checkbox'
+
+type Question = {
+  id: string
+  text: string
+  type: QuestionType
+  points: number
+  required: boolean
+  options: Option[]
+  feedbackOk: string
+  feedbackError: string
+}
+
+type CreateExam = {
+  title: string
+  description: string
+  questions: Question[]
+  settings: Settings
+}
+/**/
+
 interface GetAllCompanions {
   limit?: number;
   page?: number;

@@ -71,3 +71,128 @@ export const recentSessions = [
     color: "#C8FFDF",
   },
 ];
+
+export const exam =
+{
+  "title": "APX exam",
+  "description": "Examen de programación APX",
+  "questions": [
+    {
+      "text": "¿Cuál de los siguientes enunciados son incorrectos acerca de la nomenclatura de una transacción?",
+      "type": "checkbox",
+      "points": 1,
+      "required": false,
+      "options": [
+        {
+          "text": "a. Debe haber un código de versión. Este debe ser igual al número del pom.xml",
+          "checked": true
+        },
+        {
+          "text": "b. Debe tener un código de entrono. Este código de entorno es de 2 caracteres.",
+          "checked": true
+        },
+        {
+          "text": "c. Debe tener un código de transacción. Suele ir después de la letra y son 3 caracteres alfanuméricos.",
+          "checked": false
+        },
+        {
+          "text": "d. Debe tener un código de país. Este código de país debe tener 2 caracteres.",
+          "checked": false
+        },
+        {
+          "text": "e. Debe tener un código de aplicación, comúnmente conocido como UUAA y debe ser un código de 4 caracteres.",
+          "checked": false
+        }
+      ],
+      "feedbackOk": "Well done!",
+      "feedbackError": "Remember that..."
+    },
+    {
+      "text": "¿Cuál de las siguientes preguntas son incorrectas sobre la nomenclatura de una transacción?",
+      "type": "radio",
+      "points": 1,
+      "required": false,
+      "options": [
+        {
+          "text": "a. Debe haber un país: debe tener 2 caracteres",
+          "checked": false
+        },
+        {
+          "text": "b. Ninguna",
+          "checked": false
+        },
+        {
+          "text": "c. Debe haber un código de aplicación, comúnmente conocido como UUAA: Debe ser un código de 4 caracteres",
+          "checked": false
+        },
+        {
+          "text": "d. Debe haber un número de versión. Este debe ser igual al número del pom.xml",
+          "checked": true
+        }
+      ],
+      "feedbackOk": "Well done - question 2!",
+      "feedbackError": "Remember that... - question 2"
+    },
+    {
+      "text": "¿Para visualizar las dependencias de las transacciones, en qué lugar del proyecto me debo ubicar?",
+      "type": "radio",
+      "points": 1,
+      "required": false,
+      "options": [
+        {
+          "text": "a. En cualquier ubicación.",
+          "checked": false
+        },
+        {
+          "text": "b. En la transacción en específico",
+          "checked": false
+        },
+        {
+          "text": "c. Debo estar en artifact",
+          "checked": false
+        },
+        {
+          "text": "d. Debo estar en la librería",
+          "checked": false
+        },
+        {
+          "text": "e. Debo estar en el POM",
+          "checked": true
+        }
+      ],
+      "feedbackOk": "Well done! - question 3",
+      "feedbackError": "Remember that... - question 3"
+    }
+  ],
+  "settings": {
+    "general": {
+      "shuffleQuestions": false,
+      "shuffleOptions": false,
+      "viewToggleQuestions": true,
+      "viewQuestions": true,
+      "scoreMin": 70
+    },
+    "timer": {
+      "enabled": true,
+      "hours": 1,
+      "minutes": 0
+    },
+    "camera": {
+      "enabled": true,
+      "faceAbsence": true,
+      "eyeTracking": true
+    },
+    "microphone": {
+      "enabled": true,
+      "loudNoise": true
+    },
+    "screen": {
+      "tabSwitch": true,
+      "fullscreenExit": true,
+      "devToolsOpen": true,
+      "leaveFullScreen": true,
+      "blockKeyShortcuts": true,
+      "secondMonitor": true
+    }
+  }
+};

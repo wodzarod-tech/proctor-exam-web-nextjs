@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 import ExamCard from '@/components/ExamCard'
 import TitleCard from '@/components/TitleCard'
 import QuestionCard from '@/components/QuestionCard2'
+import { exam } from '@/constants'
+import { createExam } from "@/lib/actions/companion.actions"
 
 /* =====================
    Types
@@ -31,7 +33,14 @@ type Question = {
   feedbackError: string
 }
 
-type ProctorSettings = {
+type Exam = {
+  title: string
+  description: string
+  questions: Question[]
+  settings: Settings
+}
+
+type Settings = {
   general: {
     shuffleQuestions: boolean
     shuffleOptions: boolean
@@ -99,7 +108,7 @@ export default function CreatePage() {
   const [questions, setQuestions] = useState<Question[]>([
     createEmptyQuestion()
   ])
-  const [settings, setSettings] = useState<ProctorSettings | null>(null)
+  const [settings, setSettings] = useState<Settings | null>(null)
   const [isSettingsDirty, setIsSettingsDirty] = useState(false) // Track if settings have unsaved changes
 
   const [isProctorOpen, setIsProctorOpen] = useState(false)
@@ -211,9 +220,80 @@ useEffect(() => {
   })
 }, [questions])
 
+// Load exam content
+useEffect(() => {
+  if (!exam) return
+
+  // Transform external exam to internal builder format
+  const mappedQuestions: Question[] = exam.questions.map(q => ({
+    id: uid(),
+    text: q.text,
+    type: q.type as QuestionType,
+    points: q.points,
+    required: q.required,
+    feedbackOk: q.feedbackOk || "",
+    feedbackError: q.feedbackError || "",
+    options: q.options.map(opt => ({
+      id: uid(),
+      text: opt.text,
+      checked: opt.checked
+    }))
+  }))
+
+  const examContent: Exam = {
+    title: exam.title,
+    description: exam.description,
+    questions: mappedQuestions,
+    settings: exam.settings
+  }
+
+  setTitle(examContent.title)
+  setDescription(examContent.description)
+  setQuestions(examContent.questions)
+  setSettings(examContent.settings)
+}, [])
+
   /* =====================
      Actions
   ===================== */
+
+async function saveExam() {
+  try {
+    if (!settings) {
+      alert("Settings not loaded yet")
+      return
+    }
+
+    const examPayload = {
+      title,
+      description,
+      questions: questions.map(q => ({
+        text: q.text,
+        type: q.type,
+        points: q.points,
+        required: q.required,
+        feedbackOk: q.feedbackOk,
+        feedbackError: q.feedbackError,
+        options: q.options.map(o => ({
+          text: o.text,
+          checked: o.checked
+        }))
+      })),
+      settings
+    }
+
+    const createdExam = await createExam(examPayload)
+
+    alert("Exam saved successfully ✅")
+
+    // optional: redirect to exam page
+    router.push(`/exam/${createdExam.id}`)
+
+  } catch (error: any) {
+    console.error(error)
+    alert(error.message || "Failed to save exam")
+  }
+}
 
   function addQuestion() {
     setQuestions(qs => [
@@ -276,7 +356,7 @@ useEffect(() => {
     }
   }
 
-  function saveProctorSettings(){
+  function saveSettings(){
 
   alert("Settings saved successfully");
 }
@@ -285,9 +365,9 @@ useEffect(() => {
     setIsToolbarCollapsed(prev => !prev)
   }
 
-  function updateSetting<K extends keyof ProctorSettings>(
+  function updateSetting<K extends keyof Settings>(
     key: K,
-    value: ProctorSettings[K]
+    value: Settings[K]
   ) {
     setSettings(prev => {
       if (!prev) return prev
@@ -551,7 +631,7 @@ useEffect(() => {
         <div className="toolbar-buttons">
           <button className="g-tooltip" data-tooltip="Add question" onClick={addQuestion}>+</button>
           <button className="g-tooltip" data-tooltip="Import Exam" onClick={addQuestion}>📂</button>
-          <button className="g-tooltip" data-tooltip="Export Exam" onClick={addQuestion}>💾</button>
+          <button className="g-tooltip" data-tooltip="Save Exam" onClick={saveExam}>💾</button>
           <button className="g-tooltip" data-tooltip="Settings" onClick={() => setIsProctorOpen(true)}>⚙️</button>
           <button className="g-tooltip" data-tooltip="Preview exam" onClick={() => router.push("/preview")}>👁️</button>
           <button className="g-tooltip" data-tooltip="Home" onClick={() => router.push('/')}>🏠</button>
@@ -741,7 +821,7 @@ useEffect(() => {
           </div>
         
           <div className="proctor-footer">
-            <button className="btn-save" onClick={saveProctorSettings} disabled>💾 Save</button>
+            <button className="btn-save" onClick={saveSettings} disabled>💾 Save</button>
           </div>
         </div>
       </div>

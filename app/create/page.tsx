@@ -201,6 +201,16 @@ useEffect(() => {
   }
 }, [])
 
+// auto-adjust textarea when loading existing content
+useEffect(() => {
+  const areas = document.querySelectorAll(".q-comment")
+  areas.forEach((area) => {
+    const el = area as HTMLTextAreaElement
+    el.style.height = "auto"
+    el.style.height = el.scrollHeight + "px"
+  })
+}, [questions])
+
   /* =====================
      Actions
   ===================== */
@@ -468,7 +478,20 @@ useEffect(() => {
                       <span className="feedback-icon">✔</span>
                       <span>Correct:</span>
                     </div>
-                    <textarea className="q-comment" placeholder="Feedback"></textarea>
+                    <textarea
+                      className="q-title q-comment"
+                      rows={1}
+                      placeholder="Feedback"
+                      value={q.feedbackOk}
+                      onChange={(e) => {
+                        updateQuestion(q.id, { feedbackOk: e.target.value })
+
+                        // auto-resize
+                        e.currentTarget.style.height = "auto"
+                        e.currentTarget.style.height =
+                        e.currentTarget.scrollHeight + "px"
+                      }}
+                    />
                   </div>
 
                   <div className="feedback-group error">
@@ -476,7 +499,20 @@ useEffect(() => {
                       <span className="feedback-icon">✖</span>
                       <span>Incorrect:</span>
                     </div>
-                    <textarea className="q-comment" placeholder="Feedback"></textarea>
+                    <textarea
+                      className="q-title q-comment"
+                      rows={1}
+                      placeholder="Feedback"
+                      value={q.feedbackError}
+                      onChange={(e) => {
+                        updateQuestion(q.id, { feedbackError: e.target.value })
+
+                        // auto-resize
+                        e.currentTarget.style.height = "auto"
+                        e.currentTarget.style.height =
+                        e.currentTarget.scrollHeight + "px"
+                      }}
+                    />
                   </div>
 
                 </div>

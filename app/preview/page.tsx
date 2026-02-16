@@ -131,7 +131,7 @@ export default function PreviewExam() {
   /* =====================
      Effects
   ===================== */
-
+/*
   // Camera
   useEffect(() => {
     const cameraSettings = {
@@ -167,7 +167,7 @@ export default function PreviewExam() {
       }
     }
   }, [])
-
+*/
   // Auto-save JSON
   useEffect(() => {
     const timeout = setTimeout(() => {

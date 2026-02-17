@@ -3,25 +3,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-interface ExamCardProps {
+interface CompanionCardProps {
   id: string;
-  title: string;
-  description: string;
-  questions: string;
-  settings: string;
+  name: string;
+  topic: string;
+  subject: string;
   duration: number;
   color: string;
 }
 
-const ExamCard = ({
+const CompanionCard = ({
   id,
-  title,
-  description,
-  questions,
-  settings,
+  name,
+  topic,
+  subject,
   duration,
   color
-}: ExamCardProps) => {
+}: CompanionCardProps) => {
   const pathname = usePathname();
   const handleBookmark = async () => {
   };
@@ -29,7 +27,7 @@ const ExamCard = ({
   return (
     <article className="companion-card" style={{backgroundColor: color}}>
       <div className="flex justify-between items-center">
-        <div className="subject-badge">{title}</div>
+        <div className="subject-badge">{subject}</div>
         <button className="companion-bookmark" onClick={handleBookmark}>
           <Image
             src={"/icons/bookmark.svg"            }
@@ -40,8 +38,8 @@ const ExamCard = ({
         </button>
       </div>
 
-      <h2 className="text-2xl font-bold">{description}</h2>
-      {/*<p className="text-sm">{title}</p>*/}
+      <h2 className="text-2xl font-bold">{name}</h2>
+      <p className="text-sm">{topic}</p>
       <div className="flex items-center gap-2">
         <Image
           src="/icons/clock.svg"
@@ -52,9 +50,9 @@ const ExamCard = ({
         <p className="text-sm">{duration} minutes</p>
       </div>
 
-      <Link href={`/exams/${id}`} className="w-full">
+      <Link href={`/companions/${id}`} className="w-full">
         <button className="btn-primary w-full justify-center">
-          Take Exam
+          Launch Lesson
         </button>
       </Link>
 
@@ -62,4 +60,4 @@ const ExamCard = ({
   );
 };
 
-export default ExamCard
+export default CompanionCard

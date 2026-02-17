@@ -69,6 +69,12 @@ interface GetAllCompanions {
   topic?: string | string[];
 }
 
+interface GetAllExams {
+  limit?: number;
+  page?: number;
+  title?: string | string[];
+}
+
 interface BuildClient {
   key?: string;
   sessionToken?: string;

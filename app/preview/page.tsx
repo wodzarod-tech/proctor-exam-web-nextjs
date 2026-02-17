@@ -4,7 +4,7 @@ import "./preview.css"
 import { useEffect, useRef, useState } from 'react'
 import Sortable from 'sortablejs'
 import { useRouter } from 'next/navigation'
-import ExamCard from '@/components/ExamCard'
+import ExamCard from '@/components/ExamCard1'
 import TitleCard from '@/components/TitleCard'
 import QuestionCard from '@/components/QuestionCard2'
 

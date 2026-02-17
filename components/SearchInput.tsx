@@ -1,0 +1,57 @@
+'use client' // for use{} , for example: usePathname
+
+import {usePathname, useRouter, useSearchParams} from 'next/navigation'
+import {useEffect, useState} from 'react'
+import Image from 'next/image';
+import {formUrlQuery, removeKeysFromUrlQuery} from '@jsmastery/utils';
+             // use{} -> hooks
+
+const SearchInput = () => {
+    const pathname = usePathname();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    //const query = searchParams.get('topic') || '';
+    const query = searchParams.get('title') || '';
+
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // modify URL bar based on what we typing in the search input
+    // what we typing is querying to the the database
+    // http://localhost:3000/companions?topic=math
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            if(searchQuery) {
+                //router.push(`/currentRoute?topic=${searchQuery}`);
+                const newUrl = formUrlQuery({
+                    params: searchParams.toString(),
+                    key: "title",/*topic*/
+                    value: searchQuery,
+                });
+
+                router.push(newUrl, { scroll: false });
+            } else {
+                if(pathname === '/exams') { /*companions*/
+                    const newUrl = removeKeysFromUrlQuery({
+                        params: searchParams.toString(),
+                        keysToRemove: ["title"],/*topic*/
+                    });
+
+                    router.push(newUrl, { scroll: false });
+                }
+            }
+        }, 500)
+    }, [searchQuery, router, searchParams, pathname]);
+
+    return (
+        <div className="relative border border-black rounded-lg items-center flex gap-2 px-2 py-1 h-fit">
+            <Image src="/icons/search.svg" alt="search" width={15} height={15} />
+            <input
+                placeholder="Search exams..." /*companions*/
+                className="outline-none"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+            />
+        </div>
+    )
+}
+export default SearchInput

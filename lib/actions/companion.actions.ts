@@ -59,6 +59,24 @@ export const getAllCompanions = async ({ limit = 10, page = 1, subject, topic }:
     return companions;
 }
 
+export const getAllExams = async ({ limit = 10, page = 1, title }: GetAllExams) => {
+    const supabase = createSupabaseClient();
+
+    let query = supabase.from('exams').select();
+
+    if(title) {
+        query = query.ilike('title', `%${title}%`)
+    }
+
+    query = query.range((page - 1) * limit, page * limit - 1);
+
+    const { data: companions, error } = await query;
+    
+    if(error) throw new Error(error.message);
+
+    return companions;
+}
+
 export const getCompanion = async (id: string) => {
     const supabase = createSupabaseClient();
 

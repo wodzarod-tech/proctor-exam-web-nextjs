@@ -386,11 +386,7 @@ async function saveExam() {
   ===================== */
 
   return (
-    <div>
-    {/*<div className="min-h-screen bg-background text-foreground">*/}
-
-      <header className="h-2 bg-primary" />
-
+    <div className="create-page">
       <div className="container" ref={containerRef}>
 
         {/* Form header */}

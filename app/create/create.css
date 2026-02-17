@@ -6,20 +6,30 @@
     --border:#dadce0;
     --text:#202124;
 }
-
+/*
 body{
     margin:0;
     font-family:Roboto, Arial, sans-serif;
     background:var(--bg);
     color:var(--text);
     /* Mobile centering */
-    display: flex;
-    justify-content: center;
+    /*display: flex;*/
+    /*justify-content: center;
 }
+*/
 
-header{
-    background:var(--purple);
-    height:8px;
+.create-page {
+    background: var(--bg);
+    /*
+    color: var(--text);
+    font-family: Roboto, Arial, sans-serif;
+    */
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;   /* horizontal center */
+    align-items: flex-start;   /* keep content at top */
+    padding: 40px 20px;        /* spacing from edges */
+    box-sizing: border-box;
 }
 
 /* Form header total points */
@@ -65,7 +75,7 @@ header{
 
 .container{
     width: 100%;
-    max-width:820px;
+    max-width:900px;
     /*margin:24px auto;*/
 
     /* Mobile padding */

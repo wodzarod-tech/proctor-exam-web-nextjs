@@ -8,8 +8,13 @@ interface ExamCardProps {
   title: string;
   description: string;
   questions: string;
-  settings: string;
-  duration: number;
+  settings: {
+    timer: {
+      enabled: boolean;
+      hours: number;
+      minutes: number;
+    };
+  };
   color: string;
 }
 
@@ -19,12 +24,32 @@ const ExamCard = ({
   description,
   questions,
   settings,
-  duration,
   color
 }: ExamCardProps) => {
   const pathname = usePathname();
   const handleBookmark = async () => {
   };
+
+const hours = settings?.timer?.hours ?? 0;
+const minutes = settings?.timer?.minutes ?? 0;
+
+let durationLabel = "No time limit";
+  
+if (settings?.timer?.enabled) {
+  const hourLabel =
+    hours > 0
+      ? `${hours} hour${hours === 1 ? "" : "s"}`
+      : "";
+
+  const minuteLabel =
+    minutes > 0
+      ? `${minutes} minute${minutes === 1 ? "" : "s"}`
+      : "";
+
+  durationLabel = [hourLabel, minuteLabel]
+    .filter(Boolean)
+    .join(" ");
+}
 
   return (
     <article className="companion-card" style={{backgroundColor: color}}>
@@ -49,7 +74,9 @@ const ExamCard = ({
           width={13.5}
           height={13.5}
         />
-        <p className="text-sm">{duration} minutes</p>
+        {/*<p className="text-sm">{duration} minutes</p>*/}
+        <p className="text-sm">{durationLabel}</p>
+        
       </div>
 
       <Link href={`/exams/${id}`} className="w-full">

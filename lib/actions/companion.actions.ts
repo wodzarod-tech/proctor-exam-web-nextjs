@@ -90,6 +90,19 @@ export const getCompanion = async (id: string) => {
     return data[0];
 }
 
+export const getExam = async (id: string) => {
+    const supabase = createSupabaseClient();
+
+    const { data, error } = await supabase
+        .from('exams')
+        .select()
+        .eq('id', id);
+
+    if(error) return console.log(error);
+
+    return data[0];
+}
+
 // Store conversation in session history (session_history)
 export const addToSessionHistory = async (companionId: string) => {
     const { userId } = await auth(); // Get the authenticated user's ID from Clerk server

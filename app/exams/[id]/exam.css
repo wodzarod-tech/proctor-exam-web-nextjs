@@ -746,7 +746,7 @@ pre{
 
 #webcam {
   position: fixed;
-  top: 40px;
+  /*top: 40px;*/
   right: 10px;
   border: 2px solid #333;
   width: 90px;

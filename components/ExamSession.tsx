@@ -98,6 +98,63 @@ const ExamSession = ({ exam, userId }: ExamSessionProps) => {
 
   const { titleBD, descriptionBD, questionsBD, settingsBD } = exam;
 
+// Transform Supabase Questions
+const rawQuestions =
+  typeof exam.questions === "string"
+    ? JSON.parse(exam.questions)
+    : exam.questions;
+
+const generateId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : Math.random().toString(36).substring(2);
+
+const formattedQuestions = rawQuestions.map((q: any) => ({
+  id: generateId(),
+  text: q.text,
+  type: q.type,
+  points: q.points || 0,
+  required: q.required || false,
+  feedbackOk: q.feedbackOk || "",
+  feedbackError: q.feedbackError || "",
+  options: q.options.map((opt: any) => ({
+    id: generateId(),
+    text: opt.text,
+    checked: opt.checked || false,
+  })),
+}));
+//
+
+  const handleSelect = (
+    questionIndex: number,
+    optionText: string,
+    type: string
+  ) => {
+    setAnswers((prev) => {
+      const current = prev[questionIndex] || [];
+
+      if (type === "radio") {
+        return {
+          ...prev,
+          [questionIndex]: [optionText],
+        };
+      }
+
+      // checkbox
+      if (current.includes(optionText)) {
+        return {
+          ...prev,
+          [questionIndex]: current.filter((o) => o !== optionText),
+        };
+      } else {
+        return {
+          ...prev,
+          [questionIndex]: [...current, optionText],
+        };
+      }
+    });
+  };
+
   const questionsRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null) // when click outside question card
 
@@ -106,12 +163,12 @@ const ExamSession = ({ exam, userId }: ExamSessionProps) => {
 
 const [title, setTitle] = useState(titleBD || '');
 const [description, setDescription] = useState(descriptionBD || '');
-const [questions, setQuestions] = useState<Question[]>(
-  questionsBD?.length ? questionsBD : [createEmptyQuestion()]
-);
+const [questions, setQuestions] = useState(formattedQuestions);
+
 const [settings, setSettings] = useState<ProctorSettings | null>(
   settingsBD || null
 );
+const [answers, setAnswers] = useState<Record<string, string[]>>({});
 
   const [isSettingsDirty, setIsSettingsDirty] = useState(false) // Track if settings have unsaved changes
 
@@ -811,16 +868,6 @@ async function startMicrophone() {
 
         {/* Options header */}
         <div className="preview-topbar">
-          <button id="goBack" className="nav-btn" data-tooltip="Back to editor" onClick={() => router.push("/create")}>⬅ Back</button>
-          
-          <div id="resultFilters" style={{ display: "flex", margin: "12px 0", gap: "8px" }}>
-            <button onClick={() => filterResults('all')}>📋 All</button>
-            <button onClick={() => filterResults('correct')}>✅ Correct</button>
-            <button onClick={() => filterResults('incorrect')}>❌ Incorrect</button>
-          </div>
-
-          <button id="goResults" className="nav-btn" data-tooltip="Back to results" style={{ display: "flex" }} onClick={() => router.push("/result")}>Back to results ➡</button>
-
           <div className="view-toggle" id="viewToggle" style={{ display: "flex" }}>
             <span>View:</span>
 
@@ -849,13 +896,10 @@ async function startMicrophone() {
         </div>
 
           {/* Questions */}
-          {/*<div id="questions"></div>*/}
           <div ref={questionsRef} className="space-y-4">
           {questions.map((q, index) => (
             <div key={q.id} className="card question"
               onClick={() => setActiveQuestionId(q.id)}>
-
-              <div className="drag">: : :</div>
 
               <div className="question-header">
 
@@ -867,14 +911,6 @@ async function startMicrophone() {
                   {index + 1} de {questions.length}
                 </div>
 
-                <button
-                  className="btn-link g-tooltip delete-top"
-                  data-tooltip="Delete question"
-                  onClick={() =>
-                    setQuestions(prev => prev.filter(x => x.id !== q.id))
-                  }
-                ><i className="fa fa-trash"></i></button>
-
                 <div className="q-points">
                   <input
                     type="number"
@@ -883,6 +919,7 @@ async function startMicrophone() {
                     step="0.1"
                     placeholder="0"
                     value={q.points}
+                    disabled
                     onChange={(e) =>
                       updateQuestion(q.id, {
                         points: Number(e.target.value) || 0
@@ -897,24 +934,12 @@ async function startMicrophone() {
                 className="q-title"
                 placeholder="Question"
                 value={q.text}
+                readOnly
                 onChange={(e) =>
                   updateQuestion(q.id, { text: e.target.value })
                 }
               />
 
-              <select className="q-type"
-                value={q.type}
-                onChange={(e) =>
-                  updateQuestion(q.id, {
-                    type: e.target.value as QuestionType
-                  })
-                }
-              >
-                <option value="radio">◉ One choice</option>
-                <option value="checkbox">☑ Multiple choices</option>
-              </select>
-
-              {/*<div className="options"></div>*/}
               <div
                 className="options"
                 ref={(el) => {
@@ -924,31 +949,45 @@ async function startMicrophone() {
                 {q.options.map((opt, index) => (
                   <div key={opt.id} className="option">
 
-                    <div className="opt-drag">⋮⋮</div>
+<input
+  className="opt-icon"
+  type={q.type}
+  name={q.type === "radio" ? q.id : undefined}
+  checked={answers[q.id]?.includes(opt.id) || false}
+  onChange={() => {
+    setAnswers(prev => {
+      const current = prev[q.id] || [];
 
-                    <input
-                      className="opt-icon"
-                      type={q.type}
-                      name={q.type === 'radio' ? q.id : undefined}
-                      checked={opt.checked}
-                      onChange={() => {
-                        updateQuestion(q.id, {
-                          options: q.options.map(o =>
-                            q.type === 'radio'
-                              ? { ...o, checked: o.id === opt.id }
-                              : o.id === opt.id
-                                ? { ...o, checked: !o.checked }
-                                : o
-                          )
-                        })
-                      }}
-                    />
+      if (q.type === "radio") {
+        return {
+          ...prev,
+          [q.id]: [opt.id]
+        };
+      }
+
+      // checkbox
+      if (current.includes(opt.id)) {
+        return {
+          ...prev,
+          [q.id]: current.filter(id => id !== opt.id)
+        };
+      } else {
+        return {
+          ...prev,
+          [q.id]: [...current, opt.id]
+        };
+      }
+    });
+  }}
+/>
+
 
                     <textarea
                       className="opt-text"
                       rows={1}
                       placeholder={`Option ${index + 1}`}
                       value={opt.text}
+                      readOnly
                       onChange={(e) => {
                         updateQuestion(q.id, {
                           options: q.options.map(o =>
@@ -962,61 +1001,8 @@ async function startMicrophone() {
                         e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
                       }}
                     />
-
-                    <button
-                      className="btn-link"
-                      onClick={() => removeOption(q.id, opt.id)}
-                    >
-                      ✕
-                    </button>
-
                   </div>
                 ))}
-              </div>
-
-              <div>
-                <button className="btn-link" onClick={() => addOption(q.id)}>Add option</button>
-              </div>
-    
-              <div className="option-separator" style={{display:"none"}}/>
-
-              {/* Toggle header */}
-              {/*
-              <div className="feedback-toggle" onClick={() => toggleFeedback(q.id)}>
-                <span className="feedback-toggle-icon">▼</span>
-                <span className="feedback-toggle-text">Answer feedback</span>
-              </div>*/}
-
-              {/* Collapsible content */}
-              
-              <div className="feedback" style={{display:"none"}}>
-
-                <div className="feedback-group ok">
-                  <div className="feedback-ok-label">
-                    <span className="feedback-icon">✔</span>
-                    <span>Correct:</span>
-                  </div>
-                  <textarea className="q-comment" rows={1} placeholder="Feedback"></textarea>
-                </div>
-
-                <div className="feedback-group error">
-                  <div className="feedback-error-label">
-                    <span className="feedback-icon">✖</span>
-                    <span>Incorrect:</span>
-                  </div>
-                  <textarea className="q-comment" rows={1} placeholder="Feedback"></textarea>
-                </div>
-
-              </div>
-
-              <div className="actions">
-                <div className="required-toggle">
-                  <span>Required</span>
-                  <label className="switch">
-                    <input type="checkbox" className="q-required" onChange={(e) => updateQuestion(q.id, { required: e.target.checked })} />
-                    <span className="slider"></span>
-                  </label>
-                </div>
               </div>
 
             </div>
@@ -1034,221 +1020,6 @@ async function startMicrophone() {
         </div>
 
       </div>
-
-      {/* Bottom toolbar */}
-      <div
-        id="gformsToolbar"
-        className={`gforms-toolbar bottom ${isToolbarCollapsed ? 'collapsed' : ''}`}
-      >
-        {/* Handle */}
-        <div 
-          className="toolbar-handle g-tooltip"
-          id="toolbarHandle"
-          data-tooltip={isToolbarCollapsed ? "Open panel" : "Close panel"}
-          onClick={toggleToolbar}>
-            {isToolbarCollapsed ? "▲" : "▼"}
-        </div>
-
-        <div className="toolbar-buttons">
-          <button className="g-tooltip" data-tooltip="Add question" onClick={addQuestion}>+</button>
-          <button className="g-tooltip" data-tooltip="Import Exam" onClick={addQuestion}>📂</button>
-          <button className="g-tooltip" data-tooltip="Export Exam" onClick={addQuestion}>💾</button>
-          <button className="g-tooltip" data-tooltip="Settings" onClick={() => setIsProctorOpen(true)}>⚙️</button>
-          <button className="g-tooltip" data-tooltip="Preview exam" onClick={() => router.push("/preview")}>👁️</button>
-          <button className="g-tooltip" data-tooltip="Home" onClick={() => router.push('/')}>🏠</button>
-        </div>
-      </div>
-
-      {/* hidden file input */}
-      <input
-        type="file"
-        id="jsonFileInput"
-        accept="application/json"
-        hidden
-      />
-
-      {/* Proctor Modal */}
-      <div className={`proctor-modal ${!isProctorOpen ? "hidden" : ""}`}>
-        <div className="proctor-card">
-
-          <div className="proctor-header">
-            <h3>Settings</h3>
-            <button className="btn-icon" onClick={() => setIsProctorOpen(false)}>✕</button>
-          </div>
-
-          {/* Settings Tabs */}
-          <div className="settings-tabs">
-            <button className={activeTab === "general" ? "tab active" : "tab"} onClick={() => setActiveTab("general")}>General</button>
-            <button className={activeTab === "proctor" ? "tab active" : "tab"} onClick={() => setActiveTab("proctor")}>Proctor 🛡️</button>
-          </div>
-
-          {/* Tab contents */}
-          <div className="settings-content">
-
-            {/* General Settings */}
-            {activeTab === "general" && (
-              <div className="tab-panel">
-              <label className="toggle-row"><strong>General:</strong></label>
-              <label className="toggle-row" style={{ display:"none" }}>
-                <input type="checkbox" data-proctor="shuffle-questions" />
-                <span>Shuffle questions</span>
-              </label>
-
-              <label className="toggle-row" style={{ display:"none" }}>
-                <input type="checkbox" data-proctor="shuffle-options" />
-                <span>Shuffle options</span>
-              </label>
-
-              <label className="toggle-row">
-                <input type="checkbox" id="viewToggleQuestions" data-proctor="view-toggle-questions" />
-                <span>View toggle questions (One by One/All)</span>
-              </label>
-              
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="view-questions" />
-                <span>View questions One by One</span>
-              </label>
-
-              <div className="toggle-inline">
-                <label className="toggle-row">
-                  <input type="checkbox" data-proctor="score-min" checked={showScoreMin}
-                    onChange={(e) => setShowScoreMin(e.target.checked)} />
-                  <span>Points/Score minimum to pass</span>
-                </label>
-
-                <div
-                  className="score-row"
-                  style={{ display: showScoreMin ? "flex" : "none" }}>
-                    <input
-                      type="number"
-                      className="score-input"
-                      min="0"
-                      step="1"
-                      value={scoreMinValue}
-                      onChange={(e) => setScoreMinValue(Number(e.target.value) || 0)}
-                    /> points
-                </div>
-              </div>
-            </div>)}
-            
-            {/* Proctor Settings */}
-            {activeTab === "proctor" && (
-            <div className="tab-panel" id="tab-proctor">
-
-              {/* Timer */}
-              <label className="toggle-row"><strong>Timer:</strong></label>
-
-              <div className="toggle-inline">
-                <label className="toggle-row">
-                  <input type="checkbox" data-proctor="timer-enabled" checked={timerEnabled}
-                    onChange={(e) => setTimerEnabled(e.target.checked)}/>
-                  <span>Timer Left</span>
-                </label>
-
-                {timerEnabled && (
-                <div className="timer-row">
-                  <input
-                    type="number"
-                    className="timer-input timer-input-hours"
-                    min="0"
-                    max="24"
-                    step="1"
-                    value={hours}
-                    onChange={(e) => {
-                      const value = Math.max(0, Math.min(24, Number(e.target.value)))
-                      setHours(value)
-                    }}
-                  />hour
-                  <span>:</span>
-                  <input
-                    type="number"
-                    className="timer-input timer-input-mins"
-                    min="0"
-                    max="59"
-                    step="1"
-                    value={minutes}
-                    onChange={(e) => {
-                      const value = Math.max(0, Math.min(59, Number(e.target.value)))
-                      setMinutes(value)
-                    }}
-                  />min
-                </div>)}
-              </div>
-
-              {/* Camera */}
-              <label className="toggle-row"><strong>Camera:</strong></label>
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="camera-enabled" />
-                <span>Show camera</span>
-              </label>
-
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="camera-face" />
-                <span>Face Detection: Detect Face absence</span>
-              </label>
-
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="camera-eye" />
-                <span>Eye-Tracking: Gaze Direction</span>
-              </label>
-
-              {/* Microphone */}
-              <label className="toggle-row"><strong>Microphone:</strong></label>
-
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="microphone-enabled" />
-                <span>Show microphone</span>
-              </label>
-
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="noise-loud" />
-                <span>Noise-detection: Detect loud background noise</span>
-              </label>
-
-              {/* Screen */}
-              <label className="toggle-row"><strong>Screen:</strong></label>
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-tab"/>
-                <span>Detect tab switching or minimize</span>
-              </label>
-
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-fullscreen"/>
-                <span>Detect fullscreen exit</span>
-              </label>
-
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-devtools"/>
-                <span>Detect DevTools Opening</span>
-              </label>
-
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-leave"/>
-                <span>Detect leaving fullscreen</span>
-              </label>
-
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-keyshortcuts"/>
-                <span>Block Keyboard Shortcuts</span>
-              </label>
-
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-secondmonitor"/>
-                <span>Fake "Second Monitor Detection"</span>
-              </label>
-
-            </div>)}
-
-          </div>
-        
-          <div className="proctor-footer">
-            <button className="btn-save" onClick={saveProctorSettings} disabled>💾 Save</button>
-          </div>
-        </div>
-      </div>
-
-      {/*<TitleCard />*/}
-      {/* <ExamCard /> */}
     </div>
   )
 }

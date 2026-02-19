@@ -622,11 +622,11 @@ async function saveExam() {
       </div>
 
       {/* Bottom toolbar */}
-      <div
+      {/*<div
         id="gformsToolbar"
         className={`gforms-toolbar bottom ${isToolbarCollapsed ? 'collapsed' : ''}`}
       >
-        {/* Handle */}
+        {/* Handle */}{/*
         <div 
           className="toolbar-handle g-tooltip"
           id="toolbarHandle"
@@ -645,13 +645,13 @@ async function saveExam() {
         </div>
       </div>
 
-      {/* hidden file input */}
+      {/* hidden file input */}{/*
       <input
         type="file"
         id="jsonFileInput"
         accept="application/json"
         hidden
-      />
+      />*/}
 
       {/* Proctor Modal */}
       <div className={`proctor-modal ${!isProctorOpen ? "hidden" : ""}`}>

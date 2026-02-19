@@ -800,14 +800,25 @@ input[type="number"] {
 }
 
 .question-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 16px;
-  padding-top: 12px;
-  /*border-top: 1px solid #e0e0e0;*/
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
 }
 
+.footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Divider */
+.vertical-divider {
+    width: 1px;
+    height: 24px;
+    background-color: #dadce0;
+}
+
+/*
 .footer-left {
   display: flex;
   align-items: center;
@@ -818,7 +829,7 @@ input[type="number"] {
   align-items: center;
   gap: 8px;
 }
-
+*/
 .icon-btn {
   background: none;
   border: none;
@@ -829,7 +840,8 @@ input[type="number"] {
 }
 
 .icon-btn:hover {
-  color: #d93025;
+    background-color: #f1f3f4;
+    border-radius: 50%;
 }
 
 .required-label {
@@ -854,4 +866,33 @@ input[type="number"] {
 .form-description {
     font-size: 14px;
     color: #5f6368;
+}
+
+.tooltip-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.tooltip-text {
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    background: #202124;
+    color: #fff;
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 4px;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+
+    white-space: nowrap;
+}
+
+.tooltip-wrapper:hover .tooltip-text {
+    opacity: 1;
 }

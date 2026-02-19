@@ -372,9 +372,7 @@ async function saveExam() {
     setIsSettingsDirty(true)
   }
 
-  const formattedPoints = Number.isInteger(totalPoints)
-  ? totalPoints
-  : totalPoints.toFixed(2);
+  const formattedPoints = Number(totalPoints);
 
   /* =====================
      Render
@@ -584,40 +582,38 @@ async function saveExam() {
               <div className="line-separator" />
 
               <div className="question-footer">
-                <div className="footer-left">
-                  <button
-                    className="icon-btn delete-btn"
-                    onClick={() =>
-                      setQuestions(prev => prev.filter(x => x.id !== q.id))
-                    }
-                  ><i className="fa fa-trash"></i>
-                  </button>
-                </div>
+                <div className="footer-actions">
 
-                <div className="footer-right">
-                  <span className="required-label">Required</span>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={q.required}
-                      onChange={(e) =>
-                        updateQuestion(q.id, { required: e.target.checked })
+                  <div className="tooltip-wrapper">
+                    <button
+                      className="icon-btn"
+                      onClick={() =>
+                        setQuestions(prev => prev.filter(x => x.id !== q.id))
                       }
-                    />
-                    <span className="slider"></span>
-                  </label>
+                    >
+                      <i className="fa fa-trash"></i>
+                    </button>
+                    <span className="tooltip-text">Delete question</span>
+                  </div>
+
+                  <div className="vertical-divider"></div>
+
+                  <div className="required-toggle">
+                    <span className="required-label">Required</span>
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        checked={q.required}
+                        onChange={(e) =>
+                          updateQuestion(q.id, { required: e.target.checked })
+                        }
+                      />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+
                 </div>
               </div>
-
-              {/*<div className="actions">
-                <div className="required-toggle">
-                  <span>Required</span>
-                  <label className="switch">
-                    <input type="checkbox" className="q-required" onChange={(e) => updateQuestion(q.id, { required: e.target.checked })} />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-              </div>*/}
 
             </div>
           ))}

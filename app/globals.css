@@ -160,7 +160,7 @@ body {
   .home-section {
     @apply flex gap-4 justify-between items-start w-full max-lg:flex-col-reverse max-lg:items-center;
   }
-  .companions-grid {
+  .exams-grid {
     @apply flex flex-wrap gap-4 w-full max-md:justify-center;
   }
   .companion-card {

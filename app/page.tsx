@@ -1,52 +1,48 @@
-"use client";
+//localhost:3000
 
-import Image from "next/image";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { getAllExams } from "@/lib/actions/exam.actions";
+import { getSubjectColor } from "@/lib/utils";
+import SearchInput from "@/components/SearchInput";
+import ExamCard from "@/components/ExamCard";
+import Link from "next/link";
 
-export default function Page() {
-  const router = useRouter();
+const Page = async ({ searchParams }: SearchParams) => {
+  const filters = await searchParams;
+  /*
+  filters: get the parameters from the URL
+  http://localhost:3000/?title=APX
+  console.log('PARAMS: ', filters);
+  */
 
-  useEffect(() => {
-    localStorage.clear();
-  }, []);
+  const title = filters.title ? filters.title : '';
+  const exams = await getAllExams({ title });
 
   return (
-    <main className="page-container">
-      <h1>Proctor Exam</h1>
+    <main>
+      <section className="flex items-center gap-6">
+        <h1 className="whitespace-nowrap">Exam Library</h1>
 
-      <div className="proctor-brand">
-        <Image
-          src="/logo.png"
-          alt="Proctor Exam"
-          width={120}
-          height={120}
-          className="proctor-logo"
-          priority
-        />
-        <p className="proctor-tagline">
-          Secure exams. Simple forms
-        </p>
-      </div>
-
-      <div className="button-row">
-        <Button
-          className="start-btn"
-          size="lg"
-          onClick={() => router.push("/start")}
+        <div className="flex-1">
+          <SearchInput />
+        </div>
+        <Link
+          href="/create"
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
         >
-          Take Exam
-        </Button>
-
-        <Button
-          className="create-btn"
-          size="lg"
-          onClick={() => router.push("/create")}
-        >
-          Create / Edit Exam
-        </Button>
-      </div>
+          + Create Exam
+        </Link>
+      </section>
+      <section className="exams-grid">
+        {exams.map((exam) => (
+          <ExamCard
+            key={exam.id}
+            {...exam}
+            color={getSubjectColor(exam.title)}
+            />
+        ))}
+      </section>
     </main>
-  );
+  )
 }
+
+export default Page

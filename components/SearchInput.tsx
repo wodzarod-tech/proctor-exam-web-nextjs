@@ -10,30 +10,29 @@ const SearchInput = () => {
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
-    //const query = searchParams.get('topic') || '';
     const query = searchParams.get('title') || '';
 
     const [searchQuery, setSearchQuery] = useState('');
 
     // modify URL bar based on what we typing in the search input
     // what we typing is querying to the the database
-    // http://localhost:3000/companions?topic=math
+    // http://localhost:3000/?title=APX
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             if(searchQuery) {
                 //router.push(`/currentRoute?topic=${searchQuery}`);
                 const newUrl = formUrlQuery({
                     params: searchParams.toString(),
-                    key: "title",/*topic*/
+                    key: "title",
                     value: searchQuery,
                 });
 
                 router.push(newUrl, { scroll: false });
             } else {
-                if(pathname === '/exams') { /*companions*/
+                if(pathname === '/exams') {
                     const newUrl = removeKeysFromUrlQuery({
                         params: searchParams.toString(),
-                        keysToRemove: ["title"],/*topic*/
+                        keysToRemove: ["title"],
                     });
 
                     router.push(newUrl, { scroll: false });
@@ -43,15 +42,26 @@ const SearchInput = () => {
     }, [searchQuery, router, searchParams, pathname]);
 
     return (
-        <div className="relative border border-black rounded-lg items-center flex gap-2 px-2 py-1 h-fit">
-            <Image src="/icons/search.svg" alt="search" width={15} height={15} />
-            <input
-                placeholder="Search exams..." /*companions*/
-                className="outline-none"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-            />
+    <div className="w-full">
+        <div className="flex items-center gap-3 px-6 py-5 rounded-full border border-gray-200 shadow-md bg-white focus-within:shadow-lg transition-all">
+        
+        <Image
+            src="/icons/search.svg"
+            alt="search"
+            width={20}
+            height={20}
+            className="opacity-60"
+        />
+
+        <input
+            type="text"
+            placeholder="Search exams..."
+            className="flex-1 text-lg outline-none bg-transparent placeholder:text-gray-400"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+        />
         </div>
-    )
+    </div>
+    );
 }
 export default SearchInput

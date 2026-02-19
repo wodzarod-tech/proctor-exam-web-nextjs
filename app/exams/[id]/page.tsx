@@ -1,7 +1,7 @@
 //localhost:3000/companions/[id]
 // Companion Session page
 
-import { getCompanion, getExam } from "@/lib/actions/companion.actions";
+import { getCompanion, getExam } from "@/lib/actions/exam.actions";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getSubjectColor } from "@/lib/utils";

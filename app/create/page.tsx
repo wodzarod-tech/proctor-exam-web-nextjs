@@ -8,7 +8,7 @@ import ExamCard from '@/components/ExamCard1'
 import TitleCard from '@/components/TitleCard'
 import QuestionCard from '@/components/QuestionCard2'
 import { exam } from '@/constants'
-import { createExam } from "@/lib/actions/companion.actions"
+import { createExam } from "@/lib/actions/exam.actions"
 
 /* =====================
    Types

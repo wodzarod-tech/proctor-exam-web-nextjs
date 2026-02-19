@@ -1,4 +1,5 @@
 'use client';
+
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -30,26 +31,26 @@ const ExamCard = ({
   const handleBookmark = async () => {
   };
 
-const hours = settings?.timer?.hours ?? 0;
-const minutes = settings?.timer?.minutes ?? 0;
+  const hours = settings?.timer?.hours ?? 0;
+  const minutes = settings?.timer?.minutes ?? 0;
 
-let durationLabel = "No time limit";
-  
-if (settings?.timer?.enabled) {
-  const hourLabel =
-    hours > 0
-      ? `${hours} hour${hours === 1 ? "" : "s"}`
-      : "";
+  let durationLabel = "No time limit";
+    
+  if (settings?.timer?.enabled) {
+    const hourLabel =
+      hours > 0
+        ? `${hours} hour${hours === 1 ? "" : "s"}`
+        : "";
 
-  const minuteLabel =
-    minutes > 0
-      ? `${minutes} minute${minutes === 1 ? "" : "s"}`
-      : "";
+    const minuteLabel =
+      minutes > 0
+        ? `${minutes} minute${minutes === 1 ? "" : "s"}`
+        : "";
 
-  durationLabel = [hourLabel, minuteLabel]
-    .filter(Boolean)
-    .join(" ");
-}
+    durationLabel = [hourLabel, minuteLabel]
+      .filter(Boolean)
+      .join(" ");
+  }
 
   return (
     <article className="companion-card" style={{backgroundColor: color}}>
@@ -66,7 +67,6 @@ if (settings?.timer?.enabled) {
       </div>
 
       <h2 className="text-2xl font-bold">{description}</h2>
-      {/*<p className="text-sm">{title}</p>*/}
       <div className="flex items-center gap-2">
         <Image
           src="/icons/clock.svg"
@@ -74,9 +74,7 @@ if (settings?.timer?.enabled) {
           width={13.5}
           height={13.5}
         />
-        {/*<p className="text-sm">{duration} minutes</p>*/}
         <p className="text-sm">{durationLabel}</p>
-        
       </div>
 
       <Link href={`/exams/${id}`} className="w-full">

@@ -6,29 +6,13 @@
     --border:#dadce0;
     --text:#202124;
 }
-/*
-body{
-    margin:0;
-    font-family:Roboto, Arial, sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    /* Mobile centering */
-    /*display: flex;*/
-    /*justify-content: center;
-}
-*/
 
 .create-page {
     background: var(--bg);
-    /*
-    color: var(--text);
-    font-family: Roboto, Arial, sans-serif;
-    */
     min-height: 100vh;
     display: flex;
     justify-content: center;   /* horizontal center */
     align-items: flex-start;   /* keep content at top */
-    /*padding: 40px 20px;*/        /* spacing from edges */
     box-sizing: border-box;
 }
 
@@ -76,7 +60,6 @@ body{
 .container{
     width: 100%;
     max-width:900px;
-    /*margin:24px auto;*/
 
     /* Mobile padding */
     padding: 16px 12px 120px; /* bottom padding avoids toolbar overlap */
@@ -134,47 +117,10 @@ select{
     margin-bottom:8px;
 }
 
-/* option multiline: textarea look like input */
-.option .opt-text{
-    width: 100%;
-    resize: none;
-    overflow: hidden;
-    line-height: 1.4;
-    background: transparent;
-    font-family: inherit;
-    font-size: 14px;
-    border: none;
-    outline: none;
-}
-
-.option input[type=text]{
-    flex:1;
-    /*border:none;
-    border-bottom:1px solid var(--border);*/
-    outline:none;
-}
-
-.q-title{
-    font-family: inherit;
-    font-size:14px;
-    width:100%;
-    /*border:none;
-    border-bottom:1px solid var(--border);*/
-    outline:none;
-    margin-bottom:1px;
-    /* multiline */
-    resize: none;
-    overflow: hidden;
-    line-height: 0.8;
-    caret-color: transparent;
-}
-
 .q-comment{
     font-family: inherit;
     font-size:14px;
     width:100%;
-    /*border:none;
-    border-bottom:1px solid var(--border);*/
     outline:none;
     margin-bottom:1px;
     /* multiline */
@@ -184,29 +130,42 @@ select{
     caret-color: transparent;
 }
 
-/* Show caret only when question card is active */
-.question.active .q-title,
-.q-title:focus {
-    caret-color: auto;
-}
+/* Base state: no line */
+.text-underline-input{
+    font-family: inherit;
+    font-size:14px;
+    width:100%;
 
-/* Default: no visible bottom border */
-.q-title,
-.option input[type=text]{
     border: none;
     border-bottom: 1px solid transparent;
+
+    outline:none;
+    
+    /* multiline */
+    resize: none;
+    overflow: hidden;
+
+    background: transparent;
+    
+    line-height: 1.5;
+    padding: 4px 0;
+    
+    transition: border-color .15s ease;
 }
 
-/* Show border ONLY when question card is active */
-.card.active .q-title,
-.card.active .option input[type=text]{
+/* Hover = subtle gray line */
+.text-underline-input:hover {
     border-bottom-color: var(--border);
 }
 
-/* Focus highlight ONLY inside active card */
-.card.active .q-title:focus,
-.card.active .option input[type=text]:focus{
+/* Focus = blue highlight */
+.text-underline-input:focus {
     border-bottom-color: #1a73e8;
+}
+
+.q-title {
+    font-size: 16px;
+    font-weight: 500;
 }
 
 /* Default: hide borders & fade controls */
@@ -296,7 +255,6 @@ select{
     user-select: none;
     font-size: 18px;
     line-height: 1;
-    /*margin-right: 4px;*/
 }
 
 /* Visible only on active question */
@@ -325,7 +283,6 @@ select{
     content: attr(data-tooltip);
     position: absolute;
     bottom: calc(100% + 8px);
-    /*bottom: 125%;*/
     left: 50%;
     transform: translateX(-50%);
 
@@ -392,8 +349,6 @@ select{
     color: #5f6368;
     /* Hide Required toggle by default */
     pointer-events: none;
-    /*transition: opacity .15s ease;*/
-    /*visibility: hidden;*/
 }
 
 /* Show ONLY when question card is active */
@@ -444,17 +399,6 @@ select{
     transform: translateX(18px);
 }
 
-/*
-.add-question{
-    width:100%;
-    padding:12px;
-    font-size:16px;
-    border:1px dashed var(--border);
-    background:white;
-    cursor:pointer;
-    border-radius:8px;
-}*/
-
 pre{
     background:#111;
     color:#0f0;
@@ -462,48 +406,6 @@ pre{
     font-size:12px;
     overflow:auto;
 }
-
-/* Right toolbar */
-/*
-.gforms-toolbar{
-    position: fixed;
-    right: 24px;
-    top: 30px;
-
-    background: white;
-    border: 1px solid #dadce0;
-    border-radius: 8px;
-
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-
-    padding: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.2);
-
-    /* hide by default */
-    /*opacity: 0;
-    pointer-events: none;
-    transition: opacity .15s ease;
-}
-
-.gforms-toolbar button{
-    width: 40px;
-    height: 40px;
-
-    border: none;
-    background: none;
-    font-size: 22px;
-    cursor: pointer;
-    color: #5f6368;
-
-    border-radius: 50%;
-}
-
-.gforms-toolbar button:hover{
-    background: #f1f3f4;
-}
-*/
 
 /* Bottom toolbar */
 .gforms-toolbar.bottom{
@@ -572,8 +474,6 @@ pre{
     height: 28px;
 
     border-radius: 50%;
-    /*background: white;
-    border: 1px solid #dadce0;*/
 
     display: flex;
     align-items: center;
@@ -582,8 +482,6 @@ pre{
     font-size: 14px;
     cursor: pointer;
     color: #5f6368;
-
-    /*box-shadow: 0 1px 3px rgba(0,0,0,.2);*/
 }
 
 /* Section */
@@ -599,15 +497,8 @@ pre{
     position: relative;
     display: flex;
     flex-direction: column;
-    /*align-items: flex-start;*/
     gap: 2px;
     margin-top: 8px;
-}
-
-/* Default: no underline */
-.feedback .q-title{
-    border-bottom-color: transparent;
-    transition: border-color .15s ease;
 }
 
 .feedback-ok-label {
@@ -636,30 +527,6 @@ pre{
     line-height: 1;
 }
 
-/* Active question: show underline */
-.card.active .feedback .q-title{
-    border-bottom-color: var(--border);
-}
-
-/* Focus highlight */
-.card.active .feedback .q-title:focus{
-    border-bottom-color: #1a73e8;
-}
-
-.feedback-group{
-    display: flex;
-    flex-direction: column;
-}
-
-.feedback-group textarea{
-    margin-top: 2px;
-    padding-left: 2px;
-}
-
-.feedback-group textarea:placeholder-shown {
-    opacity: 0.95;
-}
-
 /* Feedback toggle header */
 .feedback-toggle{
     display: none;
@@ -676,28 +543,9 @@ pre{
     transition: transform .2s ease;
 }
 
-/* Collapsible content */
-.feedback-content{
-    margin-top: 8px;
-}
-
 /* Show ONLY when question is active */
 .card.question.active .feedback-toggle{
     display: flex;
-}
-
-/* Collapsed state */
-/* Feedback only expands when question is active */
-/*.card:not(.active) .feedback-content{
-    display: none !important;
-}
-
-.feedback.collapsed .feedback-content{
-    display: none;
-}*/
-
-.feedback.collapsed .feedback-toggle-icon{
-    transform: rotate(-90deg);
 }
 
 /* for mobile */
@@ -770,15 +618,7 @@ pre{
     padding-top: 8px;
     padding-bottom: 1px;
 }
-/*
-.tab-panel{
-    display: none;
-}
 
-.tab-panel.active{
-    display: block;
-}
-*/
 .toggle-row{
     display: flex;
     align-items: center;
@@ -808,9 +648,6 @@ pre{
 
 /* Save button */
 .proctor-footer{
-    /*margin-top: 20px;*/
-    /*padding-top: 8px;*/
-    /*border-top: 1px solid #eee;*/
     display: flex;
     justify-content: center;
 }
@@ -951,7 +788,45 @@ input[type="number"] {
 }
 
 /* Line separator */
-.option-separator {
+.line-separator {
   margin: 10px 0;
-  border-top: 1px solid #e5e7eb; /* soft gray */
+  border-top: 1px solid #e0e0e0; /* soft gray */
+}
+
+.question-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  /*border-top: 1px solid #e0e0e0;*/
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #5f6368;
+  transition: color 0.2s ease;
+}
+
+.icon-btn:hover {
+  color: #d93025;
+}
+
+.required-label {
+  font-size: 14px;
+  color: #5f6368;
 }

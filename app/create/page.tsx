@@ -4,16 +4,12 @@ import "./create.css"
 import { useEffect, useRef, useState } from 'react'
 import Sortable from 'sortablejs'
 import { useRouter } from 'next/navigation'
-import ExamCard from '@/components/ExamCard1'
-import TitleCard from '@/components/TitleCard'
-import QuestionCard from '@/components/QuestionCard2'
 import { exam } from '@/constants'
 import { createExam } from "@/lib/actions/exam.actions"
 
 /* =====================
    Types
 ===================== */
-
 type Option = {
   id: string
   text: string
@@ -75,7 +71,6 @@ type Settings = {
 /* =====================
    Helpers
 ===================== */
-
 const uid = () => crypto.randomUUID()
 
 const createEmptyQuestion = (): Question => ({
@@ -94,7 +89,6 @@ const createEmptyQuestion = (): Question => ({
 /* =====================
    Page
 ===================== */
-
 export default function CreatePage() {
   const router = useRouter()
   const questionsRef = useRef<HTMLDivElement>(null)
@@ -125,13 +119,11 @@ export default function CreatePage() {
   /* =====================
      Derived
   ===================== */
-
   const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0)
 
   /* =====================
      Effects
   ===================== */
-
   // Auto-save JSON
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -256,7 +248,6 @@ useEffect(() => {
   /* =====================
      Actions
   ===================== */
-
 async function saveExam() {
   try {
     if (!settings) {
@@ -384,7 +375,6 @@ async function saveExam() {
   /* =====================
      Render
   ===================== */
-
   return (
     <div className="create-page">
       <div className="container" ref={containerRef}>
@@ -405,7 +395,6 @@ async function saveExam() {
         </div>
 
           {/* Questions */}
-          {/*<div id="questions"></div>*/}
           <div ref={questionsRef} className="space-y-4">
           {questions.map((q, index) => (
             <div key={q.id} className={`card question ${activeQuestionId === q.id ? "active" : ""}`}
@@ -423,13 +412,13 @@ async function saveExam() {
                   {index + 1} de {questions.length}
                 </div>
 
-                <button
+                {/*<button
                   className="btn-link g-tooltip delete-top"
                   data-tooltip="Delete question"
                   onClick={() =>
                     setQuestions(prev => prev.filter(x => x.id !== q.id))
                   }
-                ><i className="fa fa-trash"></i></button>
+                ><i className="fa fa-trash"></i></button>*/}
 
                 <div className="q-points">
                   <input
@@ -450,7 +439,7 @@ async function saveExam() {
               </div>
 
               <textarea
-                className="q-title"
+                className="text-underline-input q-title"
                 placeholder="Question"
                 value={q.text}
                 onChange={(e) =>
@@ -470,9 +459,7 @@ async function saveExam() {
                 <option value="checkbox">☑ Multiple choices</option>
               </select>
 
-              {/*<div className="options"></div>*/}
               <div
-                className="options"
                 ref={(el) => {
                   optionRefs.current[q.id] = el
                 }}
@@ -501,7 +488,7 @@ async function saveExam() {
                     />
 
                     <textarea
-                      className="opt-text"
+                      className="text-underline-input"
                       rows={1}
                       placeholder={`Option ${index + 1}`}
                       value={opt.text}
@@ -534,67 +521,77 @@ async function saveExam() {
                 <button className="btn-link" onClick={() => addOption(q.id)}>Add option</button>
               </div>
     
-              <div className="option-separator" />
+              <div className="line-separator" />
+  
+              <div className="feedback-ok-label">
+                <span className="feedback-icon">✔</span>
+                <span>Feedback Correct:</span>
+              </div>
 
-              <div className="feedback collapsed">
-                
-                {/* Toggle header */}
-                {/*
-                <div className="feedback-toggle" onClick={() => toggleFeedback(q.id)}>
-                  <span className="feedback-toggle-icon">▼</span>
-                  <span className="feedback-toggle-text">Answer feedback</span>
-                </div>*/}
+              <textarea
+                className="text-underline-input"
+                rows={1}
+                placeholder="Feedback"
+                value={q.feedbackOk}
+                onChange={(e) => {
+                  updateQuestion(q.id, { feedbackOk: e.target.value })
 
-                {/* Collapsible content */}
-                
-                <div className="feedback-content">
+                  // auto-resize
+                  e.currentTarget.style.height = "auto"
+                  e.currentTarget.style.height =
+                  e.currentTarget.scrollHeight + "px"
+                }}
+              />
 
-                  <div className="feedback-group ok">
-                    <div className="feedback-ok-label">
-                      <span className="feedback-icon">✔</span>
-                      <span>Correct:</span>
-                    </div>
-                    <textarea
-                      className="q-title q-comment"
-                      rows={1}
-                      placeholder="Feedback"
-                      value={q.feedbackOk}
-                      onChange={(e) => {
-                        updateQuestion(q.id, { feedbackOk: e.target.value })
+              <div className="feedback-error-label">
+                <span className="feedback-icon">✖</span>
+                <span>Feedback Incorrect:</span>
+              </div>
 
-                        // auto-resize
-                        e.currentTarget.style.height = "auto"
-                        e.currentTarget.style.height =
-                        e.currentTarget.scrollHeight + "px"
-                      }}
+              <textarea
+                className="text-underline-input"
+                rows={1}
+                placeholder="Feedback"
+                value={q.feedbackError}
+                onChange={(e) => {
+                  updateQuestion(q.id, { feedbackError: e.target.value })
+
+                  // auto-resize
+                  e.currentTarget.style.height = "auto"
+                  e.currentTarget.style.height =
+                  e.currentTarget.scrollHeight + "px"
+                }}
+              />
+
+              <div className="line-separator" />
+
+              <div className="question-footer">
+                <div className="footer-left">
+                  <button
+                    className="icon-btn delete-btn"
+                    onClick={() =>
+                      setQuestions(prev => prev.filter(x => x.id !== q.id))
+                    }
+                  ><i className="fa fa-trash"></i>
+                  </button>
+                </div>
+
+                <div className="footer-right">
+                  <span className="required-label">Required</span>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={q.required}
+                      onChange={(e) =>
+                        updateQuestion(q.id, { required: e.target.checked })
+                      }
                     />
-                  </div>
-
-                  <div className="feedback-group error">
-                    <div className="feedback-error-label">
-                      <span className="feedback-icon">✖</span>
-                      <span>Incorrect:</span>
-                    </div>
-                    <textarea
-                      className="q-title q-comment"
-                      rows={1}
-                      placeholder="Feedback"
-                      value={q.feedbackError}
-                      onChange={(e) => {
-                        updateQuestion(q.id, { feedbackError: e.target.value })
-
-                        // auto-resize
-                        e.currentTarget.style.height = "auto"
-                        e.currentTarget.style.height =
-                        e.currentTarget.scrollHeight + "px"
-                      }}
-                    />
-                  </div>
-
+                    <span className="slider"></span>
+                  </label>
                 </div>
               </div>
 
-              <div className="actions">
+              {/*<div className="actions">
                 <div className="required-toggle">
                   <span>Required</span>
                   <label className="switch">
@@ -602,7 +599,7 @@ async function saveExam() {
                     <span className="slider"></span>
                   </label>
                 </div>
-              </div>
+              </div>*/}
 
             </div>
           ))}
@@ -821,9 +818,6 @@ async function saveExam() {
           </div>
         </div>
       </div>
-
-      {/*<TitleCard />*/}
-      {/* <ExamCard /> */}
     </div>
   )
 }

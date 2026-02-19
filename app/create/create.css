@@ -17,15 +17,20 @@
 }
 
 /* Form header total points */
-.form-header-row{
+.header-row{
     display: flex;
-    align-items: flex-start;
-    gap: 16px;
+    flex-direction: column;
+}
+
+/* Top row */
+.header-top {
+    display: flex;
+    justify-content: flex-end;
 }
 
 /* for mobile */
 @media (max-width: 600px){
-    .form-header-row{
+    .header-row{
     flex-direction: column;
     gap: 8px;
     }
@@ -40,22 +45,22 @@
     }
 }
 
-.total-points{
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* Total points aligned right */
+.total-points {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 
-  font-size: 14px;
-  color: #5f6368;
-  white-space: nowrap;
+    font-size: 14px;
+    color: #5f6368;
 }
 
+/*
 .total-points strong{
     font-size: 16px;
     font-weight: 500;
     color: #202124;
-}
+}*/
 
 .container{
     width: 100%;
@@ -87,6 +92,7 @@
 .card.active{
     border-left-color: #1a73e8; /* blue active question indicator */
 }
+
 .title-input{
     font-size:32px;
     border:none;
@@ -829,4 +835,23 @@ input[type="number"] {
 .required-label {
   font-size: 14px;
   color: #5f6368;
+}
+
+.header-fields {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Big title like Google Forms */
+.form-title {
+    font-size: 28px;
+    font-weight: 500;
+    padding-bottom: 6px;
+}
+
+/* Description lighter */
+.form-description {
+    font-size: 14px;
+    color: #5f6368;
 }

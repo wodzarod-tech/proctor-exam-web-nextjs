@@ -372,6 +372,10 @@ async function saveExam() {
     setIsSettingsDirty(true)
   }
 
+  const formattedPoints = Number.isInteger(totalPoints)
+  ? totalPoints
+  : totalPoints.toFixed(2);
+
   /* =====================
      Render
   ===================== */
@@ -380,17 +384,35 @@ async function saveExam() {
       <div className="container" ref={containerRef}>
 
         {/* Form header */}
-        <div className="card form-header">
-          <div className="form-header-row">
-            <div>
-              <input className="title-input" id="formTitle" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)}/>
-              <input className="desc-input" id="formDesc" placeholder="Form description" value={description} onChange={(e) => setDescription(e.target.value)} />
-            </div>
+        <div className="card header-row">
 
+          <div className="header-top">
             <div className="total-points">
-              <span>Total points</span>
-              <strong id="totalPoints">{totalPoints.toFixed(1)}</strong>
+              <span>Total points: </span>
+              {formattedPoints}
             </div>
+          </div>
+
+          <div className="header-fields">
+            <input
+              className="text-underline-input form-title"
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+
+            <textarea
+              className="text-underline-input form-description"
+              rows={1}
+              placeholder="Form description"
+              value={description}
+              onChange={(e) => {
+                setDescription(e.target.value)
+                // auto-resize
+                e.currentTarget.style.height = "auto"
+                e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
+              }}
+            />
           </div>
         </div>
 
@@ -412,14 +434,6 @@ async function saveExam() {
                   {index + 1} de {questions.length}
                 </div>
 
-                {/*<button
-                  className="btn-link g-tooltip delete-top"
-                  data-tooltip="Delete question"
-                  onClick={() =>
-                    setQuestions(prev => prev.filter(x => x.id !== q.id))
-                  }
-                ><i className="fa fa-trash"></i></button>*/}
-
                 <div className="q-points">
                   <input
                     type="number"
@@ -440,11 +454,15 @@ async function saveExam() {
 
               <textarea
                 className="text-underline-input q-title"
+                rows={1}
                 placeholder="Question"
                 value={q.text}
-                onChange={(e) =>
+                onChange={(e) => {
                   updateQuestion(q.id, { text: e.target.value })
-                }
+                  // auto-resize
+                  e.currentTarget.style.height = "auto"
+                  e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
+                }}
               />
 
               <select className="q-type"

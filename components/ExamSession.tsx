@@ -749,9 +749,38 @@ async function startMicrophone() {
     
   }
 
-  function submitExam() {
+function submitExam() {
+  let score = 0;
 
-  }
+  const reviewData = questions.map((q) => {
+    const correctIds = q.options
+      .filter((o) => o.checked)
+      .map((o) => o.id);
+
+    const userAnswers = answers[q.id] || [];
+
+    const isCorrect =
+      correctIds.length === userAnswers.length &&
+      correctIds.every((id) => userAnswers.includes(id));
+
+    if (isCorrect) score += q.points;
+
+    return {
+      ...q,
+      correctIds,
+      userAnswers,
+    };
+  });
+
+  const total = questions.reduce((sum, q) => sum + q.points, 0);
+
+  // Store for review page
+  sessionStorage.setItem("examReview", JSON.stringify(reviewData));
+  sessionStorage.setItem("examScore", String(score));
+  sessionStorage.setItem("examTotal", String(total));
+
+  router.push("/result");
+}
 
   function filterResults(qid: string) {
   }

@@ -6,6 +6,12 @@ import Sortable from 'sortablejs'
 import { useRouter } from 'next/navigation'
 import { exam } from '@/constants'
 import { createExam } from "@/lib/actions/exam.actions"
+import Navbar from "@/components/Navbar"
+import Link from "next/link"
+import Image from "next/image"
+import NavItems from "@/components/NavItems"
+import NavItemsExam from "@/components/NavItemsExam"
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 
 /* =====================
    Types
@@ -378,7 +384,52 @@ async function saveExam() {
      Render
   ===================== */
   return (
+    <>
+    {/* Navbar */}
+    <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
+    <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        
+        <Link href="/" className="flex items-center gap-3">
+        <Image
+            src="/images/logo.png"
+            alt="EasyExam logo"
+            width={46}
+            height={44}
+            priority
+        />
+        <span className="text-2xl font-semibold tracking-tight">
+            EasyExam
+        </span>
+        </Link>
+
+        <div className="flex items-center gap-8">
+        
+        {/* NavItems */}
+        <nav className="toolbar-nav">
+          <button className="g-tooltip" data-tooltip="Add question" onClick={addQuestion}><i className="fa fa-plus"></i></button>
+          <button className="g-tooltip" data-tooltip="Import Exam"><i className="fa fa-upload"></i></button>
+          <button className="g-tooltip" data-tooltip="Save Exam" onClick={saveExam}><i className="fa fa-save"></i></button>
+          <button className="g-tooltip" data-tooltip="Settings" onClick={() => setIsProctorOpen(true)}><i className="fa fa-gear"></i></button>
+          <button className="g-tooltip" data-tooltip="Preview exam" onClick={() => router.push("/preview")}><i className="fa fa-eye"></i></button>
+          <button className="g-tooltip" data-tooltip="Delete exam"><i className="fa fa-trash"></i></button>
+          <button className="toolbar-btn primary">Publish</button>
+        </nav>
+
+        <SignedOut>
+            <SignInButton>
+            <button className="btn-signin">Sign In</button>
+            </SignInButton>
+        </SignedOut>
+
+        <SignedIn>
+            <UserButton />
+        </SignedIn>
+        </div>
+    </div>
+    </nav>
+
     <div className="create-page">
+      
       <div className="container" ref={containerRef}>
 
         {/* Form header */}
@@ -618,40 +669,7 @@ async function saveExam() {
             </div>
           ))}
         </div>
-
       </div>
-
-      {/* Bottom toolbar */}
-      {/*<div
-        id="gformsToolbar"
-        className={`gforms-toolbar bottom ${isToolbarCollapsed ? 'collapsed' : ''}`}
-      >
-        {/* Handle */}{/*
-        <div 
-          className="toolbar-handle g-tooltip"
-          id="toolbarHandle"
-          data-tooltip={isToolbarCollapsed ? "Open panel" : "Close panel"}
-          onClick={toggleToolbar}>
-            {isToolbarCollapsed ? "▲" : "▼"}
-        </div>
-
-        <div className="toolbar-buttons">
-          <button className="g-tooltip" data-tooltip="Add question" onClick={addQuestion}>+</button>
-          <button className="g-tooltip" data-tooltip="Import Exam" onClick={addQuestion}>📂</button>
-          <button className="g-tooltip" data-tooltip="Save Exam" onClick={saveExam}>💾</button>
-          <button className="g-tooltip" data-tooltip="Settings" onClick={() => setIsProctorOpen(true)}>⚙️</button>
-          <button className="g-tooltip" data-tooltip="Preview exam" onClick={() => router.push("/preview")}>👁️</button>
-          <button className="g-tooltip" data-tooltip="Home" onClick={() => router.push('/')}>🏠</button>
-        </div>
-      </div>
-
-      {/* hidden file input */}{/*
-      <input
-        type="file"
-        id="jsonFileInput"
-        accept="application/json"
-        hidden
-      />*/}
 
       {/* Proctor Modal */}
       <div className={`proctor-modal ${!isProctorOpen ? "hidden" : ""}`}>
@@ -833,5 +851,6 @@ async function saveExam() {
         </div>
       </div>
     </div>
+    </>
   )
 }

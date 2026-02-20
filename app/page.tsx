@@ -5,6 +5,7 @@ import { getSubjectColor } from "@/lib/utils";
 import SearchInput from "@/components/SearchInput";
 import ExamCard from "@/components/ExamCard";
 import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
 const Page = async ({ searchParams }: SearchParams) => {
   const filters = await searchParams;
@@ -18,6 +19,8 @@ const Page = async ({ searchParams }: SearchParams) => {
   const exams = await getAllExams({ title });
 
   return (
+    <>
+    <Navbar />
     <main>
       <section className="flex items-center gap-6">
         <h1 className="whitespace-nowrap">Exam Library</h1>
@@ -42,6 +45,7 @@ const Page = async ({ searchParams }: SearchParams) => {
         ))}
       </section>
     </main>
+    </>
   )
 }
 

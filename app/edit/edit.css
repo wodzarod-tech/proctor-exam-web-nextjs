@@ -590,70 +590,109 @@ pre{
 }
 
 /* Settings modal */
-.proctor-modal{
+.settings-modal{
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.4);
+    background: rgba(0,0,0,0.4);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2000;
+    /*backdrop-filter: blur(2px);*/
 }
 
-.proctor-modal.hidden{
+.settings-modal.hidden{
     display: none;
 }
 
-.proctor-card{
-    background: white;
-    width: 520px;
+.settings-card{
+    background: #ffffff;
+    width: 560px;
+    max-width: 95%;
     border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+
+    box-shadow:
+        0 2px 6px rgba(0,0,0,.15),
+        0 8px 24px rgba(0,0,0,.2);
+
     overflow: hidden;
 }
 
-.proctor-header{
+.settings-header{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1px 20px;
-    border-bottom: 1px solid var(--border);
-    font-weight: bold;
+
+    padding: 20px 24px;
+
+    font-size: 18px;
+    font-weight: 500;
+
+    border-bottom: 1px solid #e8eaed;
 }
 
 .settings-tabs{
     display: flex;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid #e8eaed;
 }
 
 .settings-tabs .tab{
     flex: 1;
-    padding: 10px;
+    padding: 14px 0;
+
     background: none;
     border: none;
-    cursor: pointer;
+
     font-size: 14px;
+    font-weight: 500;
+
     color: #5f6368;
+    cursor: pointer;
+
+    position: relative;
 }
 
 .settings-tabs .tab.active{
-    color: var(--purple);
-    border-bottom: 2px solid var(--purple);
-    font-weight: 500;
+    color: #1a73e8;
+}
+
+/* Google Forms style toggle row */
+.gf-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.gf-label {
+    font-size: 14px;
+    color: #202124;
 }
 
 .settings-content{
-    padding: 20px;
-    padding-top: 8px;
-    padding-bottom: 1px;
+    padding: 24px;
+}
+
+/* Section titles */
+.settings-content strong {
+    font-size: 13px;
+    font-weight: 600;
+    color: #5f6368;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    display: block;
+    margin: 18px 0 8px 0;
 }
 
 .toggle-row{
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 12px;
+
+    padding: 10px 0;
+
     font-size: 14px;
+    color: #202124;
 }
 
 .toggle-inline{
@@ -679,41 +718,44 @@ pre{
 .proctor-footer{
     display: flex;
     justify-content: center;
+    padding: 16px 24px;
+    border-top: 1px solid #e8eaed;
 }
 
 .btn-save{
-    background: #4f46e5;
+    background: #1a73e8;
     color: #fff;
+
     border: none;
-    border-radius: 10px;
-    padding: 12px 28px;
-    font-size: 15px;
-    font-weight: 600;
+    border-radius: 6px;
+
+    padding: 10px 24px;
+
+    font-size: 14px;
+    font-weight: 500;
+
     cursor: pointer;
-    transition: background .2s ease, transform .1s ease;
+    transition: background .2s ease;
 }
 
 .btn-save:hover{
-    background: #4338ca;
-}
-
-.btn-save:active{
-    transform: scale(0.97);
+    background: #1765cc;
 }
 
 /* Disabled Save button */
 .btn-save:disabled{
-    background: #c7c9f5;          /* muted purple */
-    color: #ffffff;
+    background: #dadce0;
+    color: #5f6368;
     cursor: not-allowed;
-    opacity: 0.6;
-    transform: none;
-    box-shadow: none;
 }
 
-/* Prevent hover effects when disabled */
-.btn-save:disabled:hover{
-    background: #c7c9f5;
+.tab-panel strong{
+    display: block;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #5f6368;
 }
 
 /* Score to pass */
@@ -954,4 +996,13 @@ input[type="number"] {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.sub-setting {
+  padding-left: 28px; /* adjust for perfect alignment */
+}
+
+.sub-setting .gf-label {
+  font-size: 14px;
+  color: #5f6368;
 }

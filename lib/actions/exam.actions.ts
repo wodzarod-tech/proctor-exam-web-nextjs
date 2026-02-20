@@ -20,9 +20,6 @@ export const createCompanion = async (formData: CreateCompanion) => {
 
 export const createExam = async (formData: CreateExam) => {
     const { userId: author } = await auth(); // Get the authenticated user's ID from Clerk server
-    /*if (!author) {
-        throw new Error("Unauthorized")
-    }*/
 
     const supabase = createSupabaseClient();
 

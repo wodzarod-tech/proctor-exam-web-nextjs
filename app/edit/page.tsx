@@ -1,16 +1,13 @@
 'use client'
-import "./create.css"
+import "./edit.css"
 
 import { useEffect, useRef, useState } from 'react'
 import Sortable from 'sortablejs'
 import { useRouter } from 'next/navigation'
 import { exam } from '@/constants'
 import { createExam } from "@/lib/actions/exam.actions"
-import Navbar from "@/components/Navbar"
 import Link from "next/link"
 import Image from "next/image"
-import NavItems from "@/components/NavItems"
-import NavItemsExam from "@/components/NavItemsExam"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 
 /* =====================
@@ -51,7 +48,6 @@ type Settings = {
     scoreMin: number
   }
   timer: {
-    enabled: boolean
     hours: number
     minutes: number
   }
@@ -109,18 +105,13 @@ export default function CreatePage() {
     createEmptyQuestion()
   ])
   const [settings, setSettings] = useState<Settings | null>(null)
-  const [isSettingsDirty, setIsSettingsDirty] = useState(false) // Track if settings have unsaved changes
 
-  const [isProctorOpen, setIsProctorOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("general")
-  const [showScoreMin, setShowScoreMin] = useState(false)
-  const [timerEnabled, setTimerEnabled] = useState(false)
+  const [isSeetingsOpen, setIsSettingsOpen] = useState(false)
   const [hours, setHours] = useState(0)
   const [minutes, setMinutes] = useState(0)
   const [scoreMinValue, setScoreMinValue] = useState(0)
 
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null)
-  const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false)
 
   /* =====================
      Derived
@@ -130,6 +121,40 @@ export default function CreatePage() {
   /* =====================
      Effects
   ===================== */
+    // Load exam with data by default
+  useEffect(() => {
+    if (!exam) return
+
+    // Transform external exam to internal builder format
+    const mappedQuestions: Question[] = exam.questions.map(q => ({
+      id: uid(),
+      text: q.text,
+      type: q.type as QuestionType,
+      points: q.points,
+      required: q.required,
+      feedbackOk: q.feedbackOk || "",
+      feedbackError: q.feedbackError || "",
+      options: q.options.map(opt => ({
+        id: uid(),
+        text: opt.text,
+        checked: opt.checked
+      }))
+    }))
+
+    const examContent: Exam = {
+      title: exam.title,
+      description: exam.description,
+      questions: mappedQuestions,
+      settings: exam.settings
+    }
+
+    setTitle(examContent.title)
+    setDescription(examContent.description)
+    setQuestions(examContent.questions)
+    setSettings(examContent.settings)
+  }, [])
+
+  /*
   // Auto-save JSON
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -138,159 +163,123 @@ export default function CreatePage() {
 
     return () => clearTimeout(timeout)
   }, [title, description, questions, settings])
+*/
 
-// Enable Sortable (questions): when drag & drop a question card
-useEffect(() => {
-  if (!questionsRef.current) return
+  // Enable Sortable (questions): when drag & drop a question card
+  useEffect(() => {
+    if (!questionsRef.current) return
 
-  const sortable = new Sortable(questionsRef.current, {
-    handle: '.drag',
-    animation: 150,
-    onEnd: (evt) => {
-      setQuestions(prev => {
-        const reordered = [...prev]
-        const [moved] = reordered.splice(evt.oldIndex!, 1)
-        reordered.splice(evt.newIndex!, 0, moved)
-        return reordered
-      })
-    }
-  })
-
-  return () => {
-    sortable.destroy()
-  }
-}, [])
-
-// Replace enableOptionDrag(opt) and options._sortable = new Sortable(...)
-useEffect(() => {
-  Object.entries(optionRefs.current).forEach(([qid, el]) => {
-    if (!el || (el as any)._sortable) return
-
-    const sortable = new Sortable(el, {
-      handle: '.opt-drag',
+    const sortable = new Sortable(questionsRef.current, {
+      handle: '.drag',
       animation: 150,
       onEnd: (evt) => {
-        setQuestions(prev =>
-          prev.map(q => {
-            if (q.id !== qid) return q
-
-            const reordered = [...q.options]
-            const [moved] = reordered.splice(evt.oldIndex!, 1)
-            reordered.splice(evt.newIndex!, 0, moved)
-
-            return { ...q, options: reordered }
-          })
-        )
+        setQuestions(prev => {
+          const reordered = [...prev]
+          const [moved] = reordered.splice(evt.oldIndex!, 1)
+          reordered.splice(evt.newIndex!, 0, moved)
+          return reordered
+        })
       }
     })
 
-    ;(el as any)._sortable = sortable
-  })
-}, [questions])
-
-// Click-outside effect to deselect active question card
-useEffect(() => {
-  function handleClickOutside(e: MouseEvent) {
-    if (!containerRef.current) return
-
-    const target = e.target as HTMLElement
-
-    // If click is NOT inside a question card
-    if (!target.closest('.card.question')) {
-      setActiveQuestionId(null)
+    return () => {
+      sortable.destroy()
     }
-  }
+  }, [])
 
-  document.addEventListener('mousedown', handleClickOutside)
+  // Replace enableOptionDrag(opt) and options._sortable = new Sortable(...)
+  useEffect(() => {
+    Object.entries(optionRefs.current).forEach(([qid, el]) => {
+      if (!el || (el as any)._sortable) return
 
-  return () => {
-    document.removeEventListener('mousedown', handleClickOutside)
-  }
-}, [])
+      const sortable = new Sortable(el, {
+        handle: '.opt-drag',
+        animation: 150,
+        onEnd: (evt) => {
+          setQuestions(prev =>
+            prev.map(q => {
+              if (q.id !== qid) return q
 
-// auto-adjust textarea when loading existing content
-useEffect(() => {
-  const areas = document.querySelectorAll(".q-comment")
-  areas.forEach((area) => {
-    const el = area as HTMLTextAreaElement
-    el.style.height = "auto"
-    el.style.height = el.scrollHeight + "px"
-  })
-}, [questions])
+              const reordered = [...q.options]
+              const [moved] = reordered.splice(evt.oldIndex!, 1)
+              reordered.splice(evt.newIndex!, 0, moved)
 
-// Load exam content
-useEffect(() => {
-  if (!exam) return
+              return { ...q, options: reordered }
+            })
+          )
+        }
+      })
 
-  // Transform external exam to internal builder format
-  const mappedQuestions: Question[] = exam.questions.map(q => ({
-    id: uid(),
-    text: q.text,
-    type: q.type as QuestionType,
-    points: q.points,
-    required: q.required,
-    feedbackOk: q.feedbackOk || "",
-    feedbackError: q.feedbackError || "",
-    options: q.options.map(opt => ({
-      id: uid(),
-      text: opt.text,
-      checked: opt.checked
-    }))
-  }))
+      ;(el as any)._sortable = sortable
+    })
+  }, [questions])
 
-  const examContent: Exam = {
-    title: exam.title,
-    description: exam.description,
-    questions: mappedQuestions,
-    settings: exam.settings
-  }
+  // Click-outside effect to deselect active question card
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (!containerRef.current) return
 
-  setTitle(examContent.title)
-  setDescription(examContent.description)
-  setQuestions(examContent.questions)
-  setSettings(examContent.settings)
-}, [])
+      const target = e.target as HTMLElement
+
+      // If click is NOT inside a question card
+      if (!target.closest('.card.question')) {
+        setActiveQuestionId(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  // auto-adjust textarea when loading existing content
+  useEffect(() => {
+    const areas = document.querySelectorAll(".q-comment")
+    areas.forEach((area) => {
+      const el = area as HTMLTextAreaElement
+      el.style.height = "auto"
+      el.style.height = el.scrollHeight + "px"
+    })
+  }, [questions])
 
   /* =====================
      Actions
   ===================== */
-async function saveExam() {
-  try {
-    if (!settings) {
-      alert("Settings not loaded yet")
-      return
+  async function saveExam() {
+    try {
+
+      const examPayload = {
+        title,
+        description,
+        questions: questions.map(q => ({
+          text: q.text,
+          type: q.type,
+          points: q.points,
+          required: q.required,
+          options: q.options.map(o => ({
+            text: o.text,
+            checked: o.checked
+          })),
+          feedbackOk: q.feedbackOk,
+          feedbackError: q.feedbackError
+        })),
+        settings
+      }
+
+      const createdExam = await createExam(examPayload)
+
+      alert("Exam saved successfully ✅")
+
+      // optional: redirect to exam page
+      //router.push(`/exam/${createdExam.id}`)
+
+    } catch (error: any) {
+      console.error(error)
+      alert(error.message || "Failed to save exam")
     }
-
-    const examPayload = {
-      title,
-      description,
-      questions: questions.map(q => ({
-        text: q.text,
-        type: q.type,
-        points: q.points,
-        required: q.required,
-        feedbackOk: q.feedbackOk,
-        feedbackError: q.feedbackError,
-        options: q.options.map(o => ({
-          text: o.text,
-          checked: o.checked
-        }))
-      })),
-      settings
-    }
-
-    const createdExam = await createExam(examPayload)
-
-    alert("Exam saved successfully ✅")
-
-    // optional: redirect to exam page
-    router.push(`/exam/${createdExam.id}`)
-
-  } catch (error: any) {
-    console.error(error)
-    alert(error.message || "Failed to save exam")
   }
-}
 
   function addQuestion() {
     setQuestions(qs => [
@@ -353,31 +342,6 @@ async function saveExam() {
     }
   }
 
-  function saveSettings(){
-
-  alert("Settings saved successfully");
-}
-
-  function toggleToolbar() {
-    setIsToolbarCollapsed(prev => !prev)
-  }
-
-  function updateSetting<K extends keyof Settings>(
-    key: K,
-    value: Settings[K]
-  ) {
-    setSettings(prev => {
-      if (!prev) return prev
-
-      return {
-        ...prev,
-        [key]: value
-      }
-    })
-
-    setIsSettingsDirty(true)
-  }
-
   const formattedPoints = Number(totalPoints);
 
   /* =====================
@@ -409,7 +373,7 @@ async function saveExam() {
           <button className="g-tooltip" data-tooltip="Add question" onClick={addQuestion}><i className="fa fa-plus"></i></button>
           <button className="g-tooltip" data-tooltip="Import Exam"><i className="fa fa-upload"></i></button>
           <button className="g-tooltip" data-tooltip="Save Exam" onClick={saveExam}><i className="fa fa-save"></i></button>
-          <button className="g-tooltip" data-tooltip="Settings" onClick={() => setIsProctorOpen(true)}><i className="fa fa-gear"></i></button>
+          <button className="g-tooltip" data-tooltip="Settings" onClick={() => setIsSettingsOpen(true)}><i className="fa fa-gear"></i></button>
           <button className="g-tooltip" data-tooltip="Preview exam" onClick={() => router.push("/preview")}><i className="fa fa-eye"></i></button>
           <button className="g-tooltip" data-tooltip="Delete exam"><i className="fa fa-trash"></i></button>
           <button className="toolbar-btn primary">Publish</button>
@@ -670,29 +634,19 @@ async function saveExam() {
           ))}
         </div>
       </div>
+      
+      {/* Settings Modal */}
+      <div className={`settings-modal ${!isSeetingsOpen ? "hidden" : ""}`}>
+        
+        <div className="settings-card">
 
-      {/* Proctor Modal */}
-      <div className={`proctor-modal ${!isProctorOpen ? "hidden" : ""}`}>
-        <div className="proctor-card">
-
-          <div className="proctor-header">
+          <div className="settings-header">
             <h3>Settings</h3>
-            <button className="btn-icon" onClick={() => setIsProctorOpen(false)}>✕</button>
+            <button className="btn-icon" onClick={() => setIsSettingsOpen(false)}>✕</button>
           </div>
-
-          {/* Settings Tabs */}
-          <div className="settings-tabs">
-            <button className={activeTab === "general" ? "tab active" : "tab"} onClick={() => setActiveTab("general")}>General</button>
-            <button className={activeTab === "proctor" ? "tab active" : "tab"} onClick={() => setActiveTab("proctor")}>Proctor 🛡️</button>
-          </div>
-
-          {/* Tab contents */}
+          
           <div className="settings-content">
 
-            {/* General Settings */}
-            {activeTab === "general" && (
-              <div className="tab-panel">
-              <label className="toggle-row"><strong>General:</strong></label>
               <label className="toggle-row" style={{ display:"none" }}>
                 <input type="checkbox" data-proctor="shuffle-questions" />
                 <span>Shuffle questions</span>
@@ -703,57 +657,67 @@ async function saveExam() {
                 <span>Shuffle options</span>
               </label>
 
-              <label className="toggle-row">
-                <input type="checkbox" id="viewToggleQuestions" data-proctor="view-toggle-questions" />
-                <span>View toggle questions (One by One/All)</span>
-              </label>
-              
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="view-questions" />
-                <span>View questions One by One</span>
-              </label>
-
-              <div className="toggle-inline">
-                <label className="toggle-row">
-                  <input type="checkbox" data-proctor="score-min" checked={showScoreMin}
-                    onChange={(e) => setShowScoreMin(e.target.checked)} />
-                  <span>Points/Score minimum to pass</span>
+              <div className="gf-toggle-row">
+                <span className="gf-label">
+                  View toggle One by One/All questions
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="view-toggle-questions"
+                  />
+                  <span className="slider"></span>
                 </label>
-
-                <div
-                  className="score-row"
-                  style={{ display: showScoreMin ? "flex" : "none" }}>
-                    <input
-                      type="number"
-                      className="score-input"
-                      min="0"
-                      step="1"
-                      value={scoreMinValue}
-                      onChange={(e) => setScoreMinValue(Number(e.target.value) || 0)}
-                    /> points
-                </div>
               </div>
-            </div>)}
-            
-            {/* Proctor Settings */}
-            {activeTab === "proctor" && (
-            <div className="tab-panel" id="tab-proctor">
 
-              {/* Timer */}
-              <label className="toggle-row"><strong>Timer:</strong></label>
-
-              <div className="toggle-inline">
-                <label className="toggle-row">
-                  <input type="checkbox" data-proctor="timer-enabled" checked={timerEnabled}
-                    onChange={(e) => setTimerEnabled(e.target.checked)}/>
-                  <span>Timer Left</span>
+              <div className="gf-toggle-row">
+                <span className="gf-label">
+                  View questions One by One
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="view-questions"
+                  />
+                  <span className="slider"></span>
                 </label>
+              </div>
 
-                {timerEnabled && (
-                <div className="timer-row">
+              <div className="gf-toggle-row">
+                <span className="gf-label">
+                  Points minimum to pass
+                </span>
+
+                <div className="q-points">
                   <input
                     type="number"
-                    className="timer-input timer-input-hours"
+                    className="points-input"
+                    min="0"
+                    step="1"
+                    value={scoreMinValue}
+                    onChange={(e) => setScoreMinValue(Number(e.target.value) || 0)}
+                  /> points
+                </div>
+              </div>
+            
+              <div className="line-separator" />
+
+              <div>
+                <span className="gf-label">
+                  <strong>PROCTOR</strong>
+                </span>
+              </div>
+
+              {/* Timer */}
+              <div className="gf-toggle-row">
+                <span className="gf-label">
+                  Timer Left
+                </span>
+
+                <div className="q-points">
+                  <input
+                    type="number"
+                    className="points-input"
                     min="0"
                     max="24"
                     step="1"
@@ -766,7 +730,7 @@ async function saveExam() {
                   <span>:</span>
                   <input
                     type="number"
-                    className="timer-input timer-input-mins"
+                    className="points-input"
                     min="0"
                     max="59"
                     step="1"
@@ -776,77 +740,165 @@ async function saveExam() {
                       setMinutes(value)
                     }}
                   />min
-                </div>)}
+                </div>
               </div>
 
               {/* Camera */}
-              <label className="toggle-row"><strong>Camera:</strong></label>
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="camera-enabled" />
-                <span>Show camera</span>
-              </label>
+              <div className="gf-toggle-row">
+                <span className="gf-label">
+                  Camera
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="camera-enabled"
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="camera-face" />
-                <span>Face Detection: Detect Face absence</span>
-              </label>
+              <div className="gf-toggle-row sub-setting">
+                <span className="gf-label">
+                  Detect Face absence
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="camera-face"
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="camera-eye" />
-                <span>Eye-Tracking: Gaze Direction</span>
-              </label>
+              <div className="gf-toggle-row sub-setting">
+                <span className="gf-label">
+                  Eye-Tracking: Gaze Direction
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="camera-eye"
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
               {/* Microphone */}
-              <label className="toggle-row"><strong>Microphone:</strong></label>
+              <div className="gf-toggle-row">
+                <span className="gf-label">
+                  Microphone
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="microphone-enabled"
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="microphone-enabled" />
-                <span>Show microphone</span>
-              </label>
-
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="noise-loud" />
-                <span>Noise-detection: Detect loud background noise</span>
-              </label>
+              <div className="gf-toggle-row sub-setting">
+                <span className="gf-label">
+                  Noise-detection: Detect loud background noise
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="noise-loud"
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
               {/* Screen */}
-              <label className="toggle-row"><strong>Screen:</strong></label>
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-tab"/>
-                <span>Detect tab switching or minimize</span>
-              </label>
+              <div>
+                <span className="gf-label">
+                  Screen
+                </span>
+              </div>
 
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-fullscreen"/>
-                <span>Detect fullscreen exit</span>
-              </label>
+              <div className="gf-toggle-row sub-setting">
+                <span className="gf-label">
+                  Detect tab switching or minimize
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="screen-tab"
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-devtools"/>
-                <span>Detect DevTools Opening</span>
-              </label>
+              <div className="gf-toggle-row sub-setting">
+                <span className="gf-label">
+                  Detect fullscreen exit
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="screen-fullscreen"
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-leave"/>
-                <span>Detect leaving fullscreen</span>
-              </label>
+              <div className="gf-toggle-row sub-setting">
+                <span className="gf-label">
+                  Detect DevTools Opening
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="screen-devtools"
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-keyshortcuts"/>
-                <span>Block Keyboard Shortcuts</span>
-              </label>
+              <div className="gf-toggle-row sub-setting">
+                <span className="gf-label">
+                  Detect leaving fullscreen
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="screen-leave"
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
-              <label className="toggle-row">
-                <input type="checkbox" data-proctor="screen-secondmonitor"/>
-                <span>Fake "Second Monitor Detection"</span>
-              </label>
+              <div className="gf-toggle-row sub-setting">
+                <span className="gf-label">
+                  Block Keyboard Shortcuts
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="screen-keyshortcuts"
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
-            </div>)}
+              <div className="gf-toggle-row sub-setting">
+                <span className="gf-label">
+                  Fake "Second Monitor Detection"
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    data-proctor="screen-secondmonitor"
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
           </div>
         
           <div className="proctor-footer">
-            <button className="btn-save" onClick={saveSettings} disabled>💾 Save</button>
+            <button className="btn-save" onClick={() => setIsSettingsOpen(false)}>Save</button>
           </div>
         </div>
       </div>

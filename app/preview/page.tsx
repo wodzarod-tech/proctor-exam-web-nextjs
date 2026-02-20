@@ -800,7 +800,7 @@ async function startMicrophone() {
 
         {/* Options header */}
         <div className="preview-topbar">
-          <button id="goBack" className="nav-btn" data-tooltip="Back to editor" onClick={() => router.push("/create")}>⬅ Back</button>
+          <button id="goBack" className="nav-btn" data-tooltip="Back to editor" onClick={() => router.push("/edit")}>⬅ Back</button>
           
           <div id="resultFilters" style={{ display: "flex", margin: "12px 0", gap: "8px" }}>
             <button onClick={() => filterResults('all')}>📋 All</button>

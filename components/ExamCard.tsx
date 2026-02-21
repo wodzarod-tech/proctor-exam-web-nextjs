@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { deleteExam } from "@/lib/actions/exam.actions"
+import { useRouter } from "next/navigation"
 
 interface ExamCardProps {
   id: string;
@@ -27,9 +28,6 @@ const ExamCard = ({
   settings,
   color
 }: ExamCardProps) => {
-  const pathname = usePathname();
-  const handleBookmark = async () => {
-  };
 
   const hours = settings?.timer?.hours ?? 0;
   const minutes = settings?.timer?.minutes ?? 0;
@@ -52,18 +50,45 @@ const ExamCard = ({
       .join(" ");
   }
 
+  // Delete exam
+  const router = useRouter()
+
+  const handleDelete = async () => {
+    const confirmDelete = confirm("Are you sure you want to delete this exam?")
+
+    if (!confirmDelete) return
+
+    try {
+      await deleteExam(id)
+      router.refresh() // refresh page to remove card
+    } catch (error) {
+      console.error(error)
+      alert("Failed to delete exam")
+    }
+  }
+
   return (
     <article className="companion-card" style={{backgroundColor: color}}>
       <div className="flex justify-between items-center">
         <div className="subject-badge">{title}</div>
-        <button className="companion-bookmark" onClick={handleBookmark}>
-          <Image
-            src={"/icons/bookmark.svg"            }
-            alt="bookmark"
-            width={12.5}
-            height={15}
-          />
-        </button>
+
+        <div className="flex items-center">
+          {/* Edit Button */}
+          <Link
+            href={`/edit/${id}`}
+            className="icon-btn g-tooltip"
+            data-tooltip="Edit exam">
+            <i className="fa fa-pen text-sm"></i>
+          </Link>
+
+          {/* Delete Button */}
+          <button
+            className="icon-btn g-tooltip"
+            data-tooltip="Delete exam"
+            onClick={handleDelete}>
+            <i className="fa fa-trash text-sm"></i>
+          </button>
+        </div>
       </div>
 
       <h2 className="text-2xl font-bold">{description}</h2>
@@ -77,7 +102,7 @@ const ExamCard = ({
         <p className="text-sm">{durationLabel}</p>
       </div>
 
-      <Link href={`/exams/${id}`} className="w-full">
+      <Link href={`/exam/${id}`} className="w-full">
         <button className="btn-primary w-full justify-center">
           Take Exam
         </button>

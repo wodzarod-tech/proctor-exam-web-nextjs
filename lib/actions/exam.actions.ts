@@ -100,6 +100,19 @@ export const getExam = async (id: string) => {
     return data[0];
 }
 
+export const deleteExam = async (id: string) => {
+    const supabase = createSupabaseClient();
+
+    const { error } = await supabase
+        .from('exams')
+        .delete()
+        .eq('id', id);
+
+    if(error) return console.log(error);
+
+    return { sucess: true };
+}
+
 // Store conversation in session history (session_history)
 export const addToSessionHistory = async (companionId: string) => {
     const { userId } = await auth(); // Get the authenticated user's ID from Clerk server

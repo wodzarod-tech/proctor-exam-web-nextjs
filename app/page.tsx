@@ -23,7 +23,7 @@ const Page = async ({ searchParams }: SearchParams) => {
     <Navbar />
     <main>
       <section className="flex items-center gap-6">
-        <h1 className="whitespace-nowrap">Exam Library</h1>
+        <h1 className="whitespace-nowrap">My Exams</h1>
 
         <div className="flex-1">
           <SearchInput />
@@ -31,8 +31,7 @@ const Page = async ({ searchParams }: SearchParams) => {
         <Link
           href="/edit"
           className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
-        >
-          + Create Exam
+        >Create Exam
         </Link>
       </section>
       <section className="exams-grid">

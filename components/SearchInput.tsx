@@ -29,7 +29,7 @@ const SearchInput = () => {
 
                 router.push(newUrl, { scroll: false });
             } else {
-                if(pathname === '/exams') {
+                if(pathname === '/exam') {
                     const newUrl = removeKeysFromUrlQuery({
                         params: searchParams.toString(),
                         keysToRemove: ["title"],

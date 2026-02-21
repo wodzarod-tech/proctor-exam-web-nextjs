@@ -20,14 +20,13 @@ interface CompanionSessionPageProps {
 const CompanionSession = async({ params }: CompanionSessionPageProps) => {
   const { id } = await params;
   const companion = await getExam(id);
+  console.log('companion = ', companion);
   const user = await currentUser();
 
   const { title, description, questions, settings } = companion;
 
   if(!user) redirect('/sign-in');
-  if(!title) redirect('/exams');
-
-  //console.log(name);
+  if(!title) redirect('/exam');
 
   return (
     <ExamSession

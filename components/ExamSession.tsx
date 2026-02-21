@@ -104,6 +104,8 @@ const rawQuestions =
     ? JSON.parse(exam.questions)
     : exam.questions;
 
+  console.log('exam=', exam);
+
 const generateId = () =>
   typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()

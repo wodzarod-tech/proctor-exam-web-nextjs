@@ -4,6 +4,8 @@ import "./edit.css"
 import { useEffect, useRef, useState } from 'react'
 import Sortable from 'sortablejs'
 import { useRouter } from 'next/navigation'
+import { exam } from '@/constants'
+import { createExam } from "@/lib/actions/exam.actions"
 import Link from "next/link"
 import Image from "next/image"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
@@ -104,7 +106,7 @@ export default function CreatePage() {
   ])
   const [settings, setSettings] = useState<Settings | null>(null)
 
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isSeetingsOpen, setIsSettingsOpen] = useState(false)
   const [hours, setHours] = useState(0)
   const [minutes, setMinutes] = useState(0)
   const [scoreMinValue, setScoreMinValue] = useState(0)
@@ -119,6 +121,50 @@ export default function CreatePage() {
   /* =====================
      Effects
   ===================== */
+    // Load exam with data by default
+  useEffect(() => {
+    if (!exam) return
+
+    // Transform external exam to internal builder format
+    const mappedQuestions: Question[] = exam.questions.map(q => ({
+      id: uid(),
+      text: q.text,
+      type: q.type as QuestionType,
+      points: q.points,
+      required: q.required,
+      feedbackOk: q.feedbackOk || "",
+      feedbackError: q.feedbackError || "",
+      options: q.options.map(opt => ({
+        id: uid(),
+        text: opt.text,
+        checked: opt.checked
+      }))
+    }))
+
+    const examContent: Exam = {
+      title: exam.title,
+      description: exam.description,
+      questions: mappedQuestions,
+      settings: exam.settings
+    }
+
+    setTitle(examContent.title)
+    setDescription(examContent.description)
+    setQuestions(examContent.questions)
+    setSettings(examContent.settings)
+  }, [])
+
+  /*
+  // Auto-save JSON
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      localStorage.setItem('formContent', JSON.stringify(exportJSON(), null, 2))
+    }, 1500)
+
+    return () => clearTimeout(timeout)
+  }, [title, description, questions, settings])
+*/
+
   // Enable Sortable (questions): when drag & drop a question card
   useEffect(() => {
     if (!questionsRef.current) return
@@ -189,10 +235,14 @@ export default function CreatePage() {
   }, [])
 
   // auto-adjust textarea when loading existing content
-  function autoResize(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    e.currentTarget.style.height = "auto"
-    e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
-  }
+  useEffect(() => {
+    const areas = document.querySelectorAll(".q-comment")
+    areas.forEach((area) => {
+      const el = area as HTMLTextAreaElement
+      el.style.height = "auto"
+      el.style.height = el.scrollHeight + "px"
+    })
+  }, [questions])
 
   /* =====================
      Actions
@@ -218,8 +268,7 @@ export default function CreatePage() {
         settings
       }
 
-    console.log('examPayload=', examPayload);
-      //const createdExam = await createExam(examPayload)
+      const createdExam = await createExam(examPayload)
 
       alert("Exam saved successfully ✅")
 
@@ -423,7 +472,9 @@ export default function CreatePage() {
                 value={q.text}
                 onChange={(e) => {
                   updateQuestion(q.id, { text: e.target.value })
-                  autoResize(e)
+                  // auto-resize
+                  e.currentTarget.style.height = "auto"
+                  e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
                 }}
               />
 
@@ -480,7 +531,9 @@ export default function CreatePage() {
                               : o
                           )
                         })
-                        autoResize(e)
+                        // auto-resize
+                        e.currentTarget.style.height = "auto"
+                        e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
                       }}
                     />
 
@@ -513,7 +566,11 @@ export default function CreatePage() {
                 value={q.feedbackOk}
                 onChange={(e) => {
                   updateQuestion(q.id, { feedbackOk: e.target.value })
-                  autoResize(e)
+
+                  // auto-resize
+                  e.currentTarget.style.height = "auto"
+                  e.currentTarget.style.height =
+                  e.currentTarget.scrollHeight + "px"
                 }}
               />
 
@@ -529,7 +586,11 @@ export default function CreatePage() {
                 value={q.feedbackError}
                 onChange={(e) => {
                   updateQuestion(q.id, { feedbackError: e.target.value })
-                  autoResize(e)
+
+                  // auto-resize
+                  e.currentTarget.style.height = "auto"
+                  e.currentTarget.style.height =
+                  e.currentTarget.scrollHeight + "px"
                 }}
               />
 
@@ -575,7 +636,7 @@ export default function CreatePage() {
       </div>
       
       {/* Settings Modal */}
-      <div className={`settings-modal ${!isSettingsOpen ? "hidden" : ""}`}>
+      <div className={`settings-modal ${!isSeetingsOpen ? "hidden" : ""}`}>
         
         <div className="settings-card">
 

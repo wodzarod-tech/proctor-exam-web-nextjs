@@ -7,22 +7,22 @@ import { useRouter } from 'next/navigation'
 import Link from "next/link"
 import Image from "next/image"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
+import { createExam } from "@/lib/actions/exam.actions"
 
 /* =====================
    Types
 ===================== */
-type Option = {
-  id: string
-  text: string
-  checked: boolean
+type Exam = {
+  title: string
+  description: string
+  questions: Question[]
+  settings: Settings
 }
-
-type QuestionType = 'radio' | 'checkbox'
 
 type Question = {
   id: string
   text: string
-  type: QuestionType
+  type: OptionType
   points: number
   required: boolean
   options: Option[]
@@ -30,12 +30,13 @@ type Question = {
   feedbackError: string
 }
 
-type Exam = {
-  title: string
-  description: string
-  questions: Question[]
-  settings: Settings
+type Option = {
+  id: string
+  text: string
+  checked: boolean
 }
+
+type OptionType = 'radio' | 'checkbox'
 
 type Settings = {
   general: {
@@ -91,35 +92,61 @@ const createEmptyQuestion = (): Question => ({
 ===================== */
 export default function CreatePage() {
   const router = useRouter()
-  const questionsRef = useRef<HTMLDivElement>(null)
+
   const containerRef = useRef<HTMLDivElement>(null) // when click outside question card
+  const questionsRef = useRef<HTMLDivElement>(null) // for drag & drop
+  const optionRefs = useRef<Record<string, HTMLDivElement | null>>({}) // for drag & drop
 
-  {/*enableOptionDrag (Sortable per question) */}
-  const optionRefs = useRef<Record<string, HTMLDivElement | null>>({})
-
+  // Form fields
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [questions, setQuestions] = useState<Question[]>([
     createEmptyQuestion()
   ])
-  const [settings, setSettings] = useState<Settings | null>(null)
+  const [settings, setSettings] = useState<Settings>({
+    general: {
+      shuffleQuestions: false,
+      shuffleOptions: false,
+      viewToggleQuestions: false,
+      viewQuestions: false,
+      scoreMin: 0,
+    },
+    timer: {
+      hours: 0,
+      minutes: 0,
+    },
+    camera: {
+      enabled: false,
+      faceAbsence: false,
+      eyeTracking: false,
+    },
+    microphone: {
+      enabled: false,
+      loudNoise: false,
+    },
+    screen: {
+      tabSwitch: false,
+      fullscreenExit: false,
+      devToolsOpen: false,
+      leaveFullScreen: false,
+      blockKeyShortcuts: false,
+      secondMonitor: false,
+    },
+  })
 
+  // Open/Close Settings modal
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [hours, setHours] = useState(0)
-  const [minutes, setMinutes] = useState(0)
-  const [scoreMinValue, setScoreMinValue] = useState(0)
 
+  // Active/Desactivate question card
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null)
 
-  /* =====================
-     Derived
-  ===================== */
   const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0)
+  const formattedPoints = Number(totalPoints);
 
   /* =====================
      Effects
   ===================== */
-  // Enable Sortable (questions): when drag & drop a question card
+  // drag & drop a question card
   useEffect(() => {
     if (!questionsRef.current) return
 
@@ -141,10 +168,12 @@ export default function CreatePage() {
     }
   }, [])
 
-  // Replace enableOptionDrag(opt) and options._sortable = new Sortable(...)
+  // drag & drop options
   useEffect(() => {
+    const sortables: Sortable[] = []
+
     Object.entries(optionRefs.current).forEach(([qid, el]) => {
-      if (!el || (el as any)._sortable) return
+      if (!el) return
 
       const sortable = new Sortable(el, {
         handle: '.opt-drag',
@@ -164,8 +193,12 @@ export default function CreatePage() {
         }
       })
 
-      ;(el as any)._sortable = sortable
+      sortables.push(sortable)
     })
+
+    return () => {
+      sortables.forEach(s => s.destroy())
+    }
   }, [questions])
 
   // Click-outside effect to deselect active question card
@@ -199,7 +232,6 @@ export default function CreatePage() {
   ===================== */
   async function saveExam() {
     try {
-
       const examPayload = {
         title,
         description,
@@ -218,13 +250,10 @@ export default function CreatePage() {
         settings
       }
 
-    console.log('examPayload=', examPayload);
+      console.log('examPayload=',examPayload)
       //const createdExam = await createExam(examPayload)
 
       alert("Exam saved successfully ✅")
-
-      // optional: redirect to exam page
-      //router.push(`/exam/${createdExam.id}`)
 
     } catch (error: any) {
       console.error(error)
@@ -283,17 +312,6 @@ export default function CreatePage() {
       )
     )
   }
-
-  function exportJSON() {
-    return {
-      title,
-      description,
-      questions,
-      settings
-    }
-  }
-
-  const formattedPoints = Number(totalPoints);
 
   /* =====================
      Render
@@ -431,7 +449,7 @@ export default function CreatePage() {
                 value={q.type}
                 onChange={(e) =>
                   updateQuestion(q.id, {
-                    type: e.target.value as QuestionType
+                    type: e.target.value as OptionType
                   })
                 }
               >
@@ -586,15 +604,49 @@ export default function CreatePage() {
           
           <div className="settings-content">
 
-              <label className="toggle-row" style={{ display:"none" }}>
-                <input type="checkbox" data-proctor="shuffle-questions" />
-                <span>Shuffle questions</span>
-              </label>
+              <div className="gf-toggle-row">
+                <span className="gf-label">
+                  Shuffle questions
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.general.shuffleQuestions}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        general: {
+                          ...prev.general,
+                          shuffleQuestions: e.target.checked
+                        }
+                      }))
+                    }
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
-              <label className="toggle-row" style={{ display:"none" }}>
-                <input type="checkbox" data-proctor="shuffle-options" />
-                <span>Shuffle options</span>
-              </label>
+              <div className="gf-toggle-row">
+                <span className="gf-label">
+                  Shuffle options
+                </span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.general.shuffleOptions}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        general: {
+                          ...prev.general,
+                          shuffleOptions: e.target.checked
+                        }
+                      }))
+                    }
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
 
               <div className="gf-toggle-row">
                 <span className="gf-label">
@@ -603,7 +655,16 @@ export default function CreatePage() {
                 <label className="switch">
                   <input
                     type="checkbox"
-                    data-proctor="view-toggle-questions"
+                    checked={settings.general.viewToggleQuestions}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        general: {
+                          ...prev.general,
+                          viewToggleQuestions: e.target.checked
+                        }
+                      }))
+                    }
                   />
                   <span className="slider"></span>
                 </label>
@@ -632,9 +693,18 @@ export default function CreatePage() {
                     type="number"
                     className="points-input"
                     min="0"
-                    step="1"
-                    value={scoreMinValue}
-                    onChange={(e) => setScoreMinValue(Number(e.target.value) || 0)}
+                    step="0.1"
+                    value={settings.general.scoreMin}
+                    onChange={(e) => {
+                      const value = Number(e.target.value) || 0
+                      setSettings(prev => ({
+                        ...prev,
+                        general: {
+                          ...prev.general,
+                          scoreMin: value
+                        }
+                      }))
+                    }}
                   /> points
                 </div>
               </div>
@@ -643,7 +713,7 @@ export default function CreatePage() {
 
               <div>
                 <span className="gf-label">
-                  <strong>PROCTOR</strong>
+                  <h2><strong>PROCTOR</strong></h2>
                 </span>
               </div>
 
@@ -660,10 +730,16 @@ export default function CreatePage() {
                     min="0"
                     max="24"
                     step="1"
-                    value={hours}
+                    value={settings.timer.hours}
                     onChange={(e) => {
                       const value = Math.max(0, Math.min(24, Number(e.target.value)))
-                      setHours(value)
+                      setSettings(prev => ({
+                        ...prev,
+                        timer: {
+                          ...prev.timer,
+                          hours: value
+                        }
+                      }))
                     }}
                   />hour
                   <span>:</span>
@@ -673,10 +749,16 @@ export default function CreatePage() {
                     min="0"
                     max="59"
                     step="1"
-                    value={minutes}
+                    value={settings.timer.minutes}
                     onChange={(e) => {
                       const value = Math.max(0, Math.min(59, Number(e.target.value)))
-                      setMinutes(value)
+                      setSettings(prev => ({
+                        ...prev,
+                        timer: {
+                          ...prev.timer,
+                          minutes: value
+                        }
+                      }))
                     }}
                   />min
                 </div>
@@ -688,10 +770,19 @@ export default function CreatePage() {
                   Camera
                 </span>
                 <label className="switch">
-                  <input
-                    type="checkbox"
-                    data-proctor="camera-enabled"
-                  />
+                <input
+                  type="checkbox"
+                  checked={settings.camera.enabled}
+                  onChange={(e) =>
+                    setSettings(prev => ({
+                      ...prev,
+                      camera: {
+                        ...prev.camera,
+                        enabled: e.target.checked
+                      }
+                    }))
+                  }
+                />
                   <span className="slider"></span>
                 </label>
               </div>
@@ -703,7 +794,16 @@ export default function CreatePage() {
                 <label className="switch">
                   <input
                     type="checkbox"
-                    data-proctor="camera-face"
+                    checked={settings.camera.faceAbsence}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        camera: {
+                          ...prev.camera,
+                          faceAbsence: e.target.checked
+                        }
+                      }))
+                    }
                   />
                   <span className="slider"></span>
                 </label>
@@ -716,7 +816,16 @@ export default function CreatePage() {
                 <label className="switch">
                   <input
                     type="checkbox"
-                    data-proctor="camera-eye"
+                    checked={settings.camera.eyeTracking}
+                    onChange={(e) =>
+                    setSettings(prev => ({
+                      ...prev,
+                      camera: {
+                        ...prev.camera,
+                        eyeTracking: e.target.checked
+                      }
+                    }))
+                  }
                   />
                   <span className="slider"></span>
                 </label>
@@ -730,7 +839,16 @@ export default function CreatePage() {
                 <label className="switch">
                   <input
                     type="checkbox"
-                    data-proctor="microphone-enabled"
+                    checked={settings.microphone.enabled}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        microphone: {
+                          ...prev.microphone,
+                          enabled: e.target.checked
+                        }
+                      }))
+                    }
                   />
                   <span className="slider"></span>
                 </label>
@@ -743,7 +861,16 @@ export default function CreatePage() {
                 <label className="switch">
                   <input
                     type="checkbox"
-                    data-proctor="noise-loud"
+                    checked={settings.microphone.loudNoise}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        microphone: {
+                          ...prev.microphone,
+                          loudNoise: e.target.checked
+                        }
+                      }))
+                    }
                   />
                   <span className="slider"></span>
                 </label>
@@ -763,7 +890,16 @@ export default function CreatePage() {
                 <label className="switch">
                   <input
                     type="checkbox"
-                    data-proctor="screen-tab"
+                    checked={settings.screen.tabSwitch}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        screen: {
+                          ...prev.screen,
+                          tabSwitch: e.target.checked
+                        }
+                      }))
+                    }
                   />
                   <span className="slider"></span>
                 </label>
@@ -776,7 +912,16 @@ export default function CreatePage() {
                 <label className="switch">
                   <input
                     type="checkbox"
-                    data-proctor="screen-fullscreen"
+                    checked={settings.screen.fullscreenExit}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        screen: {
+                          ...prev.screen,
+                          fullscreenExit: e.target.checked
+                        }
+                      }))
+                    }
                   />
                   <span className="slider"></span>
                 </label>
@@ -789,7 +934,16 @@ export default function CreatePage() {
                 <label className="switch">
                   <input
                     type="checkbox"
-                    data-proctor="screen-devtools"
+                    checked={settings.screen.devToolsOpen}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        screen: {
+                          ...prev.screen,
+                          devToolsOpen: e.target.checked
+                        }
+                      }))
+                    }
                   />
                   <span className="slider"></span>
                 </label>
@@ -802,7 +956,16 @@ export default function CreatePage() {
                 <label className="switch">
                   <input
                     type="checkbox"
-                    data-proctor="screen-leave"
+                    checked={settings.screen.leaveFullScreen}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        screen: {
+                          ...prev.screen,
+                          leaveFullScreen: e.target.checked
+                        }
+                      }))
+                    }
                   />
                   <span className="slider"></span>
                 </label>
@@ -815,7 +978,16 @@ export default function CreatePage() {
                 <label className="switch">
                   <input
                     type="checkbox"
-                    data-proctor="screen-keyshortcuts"
+                    checked={settings.screen.blockKeyShortcuts}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        screen: {
+                          ...prev.screen,
+                          blockKeyShortcuts: e.target.checked
+                        }
+                      }))
+                    }
                   />
                   <span className="slider"></span>
                 </label>
@@ -828,16 +1000,20 @@ export default function CreatePage() {
                 <label className="switch">
                   <input
                     type="checkbox"
-                    data-proctor="screen-secondmonitor"
+                    checked={settings.screen.secondMonitor}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        screen: {
+                          ...prev.screen,
+                          secondMonitor: e.target.checked
+                        }
+                      }))
+                    }
                   />
                   <span className="slider"></span>
                 </label>
               </div>
-
-          </div>
-        
-          <div className="proctor-footer">
-            <button className="btn-save" onClick={() => setIsSettingsOpen(false)}>Save</button>
           </div>
         </div>
       </div>

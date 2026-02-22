@@ -8,9 +8,18 @@ import ExamCard from '@/components/ExamCard1'
 import TitleCard from '@/components/TitleCard'
 import QuestionCard from '@/components/QuestionCard2'
 
-/***************************
-Types
-***************************/
+/* =====================
+   Types
+===================== */
+
+type Option = {
+  id: string
+  text: string
+  checked: boolean
+}
+
+type QuestionType = 'radio' | 'checkbox'
+
 type Question = {
   id: string
   text: string
@@ -22,15 +31,7 @@ type Question = {
   feedbackError: string
 }
 
-type Option = {
-  id: string
-  text: string
-  checked: boolean
-}
-
-type QuestionType = 'radio' | 'checkbox'
-
-type Settings = {
+type ProctorSettings = {
   general: {
     shuffleQuestions: boolean
     shuffleOptions: boolean
@@ -39,6 +40,7 @@ type Settings = {
     scoreMin: number
   }
   timer: {
+    enabled: boolean
     hours: number
     minutes: number
   }
@@ -61,9 +63,10 @@ type Settings = {
   }
 }
 
-/***************************
-Helpers
-***************************/
+/* =====================
+   Helpers
+===================== */
+
 const uid = () => crypto.randomUUID()
 
 const createEmptyQuestion = (): Question => ({
@@ -79,62 +82,26 @@ const createEmptyQuestion = (): Question => ({
   feedbackError: ''
 })
 
-/***************************
-Page
-***************************/
-export default function PreviewExam() {
+/* =====================
+   Page
+===================== */
+
+export default function PreviewExam2() {
   const router = useRouter()
-
+  const questionsRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null) // when click outside question card
-  const questionsRef = useRef<HTMLDivElement>(null) // for drag & drop
-  const optionRefs = useRef<Record<string, HTMLDivElement | null>>({}) // for drag & drop
 
-  // Form fields
+  {/*enableOptionDrag (Sortable per question) */}
+  const optionRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [questions, setQuestions] = useState<Question[]>([
     createEmptyQuestion()
   ])
-  const [settings, setSettings] = useState<Settings>({
-    general: {
-      shuffleQuestions: false,
-      shuffleOptions: false,
-      viewToggleQuestions: false,
-      viewQuestions: false,
-      scoreMin: 0,
-    },
-    timer: {
-      hours: 0,
-      minutes: 0,
-    },
-    camera: {
-      enabled: false,
-      faceAbsence: false,
-      eyeTracking: false,
-    },
-    microphone: {
-      enabled: false,
-      loudNoise: false,
-    },
-    screen: {
-      tabSwitch: false,
-      fullscreenExit: false,
-      devToolsOpen: false,
-      leaveFullScreen: false,
-      blockKeyShortcuts: false,
-      secondMonitor: false,
-    },
-  })
-
-  // Active/Desactivate question card
-  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null) // NO USAR
-
-  const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0)
-
+  const [settings, setSettings] = useState<ProctorSettings | null>(null)
   const [isSettingsDirty, setIsSettingsDirty] = useState(false) // Track if settings have unsaved changes
-              // NO USAR
-  
-              // REVIEW
+
   const [isProctorOpen, setIsProctorOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("general")
   const [showScoreMin, setShowScoreMin] = useState(false)
@@ -143,6 +110,7 @@ export default function PreviewExam() {
   const [minutes, setMinutes] = useState(0)
   const [scoreMinValue, setScoreMinValue] = useState(0)
 
+  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null)
   const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false)
 
   // Face absence detection and eye-tracking
@@ -154,11 +122,17 @@ export default function PreviewExam() {
   const faceMeshRef = useRef<any>(null);
   const lastFaceStateRef = useRef<string>("unknown");
 
-/***************************
-Effects
-***************************/
+  /* =====================
+     Derived
+  ===================== */
+
+  const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0)
+
+  /* =====================
+     Effects
+  ===================== */
+/*
   // Camera
-  // ---------------------------
   useEffect(() => {
     const cameraSettings = {
       faceAbsence: true,
@@ -177,7 +151,6 @@ Effects
   }, [])
 
   // Microphone
-  // ---------------------------
   useEffect(() => {
     startMicrophone()
 
@@ -194,72 +167,155 @@ Effects
       }
     }
   }, [])
-
-  // Timer
-  // ---------------------------
-  const [timeLeft, setTimeLeft] = useState(0);
-
-  const hoursTimer = Math.max(0, Math.floor(timeLeft / 3600));
-  const minutesTimer = Math.max(0, Math.floor((timeLeft % 3600) / 60));
-  const secondsTimer = Math.max(0, timeLeft % 60);
-
-  const formattedTime = `Time Left: ${hoursTimer}:${
-    minutesTimer < 10 ? "0" : ""
-  }${minutesTimer}:${secondsTimer < 10 ? "0" : ""}${secondsTimer}`;
-
-  // Set initial time on load
+*/
+  // Auto-save JSON
   useEffect(() => {
-    const hours = 1;
-    const minutes = 20;
-    const seconds = 10;
+    const timeout = setTimeout(() => {
+      localStorage.setItem('formContent', JSON.stringify(exportJSON(), null, 2))
+    }, 1500)
 
-    const total =
-      Number(hours || 0) * 3600 +
-      Number(minutes || 0) * 60 +
-      Number(seconds || 0);
+    return () => clearTimeout(timeout)
+  }, [title, description, questions, settings])
 
-    setTimeLeft(total);
-  }, []);
+// Enable Sortable (questions): when drag & drop a question card
+useEffect(() => {
+  if (!questionsRef.current) return
 
-  // Countdown Logic
-  useEffect(() => {
-    if (timeLeft <= 0) return;
+  const sortable = new Sortable(questionsRef.current, {
+    handle: '.drag',
+    animation: 150,
+    onEnd: (evt) => {
+      setQuestions(prev => {
+        const reordered = [...prev]
+        const [moved] = reordered.splice(evt.oldIndex!, 1)
+        reordered.splice(evt.newIndex!, 0, moved)
+        return reordered
+      })
+    }
+  })
 
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
+  return () => {
+    sortable.destroy()
+  }
+}, [])
 
-    return () => clearInterval(interval);
-  }, [timeLeft]);
+// Replace enableOptionDrag(opt) and options._sortable = new Sortable(...)
+useEffect(() => {
+  Object.entries(optionRefs.current).forEach(([qid, el]) => {
+    if (!el || (el as any)._sortable) return
+
+    const sortable = new Sortable(el, {
+      handle: '.opt-drag',
+      animation: 150,
+      onEnd: (evt) => {
+        setQuestions(prev =>
+          prev.map(q => {
+            if (q.id !== qid) return q
+
+            const reordered = [...q.options]
+            const [moved] = reordered.splice(evt.oldIndex!, 1)
+            reordered.splice(evt.newIndex!, 0, moved)
+
+            return { ...q, options: reordered }
+          })
+        )
+      }
+    })
+
+    ;(el as any)._sortable = sortable
+  })
+}, [questions])
+
+// Click-outside effect to deselect active question card
+/*
+useEffect(() => {
+  function handleClickOutside(e: MouseEvent) {
+    if (!containerRef.current) return
+
+    const target = e.target as HTMLElement
+
+    // If click is NOT inside a question card
+    if (!target.closest('.card.question')) {
+      setActiveQuestionId(null)
+    }
+  }
+
+  document.addEventListener('mousedown', handleClickOutside)
+
+  return () => {
+    document.removeEventListener('mousedown', handleClickOutside)
+  }
+}, [])
+*/
+/*
+window.onload = async function() {
+  // Apply Settings/Proctor/Camera
+  await applySettingsProctorCamera(true);
+}*/
+/***************************
+Proctor Settings
+***************************/
+// Proctor Camera Settings
+/*
+async function applySettingsProctorCamera(cameraSettings) {
+  if(!cameraSettings) return;
+  
+  await startCamera(cameraSettings);
+}
+*/
 
 /***************************
-Actions
+Timer
 ***************************/
-  function prevQuestion() {
+const [timeLeft, setTimeLeft] = useState(0);
 
-  }
+const hoursTimer = Math.max(0, Math.floor(timeLeft / 3600));
+const minutesTimer = Math.max(0, Math.floor((timeLeft % 3600) / 60));
+const secondsTimer = Math.max(0, timeLeft % 60);
 
-  function nextQuestion() {
-    
-  }
+const formattedTime = `Time Left: ${hoursTimer}:${
+  minutesTimer < 10 ? "0" : ""
+}${minutesTimer}:${secondsTimer < 10 ? "0" : ""}${secondsTimer}`;
 
-  function submitExam() {
+// Set initial time on load
+useEffect(() => {
+  const hours = 1;
+  const minutes = 20;
+  const seconds = 10;
 
-  }
+  const total =
+    Number(hours || 0) * 3600 +
+    Number(minutes || 0) * 60 +
+    Number(seconds || 0);
 
-  // Face detection
-  // ---------------------------
-  async function loadScript(src: string) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = src;
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  }
+  setTimeLeft(total);
+}, []);
 
-/* BORRAR
+// Countdown Logic
+useEffect(() => {
+  if (timeLeft <= 0) return;
+
+  const interval = setInterval(() => {
+    setTimeLeft((prev) => prev - 1);
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [timeLeft]);
+
+/***************************
+Face detection
+***************************/
+async function loadScript(src: string) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+/*
 async function loadModelIfNeeded() {
   if (modelRef.current) return;
 
@@ -347,8 +403,7 @@ async function detectOnce() {
 }
 */
 
-  // Eye-Tracking (MediaPipe FaceMesh)
-  // ---------------------------
+// Eye-Tracking (MediaPipe FaceMesh)
 async function initFaceMesh(cameraSettings: any) {
   if (!(window as any).FaceMesh) {
     await loadScript(
@@ -388,7 +443,10 @@ async function initFaceMesh(cameraSettings: any) {
 
     const faces = results.multiFaceLandmarks || []
 
-    // Face Absence detection
+    /* =========================
+       FACE ABSENCE DETECTION
+    ========================== */
+
     if (cameraSettings.faceAbsence) {
       if (faces.length === 0) {
         if (lastFaceStateRef.current !== "no_face") {
@@ -409,7 +467,10 @@ async function initFaceMesh(cameraSettings: any) {
       lastFaceStateRef.current = "one_face"
     }
 
-    // Draw face box
+    /* =========================
+       DRAW FACE BOX
+    ========================== */
+
     const landmarks = faces[0]
 
     const xs = landmarks.map((p: any) => p.x * canvas.width)
@@ -424,7 +485,10 @@ async function initFaceMesh(cameraSettings: any) {
     ctx.lineWidth = 3
     ctx.strokeRect(minX, minY, maxX - minX, maxY - minY)
 
-    // Eye tracking
+    /* =========================
+       EYE TRACKING
+    ========================== */
+
     if (cameraSettings.eyeTracking) {
       analyzeEyes(landmarks)
       getGazeDirection(landmarks)
@@ -485,7 +549,13 @@ function getGazeDirection(landmarks: any[]) {
   }
 }
 
-// Camera
+/***************************
+Camera
+***************************/
+/*
+let camera = null;
+const video = document.getElementById('video');
+*/
 async function startCamera(cameraSettings?: any) {
   if (!videoRef.current) return
 
@@ -517,7 +587,9 @@ async function startCamera(cameraSettings?: any) {
   }
 }
 
-// Microphone
+/***************************
+Microphone
+***************************/
 // Config
 const NOISE_THRESHOLD = 0.16;   // When “too loud”
 const SPEAK_THRESHOLD = 0.18;   // When voice detected
@@ -597,6 +669,25 @@ async function startMicrophone() {
   }
 }
 
+  /* =====================
+     Actions
+  ===================== */
+
+  function prevQuestion() {
+
+  }
+
+  function nextQuestion() {
+    
+  }
+
+  function submitExam() {
+
+  }
+
+  function filterResults(qid: string) {
+  }
+
   function addQuestion() {
     setQuestions(qs => [
       ...qs,
@@ -639,11 +730,58 @@ async function startMicrophone() {
     )
   }
 
-/***************************
-Render
-***************************/
+  function removeOption(qid: string, oid: string) {
+    setQuestions(prev =>
+      prev.map(q =>
+        q.id === qid && q.options.length > 1
+          ? { ...q, options: q.options.filter(o => o.id !== oid) }
+          : q
+      )
+    )
+  }
+
+  function exportJSON() {
+    return {
+      title,
+      description,
+      questions,
+      settings
+    }
+  }
+
+  function saveProctorSettings(){
+
+  alert("Settings saved successfully");
+}
+
+  function toggleToolbar() {
+    setIsToolbarCollapsed(prev => !prev)
+  }
+
+  function updateSetting<K extends keyof ProctorSettings>(
+    key: K,
+    value: ProctorSettings[K]
+  ) {
+    setSettings(prev => {
+      if (!prev) return prev
+
+      return {
+        ...prev,
+        [key]: value
+      }
+    })
+
+    setIsSettingsDirty(true)
+  }
+
+  /* =====================
+     Render
+  ===================== */
+
   return (
     <div>
+    {/*<div className="min-h-screen bg-background text-foreground">*/}
+
       <header className="h-2 bg-primary" />
 
       {/* Webcam */}
@@ -664,6 +802,12 @@ Render
         <div className="preview-topbar">
           <button id="goBack" className="nav-btn" data-tooltip="Back to editor" onClick={() => router.push("/edit")}>⬅ Back</button>
           
+          <div id="resultFilters" style={{ display: "flex", margin: "12px 0", gap: "8px" }}>
+            <button onClick={() => filterResults('all')}>📋 All</button>
+            <button onClick={() => filterResults('correct')}>✅ Correct</button>
+            <button onClick={() => filterResults('incorrect')}>❌ Incorrect</button>
+          </div>
+
           <button id="goResults" className="nav-btn" data-tooltip="Back to results" style={{ display: "flex" }} onClick={() => router.push("/result")}>Back to results ➡</button>
 
           <div className="view-toggle" id="viewToggle" style={{ display: "flex" }}>
@@ -693,8 +837,9 @@ Render
           </div>
         </div>
 
-        {/* Questions */}
-        <div ref={questionsRef} className="space-y-4">
+          {/* Questions */}
+          {/*<div id="questions"></div>*/}
+          <div ref={questionsRef} className="space-y-4">
           {questions.map((q, index) => (
             <div key={q.id} className="card question"
               onClick={() => setActiveQuestionId(q.id)}>
@@ -758,6 +903,7 @@ Render
                 <option value="checkbox">☑ Multiple choices</option>
               </select>
 
+              {/*<div className="options"></div>*/}
               <div
                 className="options"
                 ref={(el) => {
@@ -822,6 +968,15 @@ Render
               </div>
     
               <div className="option-separator" style={{display:"none"}}/>
+
+              {/* Toggle header */}
+              {/*
+              <div className="feedback-toggle" onClick={() => toggleFeedback(q.id)}>
+                <span className="feedback-toggle-icon">▼</span>
+                <span className="feedback-toggle-text">Answer feedback</span>
+              </div>*/}
+
+              {/* Collapsible content */}
               
               <div className="feedback" style={{display:"none"}}>
 
@@ -868,6 +1023,221 @@ Render
         </div>
 
       </div>
+
+      {/* Bottom toolbar */}
+      <div
+        id="gformsToolbar"
+        className={`gforms-toolbar bottom ${isToolbarCollapsed ? 'collapsed' : ''}`}
+      >
+        {/* Handle */}
+        <div 
+          className="toolbar-handle g-tooltip"
+          id="toolbarHandle"
+          data-tooltip={isToolbarCollapsed ? "Open panel" : "Close panel"}
+          onClick={toggleToolbar}>
+            {isToolbarCollapsed ? "▲" : "▼"}
+        </div>
+
+        <div className="toolbar-buttons">
+          <button className="g-tooltip" data-tooltip="Add question" onClick={addQuestion}>+</button>
+          <button className="g-tooltip" data-tooltip="Import Exam" onClick={addQuestion}>📂</button>
+          <button className="g-tooltip" data-tooltip="Export Exam" onClick={addQuestion}>💾</button>
+          <button className="g-tooltip" data-tooltip="Settings" onClick={() => setIsProctorOpen(true)}>⚙️</button>
+          <button className="g-tooltip" data-tooltip="Preview exam" onClick={() => router.push("/preview")}>👁️</button>
+          <button className="g-tooltip" data-tooltip="Home" onClick={() => router.push('/')}>🏠</button>
+        </div>
+      </div>
+
+      {/* hidden file input */}
+      <input
+        type="file"
+        id="jsonFileInput"
+        accept="application/json"
+        hidden
+      />
+
+      {/* Proctor Modal */}
+      <div className={`proctor-modal ${!isProctorOpen ? "hidden" : ""}`}>
+        <div className="proctor-card">
+
+          <div className="proctor-header">
+            <h3>Settings</h3>
+            <button className="btn-icon" onClick={() => setIsProctorOpen(false)}>✕</button>
+          </div>
+
+          {/* Settings Tabs */}
+          <div className="settings-tabs">
+            <button className={activeTab === "general" ? "tab active" : "tab"} onClick={() => setActiveTab("general")}>General</button>
+            <button className={activeTab === "proctor" ? "tab active" : "tab"} onClick={() => setActiveTab("proctor")}>Proctor 🛡️</button>
+          </div>
+
+          {/* Tab contents */}
+          <div className="settings-content">
+
+            {/* General Settings */}
+            {activeTab === "general" && (
+              <div className="tab-panel">
+              <label className="toggle-row"><strong>General:</strong></label>
+              <label className="toggle-row" style={{ display:"none" }}>
+                <input type="checkbox" data-proctor="shuffle-questions" />
+                <span>Shuffle questions</span>
+              </label>
+
+              <label className="toggle-row" style={{ display:"none" }}>
+                <input type="checkbox" data-proctor="shuffle-options" />
+                <span>Shuffle options</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" id="viewToggleQuestions" data-proctor="view-toggle-questions" />
+                <span>View toggle questions (One by One/All)</span>
+              </label>
+              
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="view-questions" />
+                <span>View questions One by One</span>
+              </label>
+
+              <div className="toggle-inline">
+                <label className="toggle-row">
+                  <input type="checkbox" data-proctor="score-min" checked={showScoreMin}
+                    onChange={(e) => setShowScoreMin(e.target.checked)} />
+                  <span>Points/Score minimum to pass</span>
+                </label>
+
+                <div
+                  className="score-row"
+                  style={{ display: showScoreMin ? "flex" : "none" }}>
+                    <input
+                      type="number"
+                      className="score-input"
+                      min="0"
+                      step="1"
+                      value={scoreMinValue}
+                      onChange={(e) => setScoreMinValue(Number(e.target.value) || 0)}
+                    /> points
+                </div>
+              </div>
+            </div>)}
+            
+            {/* Proctor Settings */}
+            {activeTab === "proctor" && (
+            <div className="tab-panel" id="tab-proctor">
+
+              {/* Timer */}
+              <label className="toggle-row"><strong>Timer:</strong></label>
+
+              <div className="toggle-inline">
+                <label className="toggle-row">
+                  <input type="checkbox" data-proctor="timer-enabled" checked={timerEnabled}
+                    onChange={(e) => setTimerEnabled(e.target.checked)}/>
+                  <span>Timer Left</span>
+                </label>
+
+                {timerEnabled && (
+                <div className="timer-row">
+                  <input
+                    type="number"
+                    className="timer-input timer-input-hours"
+                    min="0"
+                    max="24"
+                    step="1"
+                    value={hours}
+                    onChange={(e) => {
+                      const value = Math.max(0, Math.min(24, Number(e.target.value)))
+                      setHours(value)
+                    }}
+                  />hour
+                  <span>:</span>
+                  <input
+                    type="number"
+                    className="timer-input timer-input-mins"
+                    min="0"
+                    max="59"
+                    step="1"
+                    value={minutes}
+                    onChange={(e) => {
+                      const value = Math.max(0, Math.min(59, Number(e.target.value)))
+                      setMinutes(value)
+                    }}
+                  />min
+                </div>)}
+              </div>
+
+              {/* Camera */}
+              <label className="toggle-row"><strong>Camera:</strong></label>
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="camera-enabled" />
+                <span>Show camera</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="camera-face" />
+                <span>Face Detection: Detect Face absence</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="camera-eye" />
+                <span>Eye-Tracking: Gaze Direction</span>
+              </label>
+
+              {/* Microphone */}
+              <label className="toggle-row"><strong>Microphone:</strong></label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="microphone-enabled" />
+                <span>Show microphone</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="noise-loud" />
+                <span>Noise-detection: Detect loud background noise</span>
+              </label>
+
+              {/* Screen */}
+              <label className="toggle-row"><strong>Screen:</strong></label>
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-tab"/>
+                <span>Detect tab switching or minimize</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-fullscreen"/>
+                <span>Detect fullscreen exit</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-devtools"/>
+                <span>Detect DevTools Opening</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-leave"/>
+                <span>Detect leaving fullscreen</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-keyshortcuts"/>
+                <span>Block Keyboard Shortcuts</span>
+              </label>
+
+              <label className="toggle-row">
+                <input type="checkbox" data-proctor="screen-secondmonitor"/>
+                <span>Fake "Second Monitor Detection"</span>
+              </label>
+
+            </div>)}
+
+          </div>
+        
+          <div className="proctor-footer">
+            <button className="btn-save" onClick={saveProctorSettings} disabled>💾 Save</button>
+          </div>
+        </div>
+      </div>
+
+      {/*<TitleCard />*/}
+      {/* <ExamCard /> */}
     </div>
   )
 }

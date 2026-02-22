@@ -9,9 +9,9 @@ import Image from "next/image"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 import { createExam } from "@/lib/actions/exam.actions"
 
-/* =====================
-   Types
-===================== */
+/***************************
+Types
+***************************/
 type Question = {
   id: string
   text: string
@@ -62,9 +62,9 @@ type Settings = {
   }
 }
 
-/* =====================
-   Helpers
-===================== */
+/***************************
+Helpers
+***************************/
 const uid = () => crypto.randomUUID()
 
 const createEmptyQuestion = (): Question => ({
@@ -80,9 +80,9 @@ const createEmptyQuestion = (): Question => ({
   feedbackError: ''
 })
 
-/* =====================
-   Page
-===================== */
+/***************************
+Page
+***************************/
 export default function CreatePage() {
   const router = useRouter()
 
@@ -136,9 +136,9 @@ export default function CreatePage() {
   const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0)
   const formattedPoints = Number(totalPoints);
 
-  /* =====================
-     Effects
-  ===================== */
+/***************************
+Effects
+***************************/
   // drag & drop a question card
   useEffect(() => {
     if (!questionsRef.current) return
@@ -220,9 +220,9 @@ export default function CreatePage() {
     e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
   }
 
-  /* =====================
-     Actions
-  ===================== */
+/***************************
+Actions
+***************************/
   async function saveExam() {
     try {
       const examPayload = {
@@ -243,8 +243,7 @@ export default function CreatePage() {
         settings
       }
 
-      console.log('examPayload=',examPayload)
-      //const createdExam = await createExam(examPayload)
+      const createdExam = await createExam(examPayload)
 
       alert("Exam saved successfully ✅")
 
@@ -306,9 +305,9 @@ export default function CreatePage() {
     )
   }
 
-  /* =====================
-     Render
-  ===================== */
+/***************************
+Render
+***************************/
   return (
     <>
     {/* Navbar */}

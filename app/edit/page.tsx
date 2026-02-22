@@ -12,13 +12,6 @@ import { createExam } from "@/lib/actions/exam.actions"
 /* =====================
    Types
 ===================== */
-type Exam = {
-  title: string
-  description: string
-  questions: Question[]
-  settings: Settings
-}
-
 type Question = {
   id: string
   text: string

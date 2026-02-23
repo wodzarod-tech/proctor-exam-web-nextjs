@@ -92,7 +92,7 @@ const createEmptyQuestion = (): Question => ({
    Page
 ===================== */
 
-const ExamSession = ({ exam, userId }: ExamSessionProps) => {
+const ExamSession2 = ({ exam, userId }: ExamSessionProps) => {
 
   const router = useRouter()
 
@@ -1054,4 +1054,4 @@ function submitExam() {
     </div>
   )
 }
-export default ExamSession
+export default ExamSession2

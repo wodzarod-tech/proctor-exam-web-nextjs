@@ -102,7 +102,7 @@ const ExamCard = ({
         <p className="text-sm">{durationLabel}</p>
       </div>
 
-      <Link href={`/exam/${id}`} className="w-full">
+      <Link href={`/edit/${id}`} className="w-full">
         <button className="btn-primary w-full justify-center">
           Take Exam
         </button>

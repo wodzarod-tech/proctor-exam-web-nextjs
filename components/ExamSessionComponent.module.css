@@ -1,0 +1,779 @@
+:root{
+    --purple:#0c77e9;
+    /*--purple:#673ab7;*/
+    --bg:#f1f3f4;
+    --card:#ffffff;
+    --border:#dadce0;
+    --text:#202124;
+}
+
+.createPage {
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;   /* horizontal center */
+    align-items: flex-start;   /* keep content at top */
+    box-sizing: border-box;
+}
+
+/* Form header total points */
+.headerRow{
+    display: flex;
+    flex-direction: column;
+}
+
+/* Top row */
+.headerTop {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* for mobile */
+@media (max-width: 600px){
+    .headerRow{
+    flex-direction: column;
+    gap: 8px;
+    }
+
+    .totalPoints{
+    margin-left: 0;
+    align-self: flex-end;
+    }
+}
+
+/* Total points aligned right */
+.totalPoints {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    font-size: 14px;
+    color: #5f6368;
+}
+
+.container{
+    width: 100%;
+    max-width:900px;
+
+    /* Mobile padding */
+    padding: 16px 12px 120px; /* bottom padding avoids toolbar overlap */
+    box-sizing: border-box;
+}
+
+.card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-left: 4px solid transparent;
+    border-radius:8px;
+    padding:20px;
+    margin-bottom:10px;
+    position:relative;
+}
+
+/* for mobile */
+@media (max-width: 600px){
+    .card{
+    padding: 16px;
+    border-radius: 10px;
+    }
+}
+
+.card.active{
+    border-left-color: #1a73e8; /* blue active question indicator */
+}
+
+.questionHeader select{
+    padding:6px;
+    border:1px solid var(--border);
+    border-radius:4px;
+    margin-bottom:1px;
+}
+
+.option{
+    position: relative;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+}
+
+/* Base state: no line */
+.textUnderlineInput{
+    font-family: inherit;
+    font-size:14px;
+    width:100%;
+
+    border: none;
+    border-bottom: 1px solid transparent;
+
+    outline:none;
+    
+    /* multiline */
+    resize: none;
+    overflow: hidden;
+
+    background: transparent;
+    
+    line-height: 1.5;
+    padding: 4px 0;
+    
+    transition: border-color .15s ease;
+}
+
+/* Hover = subtle gray line */
+.textUnderlineInput:hover {
+    border-bottom-color: var(--border);
+}
+
+/* Focus = blue highlight */
+.textUnderlineInput:focus {
+    border-bottom-color: #1a73e8;
+}
+
+.qTitle {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* Default: hide borders & fade controls */
+.qType,
+.card .btnLink{
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Active question: show controls */
+.card.active .qType,
+.card.active .btnLink{
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Smooth appearance */
+.qType,
+.card .btnLink{
+    transition: opacity .15s ease;
+}
+
+/* Remove select border when inactive */
+.qType{
+    border-color: transparent;
+}
+
+/* Show select border only when active */
+.card.active .qType{
+    border-color: var(--border);
+    padding:6px;
+    border:1px solid var(--border);
+    border-radius:4px;
+    margin-bottom:1px;
+}
+
+/* Focus highlight */
+.card.active .qType:focus{
+    border-color: #1a73e8;
+}
+
+/* select points for questions */
+.questionHeader{
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 15px;
+}
+
+.qPoints{
+    margin-left: auto; /* pushes points to the right */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #5f6368;
+    font-size: 13px;
+}
+
+.pointsInput{
+    width: 52px;
+    border: none;
+    border-bottom: 1px solid transparent;
+    text-align: right;
+    font-size: 13px;
+    color: #202124;
+    outline: none;
+}
+
+.pointsInput:focus{
+    border-bottom-color: #1a73e8;
+}
+
+.qPoints span{
+    font-size: 13px;
+}
+
+/* option drag & drop */
+.optDrag{
+    /* Hidden by default */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s ease;
+    
+    position: absolute;
+    left: -15px;          /* adjust if needed */
+    top: 50%;
+    transform: translateY(-50%);
+
+    cursor: grab;
+    color: #9aa0a6;
+    user-select: none;
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* Visible only on active question */
+.card.active .optDrag{
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.optIcon{
+    accent-color: #5f6368; /* Google Forms gray */
+}
+
+.btnLink{
+    background:none;
+    border:none;
+    color:var(--purple);
+    cursor:pointer;
+    padding:4px 0;
+}
+
+.gTooltip {
+    position: relative;
+
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 18px;
+
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.gTooltip::after {
+    content: attr(data-tooltip);
+
+    position: absolute;
+    top: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+
+    background: #6b6c6f;
+    color: #fff;
+
+    font-size: 12px;
+    padding: 6px 8px;
+
+    border-radius: 4px;
+    white-space: nowrap;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 0.15s ease;
+}
+
+.gTooltip:hover {
+    background: #f1f3f4;
+}
+
+.gTooltip:hover::after,
+.gTooltip:focus-visible::after{
+    opacity: 1;
+}
+
+.drag{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    height: 2px;
+
+    margin: -8px 0 8px 0;   /* pull it slightly up like GForms */
+    cursor: grab;
+    user-select: none;
+
+    color: #9aa0a6;
+    font-size: 18px;
+    line-height: 4;
+
+    pointer-events: auto;
+}
+
+/* Required toggle */
+.requiredToggle{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #5f6368;
+    pointer-events: auto;
+    visibility: visible;
+}
+
+/* Switch */
+.switch{
+    position: relative;
+    width: 36px;
+    height: 18px;
+}
+
+.switch input{
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider{
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #dadce0;
+    border-radius: 18px;
+    transition: 0.2s;
+}
+
+.slider:before{
+    content: "";
+    position: absolute;
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    top: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.2s;
+}
+
+.switch input:checked + .slider{
+    background-color: var(--purple);
+}
+
+.switch input:checked + .slider:before{
+    transform: translateX(18px);
+}
+/*REVIEW
+pre{
+    background:#111;
+    color:#0f0;
+    padding:12px;
+    font-size:12px;
+    overflow:auto;
+}
+*/
+/* Feedback */
+/* Feedback visibility like Google Forms */
+.feedback{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 8px;
+}
+
+.feedbackOkLabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: #188038;
+    margin-bottom: 6px;
+}
+
+.feedbackErrorLabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #ed0b0b;
+    margin-bottom: 6px;
+}
+
+.feedbackIcon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* for mobile */
+@media (max-width: 600px){
+    /*textarea,
+    input[type="text"] REVIEW{
+    font-size: 16px; /* prevents iOS zoom *//*
+    }*/
+
+    .optDrag{
+    left: -10px;
+    }
+}
+
+/* Settings modal */
+.settingsModal{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    /*backdrop-filter: blur(2px);*/
+}
+
+.settingsModal.hidden{
+    display: none;
+}
+
+.settingsCard{
+    background: #ffffff;
+    width: 560px;
+    max-width: 95%;
+    border-radius: 12px;
+
+    box-shadow:
+        0 2px 6px rgba(0,0,0,.15),
+        0 8px 24px rgba(0,0,0,.2);
+
+    overflow: hidden;
+}
+
+.settingsHeader{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 20px 24px;
+
+    font-size: 18px;
+    font-weight: 500;
+
+    border-bottom: 1px solid #e8eaed;
+}
+
+/* Google Forms style toggle row */
+.gfToggleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.gfLabel {
+    font-size: 14px;
+    color: #202124;
+}
+
+.settingsContent{
+    padding: 24px;
+}
+
+/* Section titles */
+.settingsContent strong {
+    font-size: 13px;
+    font-weight: 600;
+    color: #5f6368;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    display: block;
+    margin: 18px 0 8px 0;
+}
+
+.btnIcon{
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+/* Timer */
+.timer-row{
+    display:flex;
+    align-items:center;
+    margin-left:4px;
+    /*margin-left:auto;*/
+    pointer-events: auto;
+}
+
+.timer-row *{
+    pointer-events: auto;
+}
+
+.timer-input{
+    width:42px;
+    text-align:center;
+    border:none;
+    border-bottom:1px solid transparent;
+    text-align:right;
+    font-size:13px;
+    color:#202124;
+    outline:none;
+    background:transparent;
+    pointer-events: auto;
+    cursor: text;
+}
+
+.timer-input:focus{
+    border-bottom-color:#1a73e8;
+}
+
+/* keep native steppers */
+/*    .timer-input::-webkit-inner-spin-button,
+.timer-input::-webkit-outer-spin-button{
+    opacity:1;
+}
+*/
+
+.headerFields input[type="number"], 
+.qPoints input[type="number"],
+.option input[type="number"],
+.requiredToggle input[type="number"],
+.gfToggleRow input[type="number"],
+.headerFields input[type="number"]
+{
+    pointer-events: auto;
+    user-select: auto;
+}
+
+/* Line separator */
+.lineSeparator {
+  margin: 10px 0;
+  border-top: 1px solid #e0e0e0; /* soft gray */
+}
+
+.questionFooter {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.footerActions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Divider */
+.verticalDivider {
+    width: 1px;
+    height: 24px;
+    background-color: #dadce0;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #5f6368;
+  transition: color 0.2s ease;
+}
+
+.iconBtn:hover {
+    background-color: #f1f3f4;
+    border-radius: 50%;
+}
+
+.headerFields {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Big title like Google Forms */
+.formTitle {
+    font-size: 28px;
+    font-weight: 500;
+    padding-bottom: 6px;
+}
+
+/* Description lighter */
+.formDescription {
+    font-size: 14px;
+    color: #5f6368;
+}
+
+.tooltipWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.tooltipText {
+    position: absolute;
+    top: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    background: #6b6c6f;
+    color: #fff;
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 4px;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+
+    white-space: nowrap;
+}
+
+.tooltipWrapper:hover .tooltipText {
+    opacity: 1;
+}
+
+.toolbarBtn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #f1f3f4;
+    transition: background 0.2s ease;
+}
+
+.toolbarBtn:hover {
+    background: #e0e0e0;
+}
+
+.toolbarBtn.primary {
+    padding: 8px 18px;
+    border-radius: 6px;
+    border: none;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    background: #267ef1;
+    color: white;
+
+    transition: background 0.2s ease;
+}
+
+.toolbarBtn.primary:hover {
+    background: #096cec;
+}
+
+.toolbarNav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.subSetting {
+  padding-left: 28px; /* adjust for perfect alignment */
+}
+
+/* Camera */
+.webcam {
+  position: fixed;
+  /*top: 40px;*/
+  right: 10px;
+  border: 2px solid #333;
+  width: 90px;
+  height: 78px;
+  overflow: hidden;
+}
+
+.timer {
+  white-space: nowrap; /* ensures the text stays in one line */
+  width: auto;         /* automatically adjusts to content */
+  font-size: 10px;
+  color: #b22222;
+  font-weight:500;
+  /*margin-right: 35px;*/
+}
+
+.overlay{
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+}
+
+/* Navbar */
+.viewToggle{
+  position: static;
+  right: 16px;
+  bottom: 12px;
+  
+  display:none;
+  align-items:center;
+  gap:8px;
+
+  font-size:13px;
+  color:#5f6368;
+}
+
+.navBtn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  /*background: #ffffff;
+  border: 1px solid #dadce0;*/
+  cursor: pointer;
+}
+
+.navBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submitBtn{
+  position: absolute;
+  right: 0;
+
+  background: var(--purple);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 18px;
+  cursor: pointer;
+}
+
+.submitBtn:hover{
+  opacity: 0.9;
+}
+
+/* Previous / Next / Submit buttons */
+.questionNav{
+  position: relative;
+  display: flex;
+  justify-content: center; /* center Prev + Next */
+  align-items: center;
+  margin: 20px 0;
+}
+
+.navCenter{
+  display: flex;
+  gap: 10px;
+}
+
+.navBtn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: #f1f3f4;
+  border: 1px solid #dadce0;
+  cursor: pointer;
+}
+
+.navBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

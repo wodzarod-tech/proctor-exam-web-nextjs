@@ -13,6 +13,7 @@ import { createExam } from "@/lib/actions/exam.actions"
 Types
 ***************************/
 interface ExamSessionProps {
+  id: string;
   exam: any;
   userId: string;
 }
@@ -89,7 +90,7 @@ const createEmptyQuestion = (): Question => ({
 /***************************
 Page
 ***************************/
-const ExamComponent = ({ exam, userId }: ExamSessionProps) => {
+const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
   console.log('exam=', exam);
 
   const router = useRouter()
@@ -874,7 +875,7 @@ Render
           <button className={styles.gTooltip} data-tooltip="Import Exam"><i className="fa fa-upload"></i></button>
           <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={saveExam}><i className="fa fa-save"></i></button>
           <button className={styles.gTooltip} data-tooltip="Settings" onClick={() => setIsSettingsOpen(true)}><i className="fa fa-gear"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={() => router.push("/preview")}><i className="fa fa-eye"></i></button>
+          <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={() => router.push(`/preview/${id}`)}><i className="fa fa-eye"></i></button>
           <button className={styles.gTooltip} data-tooltip="Delete exam"><i className="fa fa-trash"></i></button>
           <button className={`${styles.toolbarBtn} ${styles.primary}`}>Publish</button>
         </nav>

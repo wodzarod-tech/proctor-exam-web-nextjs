@@ -1,6 +1,6 @@
 "use client";
 
-import styles from "./ExamSessionComponent.module.css";
+import styles from "./ExamPreviewComponent.module.css";
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from "next/link"
@@ -10,7 +10,7 @@ import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 /***************************
 Types
 ***************************/
-interface ExamSessionProps {
+interface ExamPreviewProps {
   id: string;
   exam: any;
   userId: string;
@@ -89,7 +89,7 @@ const createEmptyQuestion = (): Question => ({
 /***************************
 Page
 ***************************/
-const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamSessionProps) => {
+const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPreviewProps) => {
   //console.log('exam=', exam);
 
   const router = useRouter()
@@ -746,6 +746,8 @@ Render
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
+          <button className={styles.navBtn} data-tooltip="Back to editor" onClick={() => router.push(`/edit/${id}`)}>⬅ Back</button>
+
           <div className="flex-1 text-center font-bold text-red-600">{msg}</div>
 
           <div className={styles.viewToggle} style={{ display: "flex" }}>
@@ -998,4 +1000,4 @@ Render
     </>
   )
 }
-export default ExamSessionComponent
+export default ExamPreviewComponent

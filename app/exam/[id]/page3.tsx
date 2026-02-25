@@ -1,7 +1,7 @@
 import { getExam } from "@/lib/actions/exam.actions";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import ExamPreviewComponent from "@/components/ExamPreviewComponent";
+import ExamComponent from "@/components/ExamComponent";
 
 interface ExamSessionPageProps {
   params: Promise<{ id: string}>;
@@ -15,14 +15,12 @@ const ExamSession = async({ params }: ExamSessionPageProps) => {
   const user = await currentUser();
 
   if(!user) redirect('/sign-in');
-  if(!exam.title) redirect('/preview');
+  if(!exam.title) redirect('/edit');
 
   return (
-    <ExamPreviewComponent
-      id={id}
+    <ExamComponent
       exam={exam}
       userId={user.id}
-      readOnly
     />
   )
 }

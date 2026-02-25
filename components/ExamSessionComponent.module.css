@@ -722,19 +722,6 @@ pre{
   color:#5f6368;
 }
 
-.navBtn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  /*background: #ffffff;
-  border: 1px solid #dadce0;*/
-  cursor: pointer;
-}
-
-.navBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .submitBtn{
   position: absolute;
   right: 0;
@@ -773,9 +760,8 @@ pre{
   cursor: pointer;
 }
 
-.navBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.navBtn:hover {
+    background-color: rgba(10, 77, 233, 0.1);
 }
 
 .readOnly {

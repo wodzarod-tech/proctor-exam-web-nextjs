@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import Link from "next/link"
 import Image from "next/image"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
-import { createExam } from "@/lib/actions/exam.actions"
+import { createExam, updateExam } from "@/lib/actions/exam.actions"
 
 /***************************
 Types
@@ -762,6 +762,9 @@ Actions
   function filterResults(qid: string) {
   }
 
+  let saveExamDB;
+  let uuid="";
+
   async function saveExam() {
     try {
       const examPayload = {
@@ -782,7 +785,15 @@ Actions
         settings
       }
 
-      const createdExam = await createExam(examPayload)
+      if(!uuid) {
+        saveExamDB = await createExam(examPayload);
+        console.log("createExam=", saveExamDB);
+        uuid = saveExamDB.id;
+      } else {
+        saveExamDB = await updateExam(uuid, examPayload);
+        console.log("updateExam=", saveExamDB);
+        uuid = saveExamDB.id;
+      }
 
       alert("Exam saved successfully ✅")
 

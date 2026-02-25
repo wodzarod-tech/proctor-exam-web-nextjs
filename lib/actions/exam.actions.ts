@@ -33,6 +33,28 @@ export const createExam = async (formData: CreateExam) => {
     return data[0];
 }
 
+export const updateExam = async (
+  id: string,
+  formData: Partial<CreateExam>
+) => {
+  const { userId } = await auth(); // authenticated user
+
+  const supabase = createSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("exams")
+    .update(formData)
+    .eq("id", id)
+    .eq("author", userId) // ✅ security: only owner can update
+    .select();
+
+  if (error || !data || data.length === 0) {
+    throw new Error(error?.message || "Failed to update exam");
+  }
+
+  return data[0];
+};
+
 export const getAllCompanions = async ({ limit = 10, page = 1, subject, topic }: GetAllCompanions) => {
     const supabase = createSupabaseClient();
 

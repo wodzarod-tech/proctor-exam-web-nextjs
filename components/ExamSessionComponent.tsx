@@ -14,6 +14,7 @@ interface ExamSessionProps {
   id: string;
   exam: any;
   userId: string;
+  readOnly: boolean;
 }
 
 type Question = {
@@ -88,8 +89,8 @@ const createEmptyQuestion = (): Question => ({
 /***************************
 Page
 ***************************/
-const ExamSessionComponent = ({ id, exam, userId }: ExamSessionProps) => {
-  console.log('exam=', exam);
+const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamSessionProps) => {
+  //console.log('exam=', exam);
 
   const router = useRouter()
 
@@ -169,6 +170,10 @@ const ExamSessionComponent = ({ id, exam, userId }: ExamSessionProps) => {
   const totalPoints = questions?.reduce((sum, q) => sum + (q.points ?? 0), 0) ?? 0;
   const formattedPoints = Number(totalPoints);
 
+  // message
+  const [msg, setMsg] = useState<string>("");
+  var fmsg = true; // true = show message on label, false = show message on alert
+  
 /***************************
 Effects
 ***************************/
@@ -319,7 +324,7 @@ Effects
         if (cameraSettings.faceAbsence) {
           if (faces.length === 0) {
             if (lastFaceStateRef.current !== "no_face") {
-              alert("❌ No face detected. Stay in view.")
+              setMsgNav(fmsg, "❌ No face detected. Stay in view.")
               lastFaceStateRef.current = "no_face"
             }
             return
@@ -327,7 +332,7 @@ Effects
 
           if (faces.length > 1) {
             if (lastFaceStateRef.current !== "multi_face") {
-              alert("❌ Multiple faces detected.")
+              setMsgNav(fmsg,"❌ Multiple faces detected.")
               lastFaceStateRef.current = "multi_face"
             }
             return
@@ -390,7 +395,7 @@ Effects
       const avg = (left + right) / 2;
 
       if (avg < 0.01) {
-        console.log("BLINK");
+        //console.log("BLINK");
       }
     }
 
@@ -400,15 +405,18 @@ Effects
       const leftPupil = landmarks[468];
 
       const eyeWidth = distance(leftEyeLeft, leftEyeRight);
-      const offset =
-        (leftPupil.x - leftEyeLeft.x) / eyeWidth;
+      const offset = (leftPupil.x - leftEyeLeft.x) / eyeWidth;
 
-      if (offset < 0.32) {
-        alert("Looking right detected");
+      if (offset < 0.35) {
+        setMsgNav(fmsg,"Looking right detected");
+              console.log("offset=", offset);
+
       }
 
       if (offset > 0.68) {
-        alert("Looking left detected");
+        setMsgNav(fmsg,"Looking left detected");
+              console.log("offset=", offset);
+
       }
     }
 
@@ -480,11 +488,11 @@ Effects
         // Check for noise / speaking
         if (volume > SPEAK_THRESHOLD) {
           console.log("🎤 Someone is speaking!")
-          alert('🎤 Someone is speaking!');
+          setMsgNav(fmsg,'🎤 Someone is speaking!');
           lastNoiseTimeRef.current = Date.now()
         } else if (volume > NOISE_THRESHOLD) {
           console.log("⚠ Too loud!")
-          alert('⚠ Too loud!');
+          setMsgNav(fmsg,'⚠ Too loud!');
           lastNoiseTimeRef.current = Date.now()
         }
 
@@ -496,7 +504,7 @@ Effects
 
         if (!failedRef.current && noiseSecondsRef.current >= MAX_NOISE_TIME) {
           failedRef.current = true
-          alert("❌ Exam failed: too much noise.")
+          setMsgNav(fmsg,"❌ Exam failed: too much noise.")
         }
 
         animationRef.current = requestAnimationFrame(update)
@@ -506,7 +514,7 @@ Effects
 
     } catch (e: any) {
       console.warn("Microphone error:", e)
-      alert("❌ Microphone error: " + e.message)
+      setMsgNav(fmsg,"❌ Microphone error: " + e.message)
     }
   }
 
@@ -584,7 +592,7 @@ Effects
       }
     } catch(e) {
       console.warn('Camera error', e);
-      alert('❌ Camera error');
+      setMsgNav(fmsg,'❌ Camera error');
     }
   }
 
@@ -685,6 +693,13 @@ Actions
     )
   }
 
+  function setMsgNav(flag: boolean, msg: string){
+    if(flag)
+      setMsg(msg);
+    else
+      alert(msg)
+  }
+
 /***************************
 Render
 ***************************/
@@ -695,8 +710,10 @@ Render
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-          <button className={styles.navBtn} data-tooltip="Back to editor" onClick={() => router.push("/edit")}>⬅ Back</button>
-          
+          <button className={styles.navBtn} data-tooltip="Back to editor" onClick={() => router.push(`/edit/${id}`)}>⬅ Back</button>
+
+          <div className="flex-1 text-center font-bold text-red-600">{msg}</div>
+
           <div className={styles.viewToggle} style={{ display: "flex" }}>
             <span>View:</span>
 
@@ -724,7 +741,7 @@ Render
   
     <div className={styles.createPage}>
       
-      <div className={styles.container} ref={containerRef}>
+      <div className={`${styles.container} ${readOnly ? styles.readOnly : ""}`} ref={containerRef}>
 
         {/* Form header */}
         <div className={`${styles.card} ${styles.headerRow}`}>
@@ -764,7 +781,10 @@ Render
           {questions.map((q, index) => (
             <div key={q.id} className={`${styles.card} ${styles.question} ${activeQuestionId === q.id ? styles.active : ""}`}
 
-              onClick={() => setActiveQuestionId(q.id)}>
+              onClick={() => {
+                if (readOnly) return;
+                setActiveQuestionId(q.id)
+              }}>
 
               <div className={styles.questionHeader}>
 
@@ -784,6 +804,7 @@ Render
                     step="0.1"
                     placeholder="0"
                     value={q.points}
+                    disabled={readOnly}
                     onChange={(e) =>
                       updateQuestion(q.id, {
                         points: Number(e.target.value) || 0
@@ -850,41 +871,7 @@ Render
                   </div>
                 ))}
               </div>
-    
-              <div className={styles.lineSeparator} />
-  
-              <div className={styles.feedbackOkLabel}>
-                <span className={styles.feedbackIcon}>✔</span>
-                <span>Feedback Correct:</span>
-              </div>
-
-              <textarea
-                className={styles.textUnderlineInput}
-                rows={1}
-                placeholder="Feedback"
-                value={q.feedbackOk}
-                onChange={(e) => {
-                  updateQuestion(q.id, { feedbackOk: e.target.value })
-                  autoResize(e)
-                }}
-              />
-
-              <div className={styles.feedbackErrorLabel}>
-                <span className={styles.feedbackIcon}>✖</span>
-                <span>Feedback Incorrect:</span>
-              </div>
-
-              <textarea
-                className={styles.textUnderlineInput}
-                rows={1}
-                placeholder="Feedback"
-                value={q.feedbackError}
-                onChange={(e) => {
-                  updateQuestion(q.id, { feedbackError: e.target.value })
-                  autoResize(e)
-                }}
-              />
-
+      
               <div className={styles.lineSeparator} />
 
               <div className={styles.questionFooter}>

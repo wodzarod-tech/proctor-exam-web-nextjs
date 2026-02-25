@@ -22,6 +22,7 @@ const ExamSession = async({ params }: ExamSessionPageProps) => {
       id={id}
       exam={exam}
       userId={user.id}
+      readOnly
     />
   )
 }

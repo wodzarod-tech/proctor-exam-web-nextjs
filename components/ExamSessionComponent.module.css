@@ -777,3 +777,7 @@ pre{
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.readOnly {
+    pointer-events: none;
+}

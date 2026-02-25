@@ -767,7 +767,7 @@ Actions
   }
 
   let saveExamDB;
-  async function saveExam(flag: boolean): Promise<boolean> {
+  async function saveExam(flag: boolean = false): Promise<boolean> {
     try {
       const examPayload = {
         title,

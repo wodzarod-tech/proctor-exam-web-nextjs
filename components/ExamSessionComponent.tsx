@@ -130,6 +130,10 @@ const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamSessio
     formattedQuestions
   );
 
+  // View One by One questions
+  const [viewOneByOne, setViewOneByOne] = useState(false)
+  const [currentIndex, setCurrentIndex] = useState(0)
+
   const [settings, setSettings] = useState<Settings>({
     general: {
       shuffleQuestions: false,
@@ -600,9 +604,19 @@ Effects
 Actions
 ***************************/
   function prevQuestion() {
+    if (!viewOneByOne) return;
+
+    setCurrentIndex((prev) =>
+      prev > 0 ? prev - 1 : prev
+    );
   }
 
   function nextQuestion() {
+    if (!viewOneByOne) return;
+
+    setCurrentIndex((prev) =>
+      prev < questions.length - 1 ? prev + 1 : prev
+    );
   }
 
   function submitExam() {
@@ -718,7 +732,13 @@ Render
             <span>View:</span>
 
             <label className={styles.switch}> 
-              <input type="checkbox" id="oneByOneToggle" />
+              <input type="checkbox"
+              checked={viewOneByOne}
+              onChange={(e) => {
+                setViewOneByOne(e.target.checked)
+                setCurrentIndex(0) // reset to first question
+              }}
+              />
               <span className={styles.slider}></span>
             </label>
 
@@ -741,7 +761,7 @@ Render
   
     <div className={styles.createPage}>
       
-      <div className={`${styles.container} ${readOnly ? styles.readOnly : ""}`} ref={containerRef}>
+      <div className={styles.container} ref={containerRef}>
 
         {/* Form header */}
         <div className={`${styles.card} ${styles.headerRow}`}>
@@ -758,6 +778,7 @@ Render
               className={`${styles.textUnderlineInput} ${styles.formTitle}`}
               placeholder="Title"
               value={title}
+              disabled={readOnly}
               onChange={(e) => setTitle(e.target.value)}
             />
 
@@ -766,6 +787,7 @@ Render
               rows={1}
               placeholder="Form description"
               value={description}
+              disabled={readOnly}
               onChange={(e) => {
                 setDescription(e.target.value)
                 // auto-resize
@@ -778,133 +800,164 @@ Render
 
           {/* Questions */}
           <div ref={questionsRef} className="space-y-4">
-          {questions.map((q, index) => (
-            <div key={q.id} className={`${styles.card} ${styles.question} ${activeQuestionId === q.id ? styles.active : ""}`}
+          {(viewOneByOne
+              ? [questions[currentIndex]]
+              : questions
+            ).map((q, index) => {
+              const realIndex = viewOneByOne ? currentIndex : index;
 
-              onClick={() => {
-                if (readOnly) return;
-                setActiveQuestionId(q.id)
-              }}>
+              return (
+                <div key={q.id} className={`${styles.card} ${styles.question} ${activeQuestionId === q.id ? styles.active : ""}`}
 
-              <div className={styles.questionHeader}>
-
-                <div className={styles.qCounter} style={{
-                  fontSize: "13px",
-                  color: "#5f6368",
-                  marginRight: "auto"
+                onClick={() => {
+                  if (readOnly) return;
+                  setActiveQuestionId(q.id)
                 }}>
-                  {index + 1} de {questions.length}
-                </div>
 
-                <div className={styles.qPoints}>
-                  <input
-                    type="number"
-                    className={styles.pointsInput}
-                    min="0"
-                    step="0.1"
-                    placeholder="0"
-                    value={q.points}
-                    disabled={readOnly}
-                    onChange={(e) =>
-                      updateQuestion(q.id, {
-                        points: Number(e.target.value) || 0
-                      })
-                    }
-                  />
-                  <span>points</span>
-                </div>
-              </div>
+                <div className={styles.questionHeader}>
 
-              <textarea
-                className={`${styles.textUnderlineInput} ${styles.qTitle}`}
-                rows={1}
-                placeholder="Question"
-                value={q.text}
-                onChange={(e) => {
-                  updateQuestion(q.id, { text: e.target.value })
-                  autoResize(e)
-                }}
-              />
+                  <div className={styles.qCounter} style={{
+                    fontSize: "13px",
+                    color: "#5f6368",
+                    marginRight: "auto"
+                  }}>
+                    {realIndex + 1} de {questions.length}
+                  </div>
 
-              <div
-                ref={(el) => {
-                  optionRefs.current[q.id] = el
-                }}
-              >
-                {q.options.map((opt, index) => (
-                  <div key={opt.id} className={styles.option}>
-
+                  <div className={styles.qPoints}>
                     <input
-                      className={styles.optIcon}
-                      type={q.type}
-                      name={q.type === 'radio' ? q.id : undefined}
-                      checked={opt.checked}
-                      onChange={() => {
+                      type="number"
+                      className={styles.pointsInput}
+                      min="0"
+                      step="0.1"
+                      placeholder="0"
+                      value={q.points}
+                      disabled={readOnly}
+                      onChange={(e) =>
                         updateQuestion(q.id, {
-                          options: q.options.map(o =>
-                            q.type === 'radio'
-                              ? { ...o, checked: o.id === opt.id }
-                              : o.id === opt.id
-                                ? { ...o, checked: !o.checked }
-                                : o
-                          )
+                          points: Number(e.target.value) || 0
                         })
-                      }}
+                      }
                     />
-
-                    <textarea
-                      className={styles.textUnderlineInput}
-                      rows={1}
-                      placeholder={`Option ${index + 1}`}
-                      value={opt.text}
-                      onChange={(e) => {
-                        updateQuestion(q.id, {
-                          options: q.options.map(o =>
-                            o.id === opt.id
-                              ? { ...o, text: e.target.value }
-                              : o
-                          )
-                        })
-                        autoResize(e)
-                      }}
-                    />
+                    <span>points</span>
                   </div>
-                ))}
-              </div>
-      
-              <div className={styles.lineSeparator} />
+                </div>
 
-              <div className={styles.questionFooter}>
-                <div className={styles.footerActions}>
-                  <div className={styles.requiredToggle}>
-                    <span className={styles.gfLabel}>Required</span>
-                    <label className={styles.switch}>
+                <textarea
+                  className={`${styles.textUnderlineInput} ${styles.qTitle}`}
+                  rows={1}
+                  placeholder="Question"
+                  value={q.text}
+                  disabled={readOnly}
+                  onChange={(e) => {
+                    updateQuestion(q.id, { text: e.target.value })
+                    autoResize(e)
+                  }}
+                />
+
+                <div
+                  ref={(el) => {
+                    optionRefs.current[q.id] = el
+                  }}
+                >
+                  {q.options.map((opt, index) => (
+                    <div key={opt.id} className={styles.option}>
+
                       <input
-                        type="checkbox"
-                        checked={q.required}
-                        onChange={(e) =>
-                          updateQuestion(q.id, { required: e.target.checked })
-                        }
+                        className={styles.optIcon}
+                        type={q.type}
+                        name={q.type === 'radio' ? q.id : undefined}
+                        checked={opt.checked}
+                        onChange={() => {
+                          updateQuestion(q.id, {
+                            options: q.options.map(o =>
+                              q.type === 'radio'
+                                ? { ...o, checked: o.id === opt.id }
+                                : o.id === opt.id
+                                  ? { ...o, checked: !o.checked }
+                                  : o
+                            )
+                          })
+                        }}
                       />
-                      <span className={styles.slider}></span>
-                    </label>
-                  </div>
 
+                      <textarea
+                        className={styles.textUnderlineInput}
+                        rows={1}
+                        placeholder={`Option ${index + 1}`}
+                        value={opt.text}
+                        disabled={readOnly}
+                        onChange={(e) => {
+                          updateQuestion(q.id, {
+                            options: q.options.map(o =>
+                              o.id === opt.id
+                                ? { ...o, text: e.target.value }
+                                : o
+                            )
+                          })
+                          autoResize(e)
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+        
+                <div className={styles.lineSeparator} />
+
+                <div className={styles.questionFooter}>
+                  <div className={styles.footerActions}>
+                    <div className={styles.requiredToggle}>
+                      <span className={styles.gfLabel}>Required</span>
+                      <label className={styles.switch}>
+                        <input
+                          type="checkbox"
+                          checked={q.required}
+                          disabled={readOnly}
+                          onChange={(e) =>
+                            updateQuestion(q.id, { required: e.target.checked })
+                          }
+                        />
+                        <span className={styles.slider}></span>
+                      </label>
+                    </div>
+
+                  </div>
                 </div>
               </div>
+              )
+          })}
 
-            </div>
-          ))}
+
+
+
+
         </div>
 
         {/* Navigation Buttons */}
         <div className={styles.questionNav}>
           <div className={styles.navCenter}>
-            <button className={styles.navBtn} onClick={prevQuestion}>⬅ Previous</button>
-            <button className={styles.navBtn} onClick={nextQuestion}>Next ➡</button>
+
+            {/* Previous */}
+            <button className={styles.navBtn}
+              onClick={prevQuestion}
+              style={{ visibility: viewOneByOne && currentIndex > 0 ? "visible" : "hidden" }}>⬅ Previous</button>
+
+            {/* Next */}
+            <button className={styles.navBtn}
+              onClick={nextQuestion}
+              style={{ visibility: viewOneByOne && currentIndex < questions.length - 1
+              ? "visible"
+              : "hidden"}}>Next ➡</button>
           </div>
 
-          <button className={styles.submitBtn} onClick={submitExam}>Submit</button>
+          <button className={styles.submitBtn}
+            onClick={submitExam}
+              style={{
+              visibility:
+                (!viewOneByOne || currentIndex === questions.length - 1)
+                  ? "visible"
+                  : "hidden"
+            }}>Submit</button>
         </div>
       </div>
     </div>

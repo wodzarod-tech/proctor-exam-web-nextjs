@@ -13,7 +13,7 @@ import { createExam, updateExam } from "@/lib/actions/exam.actions"
 Types
 ***************************/
 interface ExamSessionProps {
-  id: string;
+  id: any;
   exam: any;
   userId: string;
 }
@@ -87,17 +87,21 @@ const createEmptyQuestion = (): Question => ({
   feedbackError: ''
 })
 
+let uuid = "";
+
 /***************************
 Page
 ***************************/
 const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
-  console.log('exam=', exam);
+  console.log('ExamComponent.exam=', exam);
+  console.log('ExamComponent.id=', id);
 
   const router = useRouter()
 
   let formattedQuestions=null;
 
-  if(exam!=null) {
+  // To edit exam
+  if(exam != null) {
     // Transform Supabase Questions
     const generateId = () =>
       typeof crypto !== "undefined" && crypto.randomUUID
@@ -763,9 +767,7 @@ Actions
   }
 
   let saveExamDB;
-  let uuid="";
-
-  async function saveExam() {
+  async function saveExam(flag: boolean): Promise<boolean> {
     try {
       const examPayload = {
         title,
@@ -784,23 +786,42 @@ Actions
         })),
         settings
       }
-
-      if(!uuid) {
-        saveExamDB = await createExam(examPayload);
-        console.log("createExam=", saveExamDB);
-        uuid = saveExamDB.id;
-      } else {
-        saveExamDB = await updateExam(uuid, examPayload);
-        console.log("updateExam=", saveExamDB);
-        uuid = saveExamDB.id;
+      
+      // Dont save or preview if no title
+      if(examPayload.title == "") {
+        alert("Add title ⚠️");
+        return false;
       }
+      else {
+        if(id == null && uuid == "") {
+          saveExamDB = await createExam(examPayload);
+          uuid = saveExamDB.id;
+          console.log("create exam.uuid=", uuid);
+        } else {
+          if(id!=null)
+            uuid = id;
+          saveExamDB = await updateExam(uuid, examPayload);
+          console.log("update exam.uuid=", uuid);
+        }
 
-      alert("Exam saved successfully ✅")
+        if(!flag)
+          alert("Saved successfully ✅")
+
+        return true;
+      }
 
     } catch (error: any) {
       console.error(error)
       alert(error.message || "Failed to save exam")
+      return false;
     }
+  }
+
+  async function previewExam() {
+    const success = await saveExam(true);
+
+    if(success)
+      router.push(`/preview/${uuid}`);
   }
 
   function addQuestion() {
@@ -886,7 +907,7 @@ Render
           <button className={styles.gTooltip} data-tooltip="Import Exam"><i className="fa fa-upload"></i></button>
           <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={saveExam}><i className="fa fa-save"></i></button>
           <button className={styles.gTooltip} data-tooltip="Settings" onClick={() => setIsSettingsOpen(true)}><i className="fa fa-gear"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={() => router.push(`/preview/${id}`)}><i className="fa fa-eye"></i></button>
+          <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={previewExam}><i className="fa fa-eye"></i></button>
           <button className={styles.gTooltip} data-tooltip="Delete exam"><i className="fa fa-trash"></i></button>
           <button className={`${styles.toolbarBtn} ${styles.primary}`}>Publish</button>
         </nav>

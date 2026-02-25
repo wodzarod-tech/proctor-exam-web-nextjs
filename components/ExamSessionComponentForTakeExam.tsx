@@ -870,16 +870,10 @@ Render
                         className={styles.optIcon}
                         type={q.type}
                         name={q.type === 'radio' ? q.id : undefined}
-                        checked={
-                          answers[q.id]
-                            ? answers[q.id].includes(opt.id)
-                            : opt.checked
-                        }
+                        checked={answers[q.id]?.includes(opt.id) || false}
                         onChange={() => {
                           setAnswers(prev => {
-                            // If no user answers yet, initialize from default checked options
-                            const current = prev[q.id] ??
-                            q.options.filter(o => o.checked).map(o => o.id);
+                            const current = prev[q.id] || [];
 
                             if (q.type === "radio") {
                               return {

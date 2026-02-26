@@ -776,7 +776,7 @@ Render
         muted
         playsInline width={480} height={360}
       ></video>
-      <canvas ref={overlayRef} className={styles.overlay}></canvas> {/* <!-- face detection */}
+      <canvas ref={overlayRef} className={styles.overlay} style={{ display: "none" }}></canvas> {/* <!-- face detection */}
     </div>
   
     <div className={styles.createPage}>

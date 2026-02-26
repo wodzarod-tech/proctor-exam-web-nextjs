@@ -93,8 +93,8 @@ let uuid = "";
 Page
 ***************************/
 const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
-  console.log('ExamComponent.exam=', exam);
   console.log('ExamComponent.id=', id);
+  console.log('ExamComponent.exam=', exam);
 
   const router = useRouter()
 
@@ -768,6 +768,7 @@ Actions
 
   let saveExamDB;
   async function saveExam(flag: boolean = false): Promise<boolean> {
+    
     try {
       const examPayload = {
         title,
@@ -905,7 +906,7 @@ Render
         <nav className={styles.toolbarNav}>
           <button className={styles.gTooltip} data-tooltip="Add question" onClick={addQuestion}><i className="fa fa-plus"></i></button>
           <button className={styles.gTooltip} data-tooltip="Import Exam"><i className="fa fa-upload"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={saveExam}><i className="fa fa-save"></i></button>
+          <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={() => saveExam(false)}><i className="fa fa-save"></i></button>
           <button className={styles.gTooltip} data-tooltip="Settings" onClick={() => setIsSettingsOpen(true)}><i className="fa fa-gear"></i></button>
           <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={previewExam}><i className="fa fa-eye"></i></button>
           <button className={styles.gTooltip} data-tooltip="Delete exam"><i className="fa fa-trash"></i></button>

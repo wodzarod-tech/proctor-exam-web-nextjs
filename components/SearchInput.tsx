@@ -12,7 +12,7 @@ const SearchInput = () => {
     const searchParams = useSearchParams();
     const query = searchParams.get('title') || '';
 
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(query);
 
     // modify URL bar based on what we typing in the search input
     // what we typing is querying to the the database
@@ -20,7 +20,6 @@ const SearchInput = () => {
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             if(searchQuery) {
-                //router.push(`/currentRoute?topic=${searchQuery}`);
                 const newUrl = formUrlQuery({
                     params: searchParams.toString(),
                     key: "title",
@@ -29,16 +28,16 @@ const SearchInput = () => {
 
                 router.push(newUrl, { scroll: false });
             } else {
-                if(pathname === '/exam') {
-                    const newUrl = removeKeysFromUrlQuery({
-                        params: searchParams.toString(),
-                        keysToRemove: ["title"],
-                    });
+                const newUrl = removeKeysFromUrlQuery({
+                    params: searchParams.toString(),
+                    keysToRemove: ["title"],
+                });
 
-                    router.push(newUrl, { scroll: false });
-                }
+                router.push(newUrl, { scroll: false });
             }
-        }, 500)
+        }, 500);
+        
+        return () => clearTimeout(delayDebounceFn); // debounce cleanup
     }, [searchQuery, router, searchParams, pathname]);
 
     return (

@@ -3,11 +3,11 @@
 import styles from "./ExamComponent.module.css";
 import { useEffect, useRef, useState } from 'react'
 import Sortable from 'sortablejs'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import Link from "next/link"
 import Image from "next/image"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
-import { createExam, updateExam } from "@/lib/actions/exam.actions"
+import { createExam, deleteExam, updateExam } from "@/lib/actions/exam.actions"
 
 /***************************
 Types
@@ -93,7 +93,6 @@ let uuid = "";
 Page
 ***************************/
 const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
-  console.log('ExamComponent.id=', id);
   console.log('ExamComponent.exam=', exam);
 
   const router = useRouter()
@@ -135,8 +134,9 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
     formattedQuestions ?? [createEmptyQuestion()]
   );
 
-  const [settings, setSettings] = useState<Settings>({
-    general: {
+  // If creating new exam → uses default settings
+  const defaultSettings: Settings = {
+      general: {
       shuffleQuestions: false,
       shuffleOptions: false,
       viewToggleQuestions: false,
@@ -164,7 +164,12 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
       blockKeyShortcuts: false,
       secondMonitor: false,
     },
-  })
+  }
+
+  // If editing an exam → loads saved settings
+  const [settings, setSettings] = useState<Settings>(
+    exam?.settings ?? defaultSettings
+  )
 
   // Open/Close Settings modal
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -183,6 +188,22 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
 //  const detectLoopRef = useRef<any>(null);
   const faceMeshRef = useRef<any>(null);
   const lastFaceStateRef = useRef<string>("unknown");
+
+  // Delete exam
+  const handleDelete = async () => {
+    const confirmDelete = confirm("Are you sure you want to delete this exam?")
+
+    if (!confirmDelete) return
+
+    try {
+      console.log("id=", id);
+      await deleteExam(id)
+      router.push("/")
+    } catch (error) {
+      console.error(error)
+      alert("Failed to delete exam")
+    }
+  }
 
 /***************************
 Effects
@@ -818,6 +839,22 @@ Actions
     }
   }
 
+  async function getUrl() {
+    // Make sure exam is saved first
+    const success = await saveExam(true);
+
+    if (!success) return;
+
+    const fullUrl = `${window.location.origin}/edit/${uuid}`;
+
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      alert("🔗 URL copied to clipboard!");
+    } catch (err) {
+      alert("❌ Failed to copy URL");
+    }
+  }
+
   async function previewExam() {
     const success = await saveExam(true);
 
@@ -905,12 +942,13 @@ Render
         {/* NavItems */}
         <nav className={styles.toolbarNav}>
           <button className={styles.gTooltip} data-tooltip="Add question" onClick={addQuestion}><i className="fa fa-plus"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Import Exam"><i className="fa fa-upload"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={() => saveExam(false)}><i className="fa fa-save"></i></button>
           <button className={styles.gTooltip} data-tooltip="Settings" onClick={() => setIsSettingsOpen(true)}><i className="fa fa-gear"></i></button>
+          {/*<button className={styles.gTooltip} data-tooltip="Import Exam"><i className="fa fa-upload"></i></button>*/}
+          <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={() => saveExam(false)}><i className="fa fa-save"></i></button>
+          <button className={styles.gTooltip} data-tooltip="Get URL" onClick={getUrl}><i className="fa fa-link"></i></button>
           <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={previewExam}><i className="fa fa-eye"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Delete exam"><i className="fa fa-trash"></i></button>
-          <button className={`${styles.toolbarBtn} ${styles.primary}`}>Publish</button>
+          <button className={styles.gTooltip} data-tooltip="Delete exam" onClick={handleDelete}><i className="fa fa-trash"></i></button>
+          {/*<button className={`${styles.toolbarBtn} ${styles.primary}`}>Publish</button>*/}
         </nav>
 
         <SignedOut>
@@ -1164,8 +1202,11 @@ Render
         <div className={styles.settingsCard}>
 
           <div className={styles.settingsHeader}>
-            <h3>Settings</h3>
-            <button className={styles.btnIcon} onClick={() => setIsSettingsOpen(false)}>✕</button>
+            <button className={styles.settingsBack} 
+              onClick={() => setIsSettingsOpen(false)}>
+              <span className={styles.backArrow}>← </span>
+              <span>Settings</span>
+            </button>
           </div>
           
           <div className={styles.settingsContent}>

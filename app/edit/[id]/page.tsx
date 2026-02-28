@@ -15,7 +15,7 @@ const EditExam = async({ params }: EditExamPageProps) => {
   const user = await currentUser();
 
   if(!user) redirect('/sign-in');
-  if(!exam.title) redirect('/edit');
+  if(!exam.title) redirect('/');
 
   return (
     <ExamComponent

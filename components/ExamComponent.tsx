@@ -1383,8 +1383,18 @@ Render
               {/* Camera */}
               <div className={styles.gfToggleRow}>
                 <span className={styles.gfLabel}>
-                  Camera
+                  Camera{" "}
+                  <span className={styles.noRecording}>(no recording)</span>
+                  <span className={styles.noRecordingWrapper}>
+                    <span className={styles.infoIcon}>ℹ</span>
+
+                    <span className={styles.tooltip}>
+                      Your camera is used only for live proctoring.
+                      No video is recorded, stored, or transmitted.
+                    </span>
+                  </span>
                 </span>
+
                 <label className={styles.switch}>
                 <input
                   type="checkbox"
@@ -1403,6 +1413,9 @@ Render
                 </label>
               </div>
 
+              {/* show only if camera enabled */}
+              {settings.camera.enabled && (
+              <>
               <div className={`${styles.gfToggleRow} ${styles.subSetting}`}>
                 <span className={styles.gfLabel}>
                   Detect Face absence
@@ -1446,7 +1459,9 @@ Render
                   <span className={styles.slider}></span>
                 </label>
               </div>
-
+              </>
+              )}
+              
               {/* Microphone */}
               <div className={styles.gfToggleRow}>
                 <span className={styles.gfLabel}>
@@ -1470,6 +1485,9 @@ Render
                 </label>
               </div>
 
+              {/* show only if microphone enabled */}
+              {settings.microphone.enabled && (
+              <>
               <div className={`${styles.gfToggleRow} ${styles.subSetting}`}>
                 <span className={styles.gfLabel}>
                   Noise-detection: Detect loud background noise
@@ -1491,6 +1509,8 @@ Render
                   <span className={styles.slider}></span>
                 </label>
               </div>
+              </>
+              )}
 
               {/* Screen */}
               <div>

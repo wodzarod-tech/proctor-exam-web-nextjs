@@ -68,25 +68,6 @@ type Settings = {
 }
 
 /***************************
-Helpers
-***************************/
-
-//const uid = () => crypto.randomUUID()
-/*
-const createEmptyQuestion = (): Question => ({
-  id: uid(),
-  text: '',
-  type: 'radio',
-  points: 0,
-  required: false,
-  options: [
-    { id: uid(), text: '', checked: false }
-  ],
-  feedbackOk: '',
-  feedbackError: ''
-})*/
-
-/***************************
 Page
 ***************************/
 const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPreviewProps) => {
@@ -201,6 +182,28 @@ useEffect(() => {
 
   setAnswers(initialAnswers);
 }, [questions]);
+
+// Apply Question + Option Shuffle
+useEffect(() => {
+  if (!questions) return
+
+  let updated = [...questions]
+
+  // Shuffle questions
+  if (settings.general.shuffleQuestions) {
+    updated = [...updated].sort(() => Math.random() - 0.5)
+  }
+
+  // Shuffle options
+  if (settings.general.shuffleOptions) {
+    updated = updated.map(q => ({
+      ...q,
+      options: [...q.options].sort(() => Math.random() - 0.5)
+    }))
+  }
+
+  setQuestions(updated)
+}, [])
 
   // Camera
   // ---------------------------

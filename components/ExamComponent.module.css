@@ -704,3 +704,53 @@ pre{
 .subSetting {
   padding-left: 28px; /* adjust for perfect alignment */
 }
+
+.noRecordingWrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.noRecording {
+  color: white;
+  background: #d93025;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.infoIcon {
+  font-size: 14px;
+  color: #5f6368;
+  transition: color 0.2s ease;
+}
+
+.tooltip {
+  visibility: hidden;
+  opacity: 0;
+  width: 260px;
+  background-color: #202124;
+  color: #fff;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+
+  position: absolute;
+  bottom: 130%;
+  left: 0;
+
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+.noRecordingWrapper:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.noRecordingWrapper:hover .infoIcon {
+  color: #1a73e8; /* Google blue */
+}

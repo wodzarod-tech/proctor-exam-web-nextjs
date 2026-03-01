@@ -1284,7 +1284,16 @@ Render
                 <label className={styles.switch}>
                   <input
                     type="checkbox"
-                    data-proctor="view-questions"
+                    checked={settings.general.viewQuestions}
+                    onChange={(e) =>
+                      setSettings(prev => ({
+                        ...prev,
+                        general: {
+                          ...prev.general,
+                          viewQuestions: e.target.checked
+                        }
+                      }))
+                    }
                   />
                   <span className={styles.slider}></span>
                 </label>

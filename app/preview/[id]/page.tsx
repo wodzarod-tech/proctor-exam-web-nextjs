@@ -10,7 +10,7 @@ interface ExamSessionPageProps {
 const ExamSession = async({ params }: ExamSessionPageProps) => {
   const { id } = await params;
   const exam = await getExam(id);
-  console.log('exam = ', exam);
+  console.log('exam preview = ', exam);
 
   const user = await currentUser();
 

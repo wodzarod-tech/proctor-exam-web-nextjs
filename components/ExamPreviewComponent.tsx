@@ -90,7 +90,7 @@ const createEmptyQuestion = (): Question => ({
 Page
 ***************************/
 const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPreviewProps) => {
-  //console.log('exam=', exam);
+  console.log('exam=', exam);
 
   const router = useRouter()
 
@@ -130,41 +130,6 @@ const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
     formattedQuestions
   );
 
-  // View One by One questions
-  const [viewOneByOne, setViewOneByOne] = useState(false)
-  const [currentIndex, setCurrentIndex] = useState(0)
-
-  const [settings, setSettings] = useState<Settings>({
-    general: {
-      shuffleQuestions: false,
-      shuffleOptions: false,
-      viewToggleQuestions: false,
-      viewQuestions: false,
-      scoreMin: 0,
-    },
-    timer: {
-      hours: 0,
-      minutes: 0,
-    },
-    camera: {
-      enabled: false,
-      faceAbsence: false,
-      eyeTracking: false,
-    },
-    microphone: {
-      enabled: false,
-      loudNoise: false,
-    },
-    screen: {
-      tabSwitch: false,
-      fullscreenExit: false,
-      devToolsOpen: false,
-      leaveFullScreen: false,
-      blockKeyShortcuts: false,
-      secondMonitor: false,
-    },
-  })
-
   // For results
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
 
@@ -180,7 +145,41 @@ const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
   // message
   const [msg, setMsg] = useState<string>("");
   var fmsg = true; // true = show message on label, false = show message on alert
+
+  //-----------------------
   
+  // Settings
+  
+  // View questions One by One
+  const [viewOneByOne, setViewOneByOne] = useState(
+    exam?.settings?.general?.viewQuestions ?? false
+  )
+
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  const [settings, setSettings] = useState<Settings>(
+    exam?.settings ?? {
+      general: {
+        shuffleQuestions: false,
+        shuffleOptions: false,
+        viewToggleQuestions: false,
+        viewQuestions: false,
+        scoreMin: 0,
+      },
+      timer: { hours: 0, minutes: 0 },
+      camera: { enabled: false, faceAbsence: false, eyeTracking: false },
+      microphone: { enabled: false, loudNoise: false },
+      screen: {
+        tabSwitch: false,
+        fullscreenExit: false,
+        devToolsOpen: false,
+        leaveFullScreen: false,
+        blockKeyShortcuts: false,
+        secondMonitor: false,
+      },
+    }
+  )
+
 /***************************
 Effects
 ***************************/
@@ -215,12 +214,12 @@ useEffect(() => {
   const lastFaceStateRef = useRef<string>("unknown");
 
   useEffect(() => {
-    const cameraSettings = {
-      faceAbsence: true,
-      eyeTracking: true,
-    }
+    if (!settings.camera.enabled) return
 
-    startCamera(cameraSettings)
+    startCamera({
+      faceAbsence: settings.camera.faceAbsence,
+      eyeTracking: settings.camera.eyeTracking,
+    })
 
     // Stop camera on unmount: prevents camera staying active after leaving page
     return () => {
@@ -229,7 +228,7 @@ useEffect(() => {
         tracks.forEach(track => track.stop())
       }
     }
-  }, [])
+  }, [settings.camera])
 
     // Face detection
     async function loadScript(src: string) {
@@ -449,6 +448,8 @@ useEffect(() => {
   // Microphone
   // ---------------------------
   useEffect(() => {
+    if (!settings.microphone.enabled) return
+
     startMicrophone()
 
     return () => {
@@ -463,7 +464,7 @@ useEffect(() => {
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [])
+  }, [settings.microphone])
 
   // Config
   const NOISE_THRESHOLD = 0.16;   // When “too loud”
@@ -547,6 +548,7 @@ useEffect(() => {
   // Timer
   // ---------------------------
   const [timeLeft, setTimeLeft] = useState(0);
+  const [timerInitialized, setTimerInitialized] = useState(false);
 
   const hoursTimer = Math.max(0, Math.floor(timeLeft / 3600));
   const minutesTimer = Math.max(0, Math.floor((timeLeft % 3600) / 60));
@@ -558,28 +560,30 @@ useEffect(() => {
 
   // Set initial time on load
   useEffect(() => {
-    const hours = 1;
-    const minutes = 20;
-    const seconds = 10;
-
     const total =
-      Number(hours || 0) * 3600 +
-      Number(minutes || 0) * 60 +
-      Number(seconds || 0);
+    (settings.timer.hours || 0) * 3600 +
+    (settings.timer.minutes || 0) * 60
 
     setTimeLeft(total);
+    setTimerInitialized(true); // mark timer ready
   }, []);
 
   // Countdown Logic
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (timeLeft <= 0) return // Timer Stops at 0
 
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
 
-    return () => clearInterval(interval);
-  }, [timeLeft]);
+    return () => clearInterval(timer)
+  }, [timeLeft])
 
   // auto-adjust textarea when loading existing content
   function autoResize(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -622,6 +626,18 @@ useEffect(() => {
     }
   }
 
+  // Auto-submit when timer hits 0
+  const [autoSubmitted, setAutoSubmitted] = useState(false) // prevents multiple submits
+
+  useEffect(() => {
+    if (!timerInitialized) return;  // prevent early fire
+
+    if (timeLeft === 0 && !autoSubmitted) {
+      setAutoSubmitted(true)
+      submitExam(true) // pass flag if you want to indicate auto submit
+    }
+  }, [timeLeft, autoSubmitted, timerInitialized])
+
 /***************************
 Actions
 ***************************/
@@ -641,7 +657,11 @@ Actions
     );
   }
 
-  function submitExam() {
+  function submitExam(auto = false) {
+    if (auto) {
+      alert("⏰ Time is up! Submitting exam automatically.");
+    }
+    
     let score = 0;
 
     const reviewData = questions.map((q) => {
@@ -750,6 +770,7 @@ Render
 
           <div className="flex-1 text-center font-bold text-red-600">{msg}</div>
 
+          {settings.general.viewToggleQuestions && (
           <div className={styles.viewToggle} style={{ display: "flex" }}>
             <span>View:</span>
 
@@ -766,10 +787,12 @@ Render
 
             <span>One by one</span>
           </div>
+          )}
     </div>
     </nav>
 
     {/* Webcam */}
+    {settings.camera.enabled && (
     <div className={styles.webcam}>
       <div className={styles.timer}>{formattedTime}</div>
       <video
@@ -780,6 +803,7 @@ Render
       ></video>
       <canvas ref={overlayRef} className={styles.overlay} style={{ display: "none" }}></canvas> {/* <!-- face detection */}
     </div>
+    )}
   
     <div className={styles.createPage}>
       

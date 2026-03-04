@@ -721,12 +721,6 @@ pre{
   margin-left: 6px;
 }
 
-.infoIcon {
-  font-size: 14px;
-  color: #5f6368;
-  transition: color 0.2s ease;
-}
-
 .tooltip {
   visibility: hidden;
   opacity: 0;
@@ -749,8 +743,4 @@ pre{
 .noRecordingWrapper:hover .tooltip {
   visibility: visible;
   opacity: 1;
-}
-
-.noRecordingWrapper:hover .infoIcon {
-  color: #1a73e8; /* Google blue */
 }

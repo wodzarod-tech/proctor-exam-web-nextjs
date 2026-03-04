@@ -211,10 +211,12 @@ useEffect(() => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const overlayRef = useRef<HTMLCanvasElement | null>(null);
 
-//  const modelRef = useRef<any>(null);
-//  const detectLoopRef = useRef<any>(null);
   const faceMeshRef = useRef<any>(null);
   const lastFaceStateRef = useRef<string>("unknown");
+
+  // Eye tracking
+  const lastGazeStateRef = useRef<string>("center"); // Stabilization (Hysteresis + Debounce)
+  const smoothOffsetRef = useRef<number>(0); // Smooth Stabilization
 
   useEffect(() => {
     if (!settings.camera.enabled) return
@@ -233,220 +235,182 @@ useEffect(() => {
     }
   }, [settings.camera])
 
-    // Face detection
-    async function loadScript(src: string) {
-      return new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
+  // Face detection
+  async function loadScript(src: string) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  // Eye-Tracking (MediaPipe FaceMesh)
+  async function initFaceMesh(cameraSettings: any) {
+    if (!(window as any).FaceMesh) {
+      await loadScript(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"
+      )
     }
 
-    // Face Absence Detection Loop
-    /*
-    function startDetectLoop() {
-      if (detectLoopRef.current) return;
-
-      detectLoopRef.current = setInterval(detectOnce, 700);
-
-      console.log('Detection started');
+    if (!(window as any).Camera) {
+      await loadScript(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+      )
     }
-    
-    /*
-    async function detectOnce() {
-      const video = videoRef.current;
-      const canvas = overlayRef.current;
-      if (!video || !canvas || !modelRef.current) return;
-      if (video.readyState < 2) return;
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+    const video = videoRef.current
+    const canvas = overlayRef.current
+    if (!video || !canvas) return
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
 
-      const predictions = await modelRef.current.estimateFaces(
-        video,
-        false
-      );
+    const faceMesh = new (window as any).FaceMesh({
+      locateFile: (file: string) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+    })
 
-      // predictions is array of face objects with topLeft, bottomRight, probability
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    faceMesh.setOptions({
+      maxNumFaces: 2, // allow multi-face detection
+      refineLandmarks: true,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    })
 
-      let state = "no_face";
+    faceMesh.onResults((results: any) => {
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      if (!predictions || predictions.length === 0) {
-        state = "no_face";
-      } else if (predictions.length === 1) {
-        state = "one_face";
+      const faces = results.multiFaceLandmarks || []
 
-        // draw box
-        const p = predictions[0];
-        const [x1, y1] = p.topLeft;
-        const [x2, y2] = p.bottomRight;
-
-        // label
-        ctx.strokeStyle = "rgba(6,182,212,0.9)";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-      } else {
-        state = "multi";
-      }
-
-      if (state !== lastFaceStateRef.current) {
-        if (state === "no_face") {
-          alert("No face detected. Stay in view.");
-        }
-        if (state === "multi") {
-          alert("Multiple faces detected.");
-        }
-
-        lastFaceStateRef.current = state;
-      }
-    }
-    */
-
-    // Eye-Tracking (MediaPipe FaceMesh)
-    async function initFaceMesh(cameraSettings: any) {
-      if (!(window as any).FaceMesh) {
-        await loadScript(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"
-        )
-      }
-
-      if (!(window as any).Camera) {
-        await loadScript(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
-        )
-      }
-
-      const video = videoRef.current
-      const canvas = overlayRef.current
-      if (!video || !canvas) return
-
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
-
-      const faceMesh = new (window as any).FaceMesh({
-        locateFile: (file: string) =>
-          `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
-      })
-
-      faceMesh.setOptions({
-        maxNumFaces: 2, // allow multi-face detection
-        refineLandmarks: true,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
-      })
-
-      faceMesh.onResults((results: any) => {
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-        const faces = results.multiFaceLandmarks || []
-
-        // Face Absence detection
-        if (cameraSettings.faceAbsence) {
-          if (faces.length === 0) {
-            if (lastFaceStateRef.current !== "no_face") {
-              setMsgNav(fmsg, "❌ No face detected. Stay in view.")
-              lastFaceStateRef.current = "no_face"
-            }
-            return
+      // Face Absence detection
+      if (cameraSettings.faceAbsence) {
+        if (faces.length === 0) {
+          if (lastFaceStateRef.current !== "no_face") {
+            setMsgNav(fmsg, "❌ No face detected. Stay in view.")
+            lastFaceStateRef.current = "no_face"
           }
+          return
+        } else {
+          setMsgNav(fmsg, "")
+        }
 
-          if (faces.length > 1) {
-            if (lastFaceStateRef.current !== "multi_face") {
-              setMsgNav(fmsg,"❌ Multiple faces detected.")
-              lastFaceStateRef.current = "multi_face"
-            }
-            return
+        if (faces.length > 1) {
+          if (lastFaceStateRef.current !== "multi_face") {
+            setMsgNav(fmsg,"❌ Multiple faces detected.")
+            lastFaceStateRef.current = "multi_face"
           }
-
-          lastFaceStateRef.current = "one_face"
+          return
+        } else {
+          setMsgNav(fmsg, "")
         }
 
-        // Draw face box
-        const landmarks = faces[0]
-
-        const xs = landmarks.map((p: any) => p.x * canvas.width)
-        const ys = landmarks.map((p: any) => p.y * canvas.height)
-
-        const minX = Math.min(...xs)
-        const maxX = Math.max(...xs)
-        const minY = Math.min(...ys)
-        const maxY = Math.max(...ys)
-
-        ctx.strokeStyle = "rgba(6,182,212,0.9)"
-        ctx.lineWidth = 3
-        ctx.strokeRect(minX, minY, maxX - minX, maxY - minY)
-
-        // Eye tracking
-        if (cameraSettings.eyeTracking) {
-          analyzeEyes(landmarks)
-          getGazeDirection(landmarks)
-        }
-      })
-
-      faceMeshRef.current = faceMesh
-
-      const camera = new (window as any).Camera(video, {
-        onFrame: async () => {
-          await faceMesh.send({ image: video })
-        },
-        width: 480,
-        height: 360,
-      })
-
-      camera.start()
-    }
-
-    // Eye Analysis Functions
-    function distance(a: any, b: any) {
-      return Math.hypot(a.x - b.x, a.y - b.y);
-    }
-
-    function analyzeEyes(landmarks: any[]) {
-      const LEFT_TOP = 159;
-      const LEFT_BOTTOM = 145;
-      const RIGHT_TOP = 386;
-      const RIGHT_BOTTOM = 374;
-
-      const left =
-        distance(landmarks[LEFT_TOP], landmarks[LEFT_BOTTOM]);
-      const right =
-        distance(landmarks[RIGHT_TOP], landmarks[RIGHT_BOTTOM]);
-
-      const avg = (left + right) / 2;
-
-      if (avg < 0.01) {
-        //console.log("BLINK");
+        lastFaceStateRef.current = "one_face"
       }
+
+      if (faces.length === 0) {
+        return; // stop here if no face
+      }
+
+      // Draw face box
+      const landmarks = faces[0]
+
+      const xs = landmarks.map((p: any) => p.x * canvas.width)
+      const ys = landmarks.map((p: any) => p.y * canvas.height)
+
+      const minX = Math.min(...xs)
+      const maxX = Math.max(...xs)
+      const minY = Math.min(...ys)
+      const maxY = Math.max(...ys)
+
+      ctx.strokeStyle = "rgba(6,182,212,0.9)"
+      ctx.lineWidth = 3
+      ctx.strokeRect(minX, minY, maxX - minX, maxY - minY)
+
+      // Eye tracking
+      if (cameraSettings.eyeTracking) {
+        analyzeEyes(landmarks)
+        getGazeDirection(landmarks)
+      }
+    })
+
+    faceMeshRef.current = faceMesh
+
+    const camera = new (window as any).Camera(video, {
+      onFrame: async () => {
+        await faceMesh.send({ image: video })
+      },
+      width: 480,
+      height: 360,
+    })
+
+    camera.start()
+  }
+
+  // Eye Analysis Functions
+  function distance(a: any, b: any) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  function analyzeEyes(landmarks: any[]) {
+    const LEFT_TOP = 159;
+    const LEFT_BOTTOM = 145;
+    const RIGHT_TOP = 386;
+    const RIGHT_BOTTOM = 374;
+
+    const left =
+      distance(landmarks[LEFT_TOP], landmarks[LEFT_BOTTOM]);
+    const right =
+      distance(landmarks[RIGHT_TOP], landmarks[RIGHT_BOTTOM]);
+
+    const avg = (left + right) / 2;
+
+    if (avg < 0.01) {
+      //console.log("BLINK");
     }
+  }
 
-    function getGazeDirection(landmarks: any[]) {
-      const leftEyeLeft = landmarks[33];
-      const leftEyeRight = landmarks[133];
-      const leftPupil = landmarks[468];
+  function getGazeDirection(landmarks: any[]) {
+    const leftEyeLeft = landmarks[33];
+    const leftEyeRight = landmarks[133];
+    const leftPupil = landmarks[468];
 
-      const eyeWidth = distance(leftEyeLeft, leftEyeRight);
-      const offset = (leftPupil.x - leftEyeLeft.x) / eyeWidth;
+    const eyeWidth = distance(leftEyeLeft, leftEyeRight);
 
-      if (offset < 0.35) {
+    // Smooth Stabilization
+    const rawOffset = (leftPupil.x - leftEyeLeft.x) / eyeWidth;
+      smoothOffsetRef.current = smoothOffsetRef.current * 0.8 + rawOffset * 0.2;
+    const offset = smoothOffsetRef.current;
+
+    const offsetMin = 0.32; // antes 0.35
+    const offsetMax = 0.57; // antes 0.68
+    let newState = "center";
+
+    console.log("offset=", offset);
+
+    if (offset < offsetMin) newState = "right";
+    else if (offset > offsetMax) newState = "left";
+
+    // only update if state changed
+    if (newState !== lastGazeStateRef.current) {
+      lastGazeStateRef.current = newState;
+
+      if(newState === "center") {
+        setMsgNav(fmsg,"");
+      }
+
+      if (newState === "right") {
         setMsgNav(fmsg,"Looking right detected");
-              console.log("offset=", offset);
-
       }
 
-      if (offset > 0.68) {
+      if (newState === "left") {
         setMsgNav(fmsg,"Looking left detected");
-              console.log("offset=", offset);
-
       }
     }
+  }
 
   // Microphone
   // ---------------------------
@@ -524,8 +488,10 @@ useEffect(() => {
           console.log("⚠ Too loud!")
           setMsgNav(fmsg,'⚠ Too loud!');
           lastNoiseTimeRef.current = Date.now()
+        } else {
+          //setMsgNav(fmsg,"");
         }
-
+        /*
         // Count continuous noise time
         if (Date.now() - lastNoiseTimeRef.current < 1000)
           noiseSecondsRef.current++
@@ -536,7 +502,7 @@ useEffect(() => {
           failedRef.current = true
           setMsgNav(fmsg,"❌ Exam failed: too much noise.")
         }
-
+        */
         animationRef.current = requestAnimationFrame(update)
       }
 
@@ -594,10 +560,6 @@ useEffect(() => {
     e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
   }
 
-  /*
-  let camera = null;
-  const video = document.getElementById('video');
-  */
   async function startCamera(cameraSettings?: any) {
     if (!videoRef.current) return
 
@@ -616,12 +578,7 @@ useEffect(() => {
       await videoRef.current.play();
 
       if (faceAbsence || eyeTracking) {
-        //await loadModelIfNeeded();
-        //startDetectLoop();
-
-        //if (eyeTracking) {
-          initFaceMesh(cameraSettings)
-        //}
+        initFaceMesh(cameraSettings)
       }
     } catch(e) {
       console.warn('Camera error', e);
@@ -794,10 +751,12 @@ Render
     </div>
     </nav>
 
+    {/* Timer */}
+    <div className={styles.timer}>{formattedTime}</div>
+
     {/* Webcam */}
     {settings.camera.enabled && (
     <div className={styles.webcam}>
-      <div className={styles.timer}>{formattedTime}</div>
       <video
         ref={videoRef}
         autoPlay

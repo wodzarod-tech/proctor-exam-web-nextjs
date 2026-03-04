@@ -293,22 +293,22 @@ useEffect(() => {
       if (cameraSettings.faceAbsence) {
         if (faces.length === 0) {
           if (lastFaceStateRef.current !== "no_face") {
-            setMsgNav(fmsg, "❌ No face detected. Stay in view.")
+            addViolation(fmsg,"⚠ No face detected. Stay in view.")
             lastFaceStateRef.current = "no_face"
           }
           return
         } else {
-          setMsgNav(fmsg, "")
+          setMsgNav(fmsg,"")
         }
 
         if (faces.length > 1) {
           if (lastFaceStateRef.current !== "multi_face") {
-            setMsgNav(fmsg,"❌ Multiple faces detected.")
+            addViolation(fmsg,"⚠ Multiple faces detected.")
             lastFaceStateRef.current = "multi_face"
           }
           return
         } else {
-          setMsgNav(fmsg, "")
+          //setMsgNav(fmsg, "")
         }
 
         lastFaceStateRef.current = "one_face"
@@ -408,7 +408,7 @@ useEffect(() => {
     if (currentDirection !== "center" &&
       now - directionStartTimeRef.current > 400
     ) {
-      setMsgNav(true, `Looking ${currentDirection} detected`);
+      addViolation(fmsg,`⚠ Looking ${currentDirection} detected`);
     }
   }
 
@@ -488,32 +488,26 @@ useEffect(() => {
         const volume = Math.sqrt(sum / timeData.length)
 
         // Check for noise / speaking
+        /*
         if (volume > SPEAK_THRESHOLD) {
-          setMsgNav(fmsg,'🎤 Someone is speaking!');
+          addViolation(fmsg,'⚠ Someone is speaking!');
           lastNoiseTimeRef.current = Date.now()
         } else if (volume > NOISE_THRESHOLD) {
-          setMsgNav(fmsg,'⚠ Too loud!');
+          addViolation(fmsg,'⚠ Too loud!');
           lastNoiseTimeRef.current = Date.now()
-        } 
-        /*
-        // Count continuous noise time
-        if (Date.now() - lastNoiseTimeRef.current < 1000)
-          noiseSecondsRef.current++
-        else
-          noiseSecondsRef.current = 0
-
-        if (!failedRef.current && noiseSecondsRef.current >= MAX_NOISE_TIME) {
-          failedRef.current = true
-          setMsgNav(fmsg,"❌ Exam failed: too much noise.")
         }
         */
+        if (volume > NOISE_THRESHOLD) {
+          addViolation(fmsg,'⚠ Noise detected!');
+          lastNoiseTimeRef.current = Date.now()
+        } 
+
         animationRef.current = requestAnimationFrame(update)
       }
 
       update()
 
     } catch (e: any) {
-      console.warn("Microphone error:", e)
       setMsgNav(fmsg,"❌ Microphone error: " + e.message)
     }
   }
@@ -585,7 +579,6 @@ useEffect(() => {
         initFaceMesh(cameraSettings)
       }
     } catch(e) {
-      console.warn('Camera error', e);
       setMsgNav(fmsg,'❌ Camera error');
     }
   }
@@ -602,9 +595,111 @@ useEffect(() => {
     }
   }, [timeLeft, autoSubmitted, timerInitialized])
 
+  // Screen
+  // ---------------------------
+  useEffect(() => {
+    const screen = settings.screen;
+
+    if (!screen) return;
+
+    // Screen-switch detection (tab change + blur/focus)
+    const handleVisibilityChange = () => {
+      if (document.hidden && screen.tabSwitch) {
+        addViolation(fmsg,"⚠ Tab switch or minimize detected");
+      }
+    };
+
+    // Detect leaving fullscreen
+    const handleFullscreenChange = () => {
+      if (
+        screen.fullscreenExit &&
+        !document.fullscreenElement
+      ) {
+        addViolation(fmsg,"⚠ Exited fullscreen");
+      }
+    };
+
+    // Block Keyboard Shortcuts (as many as possible)
+    // Blocks Ctrl+T, W, N, R, F5, F11, Esc
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!screen.blockKeyShortcuts) return;
+
+      const blocked =
+        (e.ctrlKey && ["t", "w", "n", "r"].includes(e.key.toLowerCase())) ||
+        ["F11", "F5", "Escape"].includes(e.key);
+
+      if (blocked) {
+        e.preventDefault();
+        addViolation(fmsg,`⚠ Blocked shortcut: ${e.key}`);
+      }
+    };
+
+    // Detect devtools size change
+    const detectDevTools = () => {
+      if (!screen.devToolsOpen) return;
+
+      const threshold = 160;
+      const devToolsOpen =
+        window.outerWidth - window.innerWidth > threshold ||
+        window.outerHeight - window.innerHeight > threshold;
+
+      if (devToolsOpen) {
+        addViolation(fmsg,"⚠ DevTools detected");
+      }
+    };
+
+    // Second Monitor Detection
+    const detectSecondMonitor = () => {
+      if (!screen.secondMonitor) return;
+
+      if (window.screen.availWidth > window.innerWidth + 100) {
+        addViolation(fmsg,"⚠ Second monitor detected");
+      }
+    };
+
+    // Cannot
+    // - Truly block Alt+Tab
+    // - Truly block OS-level shortcuts
+    // - Truly detect all monitor setups
+
+    // Attach listeners
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("keydown", handleKeyDown);
+
+    const devToolsInterval = setInterval(detectDevTools, 2000);
+    const monitorInterval = setInterval(detectSecondMonitor, 3000);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("keydown", handleKeyDown);
+      clearInterval(devToolsInterval);
+      clearInterval(monitorInterval);
+    };
+
+  }, [settings.screen]);
+
 /***************************
 Actions
 ***************************/
+  // Auto Submit After X Violations
+  const violationCountRef = useRef(0);
+  const MAX_VIOLATIONS = 10;
+
+  function addViolation(flag: boolean, reason: string) {
+    violationCountRef.current++;
+
+    setMsgNav(flag, `Violation ${violationCountRef.current}: ${reason}`);
+
+    /*console.log("violationCountRef.current = ", violationCountRef.current);
+    if (violationCountRef.current >= MAX_VIOLATIONS) {
+      submitExam(true);
+    }*/
+  }
+
+  // Navigation buttons
   function prevQuestion() {
     if (!viewOneByOne) return;
 
@@ -715,7 +810,7 @@ Actions
 
   function setMsgNav(flag: boolean, message: string) {
     if (!flag) {
-      alert(message);
+      alert(`${message}`);
       return;
     }
 
@@ -732,7 +827,7 @@ Actions
     }
 
     // Set message
-    setMsg(message);
+    setMsg(`${message}`);
 
     // Auto clear after 3 seconds
     micMessageTimeoutRef.current = setTimeout(() => {

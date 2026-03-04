@@ -1103,7 +1103,7 @@ Render
 
               <div className={`${styles.gfToggleRow} ${styles.subSetting}`}>
                 <span className={styles.gfLabel}>
-                  Fake "Second Monitor Detection"
+                  Second Monitor Detection
                 </span>
                 <label className={styles.switch}>
                   <input

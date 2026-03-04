@@ -297,8 +297,6 @@ useEffect(() => {
             lastFaceStateRef.current = "no_face"
           }
           return
-        } else {
-          setMsgNav(fmsg,"")
         }
 
         if (faces.length > 1) {
@@ -307,8 +305,6 @@ useEffect(() => {
             lastFaceStateRef.current = "multi_face"
           }
           return
-        } else {
-          //setMsgNav(fmsg, "")
         }
 
         lastFaceStateRef.current = "one_face"
@@ -432,8 +428,8 @@ useEffect(() => {
       }
 
       // cleanup on unmount
-      if (micMessageTimeoutRef.current) {
-        clearTimeout(micMessageTimeoutRef.current);
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
       }
     }
   }, [settings.microphone])
@@ -451,7 +447,7 @@ useEffect(() => {
   const animationRef = useRef<number | null>(null)
 
   // Duration for messages
-  const micMessageTimeoutRef = useRef<any>(null);
+  const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   async function startMicrophone() {
     try {
@@ -691,7 +687,8 @@ Actions
   function addViolation(flag: boolean, reason: string) {
     violationCountRef.current++;
 
-    setMsgNav(flag, `Violation ${violationCountRef.current}: ${reason}`);
+    setMsgNav(flag, `Violation: ${reason}`);
+    //setMsgNav(flag, `Violation ${violationCountRef.current}: ${reason}`);
 
     /*console.log("violationCountRef.current = ", violationCountRef.current);
     if (violationCountRef.current >= MAX_VIOLATIONS) {
@@ -810,29 +807,29 @@ Actions
 
   function setMsgNav(flag: boolean, message: string) {
     if (!flag) {
-      alert(`${message}`);
+      alert(message);
       return;
     }
 
-    // Clear previous timeout
-    if (micMessageTimeoutRef.current) {
-      clearTimeout(micMessageTimeoutRef.current);
-      micMessageTimeoutRef.current = null;
+    // Clear any existing timeout
+    if (messageTimeoutRef.current) {
+      clearTimeout(messageTimeoutRef.current);
+      messageTimeoutRef.current = null;
     }
 
     // If empty message → just clear immediately
     if (!message) {
-      //setMsg("");
+      setMsg("");
       return;
     }
 
     // Set message
-    setMsg(`${message}`);
+    setMsg(message);
 
     // Auto clear after 3 seconds
-    micMessageTimeoutRef.current = setTimeout(() => {
+    messageTimeoutRef.current = setTimeout(() => {
       setMsg("");
-      micMessageTimeoutRef.current = null;
+      messageTimeoutRef.current = null;
     }, 3000);
   }
 

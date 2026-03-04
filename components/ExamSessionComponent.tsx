@@ -55,7 +55,6 @@ type Settings = {
   }
   microphone: {
     enabled: boolean
-    loudNoise: boolean
   }
   screen: {
     tabSwitch: boolean
@@ -153,7 +152,6 @@ const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamSessio
     },
     microphone: {
       enabled: false,
-      loudNoise: false,
     },
     screen: {
       tabSwitch: false,

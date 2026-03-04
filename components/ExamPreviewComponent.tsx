@@ -55,7 +55,6 @@ type Settings = {
   }
   microphone: {
     enabled: boolean
-    loudNoise: boolean
   }
   screen: {
     tabSwitch: boolean
@@ -104,6 +103,10 @@ const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
   const questionsRef = useRef<HTMLDivElement>(null) // for drag & drop
   const optionRefs = useRef<Record<string, HTMLDivElement | null>>({}) // for drag & drop
 
+  // Camera Settings - Eye Tracking
+  const lastDirectionRef = useRef<string>("center");
+  const directionStartTimeRef = useRef<number>(0);
+
   // Form fields
   const [title, setTitle] = useState(exam?.title ?? '');
   const [description, setDescription] = useState(exam?.description ?? '');
@@ -149,7 +152,7 @@ const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
       },
       timer: { hours: 0, minutes: 0 },
       camera: { enabled: false, faceAbsence: false, eyeTracking: false },
-      microphone: { enabled: false, loudNoise: false },
+      microphone: { enabled: false },
       screen: {
         tabSwitch: false,
         fullscreenExit: false,
@@ -387,28 +390,25 @@ useEffect(() => {
 
     const offsetMin = 0.32; // antes 0.35
     const offsetMax = 0.57; // antes 0.68
-    let newState = "center";
+    const now = Date.now();
+    let currentDirection = "center";
 
     console.log("offset=", offset);
 
-    if (offset < offsetMin) newState = "right";
-    else if (offset > offsetMax) newState = "left";
+    if (offset < offsetMin) currentDirection = "right";
+    else if (offset > offsetMax) currentDirection = "left";
 
-    // only update if state changed
-    if (newState !== lastGazeStateRef.current) {
-      lastGazeStateRef.current = newState;
+    // If direction changed → reset timer
+    if (currentDirection !== lastDirectionRef.current) {
+      lastDirectionRef.current = currentDirection;
+      directionStartTimeRef.current = now;
+    }
 
-      if(newState === "center") {
-        setMsgNav(fmsg,"");
-      }
-
-      if (newState === "right") {
-        setMsgNav(fmsg,"Looking right detected");
-      }
-
-      if (newState === "left") {
-        setMsgNav(fmsg,"Looking left detected");
-      }
+    // If looking left/right AND stable for 400ms
+    if (currentDirection !== "center" &&
+      now - directionStartTimeRef.current > 400
+    ) {
+      setMsgNav(true, `Looking ${currentDirection} detected`);
     }
   }
 
@@ -421,14 +421,19 @@ useEffect(() => {
 
     return () => {
       // Cleanup mic stream
-      micStreamRef.current?.getTracks().forEach(track => track.stop())
+      micStreamRef.current?.getTracks().forEach(track => track.stop());
 
       // Cleanup audio context
-      audioContextRef.current?.close()
+      audioContextRef.current?.close();
 
       // Stop animation loop
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
+      }
+
+      // cleanup on unmount
+      if (micMessageTimeoutRef.current) {
+        clearTimeout(micMessageTimeoutRef.current);
       }
     }
   }, [settings.microphone])
@@ -444,6 +449,9 @@ useEffect(() => {
   const lastNoiseTimeRef = useRef(0)
   const failedRef = useRef(false)
   const animationRef = useRef<number | null>(null)
+
+  // Duration for messages
+  const micMessageTimeoutRef = useRef<any>(null);
 
   async function startMicrophone() {
     try {
@@ -481,16 +489,12 @@ useEffect(() => {
 
         // Check for noise / speaking
         if (volume > SPEAK_THRESHOLD) {
-          console.log("🎤 Someone is speaking!")
           setMsgNav(fmsg,'🎤 Someone is speaking!');
           lastNoiseTimeRef.current = Date.now()
         } else if (volume > NOISE_THRESHOLD) {
-          console.log("⚠ Too loud!")
           setMsgNav(fmsg,'⚠ Too loud!');
           lastNoiseTimeRef.current = Date.now()
-        } else {
-          //setMsgNav(fmsg,"");
-        }
+        } 
         /*
         // Count continuous noise time
         if (Date.now() - lastNoiseTimeRef.current < 1000)
@@ -709,11 +713,32 @@ Actions
     )
   }
 
-  function setMsgNav(flag: boolean, msg: string){
-    if(flag)
-      setMsg(msg);
-    else
-      alert(msg)
+  function setMsgNav(flag: boolean, message: string) {
+    if (!flag) {
+      alert(message);
+      return;
+    }
+
+    // Clear previous timeout
+    if (micMessageTimeoutRef.current) {
+      clearTimeout(micMessageTimeoutRef.current);
+      micMessageTimeoutRef.current = null;
+    }
+
+    // If empty message → just clear immediately
+    if (!message) {
+      //setMsg("");
+      return;
+    }
+
+    // Set message
+    setMsg(message);
+
+    // Auto clear after 3 seconds
+    micMessageTimeoutRef.current = setTimeout(() => {
+      setMsg("");
+      micMessageTimeoutRef.current = null;
+    }, 3000);
   }
 
 /***************************

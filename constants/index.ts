@@ -183,8 +183,7 @@ export const exam =
       "eyeTracking": true
     },
     "microphone": {
-      "enabled": true,
-      "loudNoise": true
+      "enabled": true
     },
     "screen": {
       "tabSwitch": true,

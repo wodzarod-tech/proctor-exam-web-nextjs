@@ -1065,11 +1065,6 @@ Render
               </div>
               )
           })}
-
-
-
-
-
         </div>
 
         {/* Navigation Buttons */}
@@ -1090,7 +1085,7 @@ Render
           </div>
 
           <button className={styles.submitBtn}
-            onClick={submitExam}
+            onClick={() => submitExam(false)}
               style={{
               visibility:
                 (!viewOneByOne || currentIndex === questions.length - 1)

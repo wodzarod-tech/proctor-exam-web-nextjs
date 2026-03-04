@@ -35,12 +35,11 @@ export default function ResultPage() {
           : "❌ You did not reach the minimum score (70%)."}
       </p>
 
-      <button onClick={() => router.push("/result/details")}
-        style={{ marginRight: "12px" }}>
+      <button className="resultsBtn" onClick={() => router.push("/result/details")}>
         📊 See results
       </button>
 
-      <button onClick={() => router.push("/")}>
+      <button className="homeBtn" onClick={() => router.push("/")}>
         🏠 Home
       </button>
     </div>

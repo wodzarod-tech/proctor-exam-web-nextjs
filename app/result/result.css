@@ -120,3 +120,39 @@
   border-left: 4px solid #dc2626;
   color: #7f1d1d;
 }
+
+.resultsBtn{
+  position: relative;
+  top: 8px;
+  right: 0;
+
+  margin-right: 12px;
+  background: var(--purple);
+  color: rgb(255, 255, 255);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 18px;
+  cursor: pointer;
+}
+
+.resultsBtn:hover{
+  opacity: 0.9;
+}
+
+.homeBtn{
+  position: relative;
+  top: 8px;
+  right: 0;
+
+  margin-right: 12px;
+  background: var(--purple);
+  color: rgb(255, 255, 255);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 18px;
+  cursor: pointer;
+}
+
+.homeBtn:hover{
+  opacity: 0.9;
+}

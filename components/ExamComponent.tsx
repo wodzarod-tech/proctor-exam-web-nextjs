@@ -272,6 +272,17 @@ Effects
     }
   }, [])
 
+  // resize after loading data
+  useEffect(() => {
+    const textareas = document.querySelectorAll("textarea")
+
+    textareas.forEach((el) => {
+      const ta = el as HTMLTextAreaElement
+      ta.style.height = "auto"
+      ta.style.height = ta.scrollHeight + "px"
+    })
+  }, [questions, description])
+
   // auto-adjust textarea when loading existing content
   function autoResize(e: React.ChangeEvent<HTMLTextAreaElement>) {
     e.currentTarget.style.height = "auto"
@@ -339,7 +350,7 @@ Actions
 
     if (!success) return;
 
-    const fullUrl = `${window.location.origin}/edit/${uuid}`;
+    const fullUrl = `${window.location.origin}/exam/${uuid}`;
 
     try {
       await navigator.clipboard.writeText(fullUrl);
@@ -438,7 +449,7 @@ Render
           <button className={styles.gTooltip} data-tooltip="Settings" onClick={() => setIsSettingsOpen(true)}><i className="fa fa-gear"></i></button>
           {/*<button className={styles.gTooltip} data-tooltip="Import Exam"><i className="fa fa-upload"></i></button>*/}
           <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={() => saveExam(false)}><i className="fa fa-save"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Get URL" onClick={getUrl}><i className="fa fa-link"></i></button>
+          <button className={styles.gTooltip} data-tooltip="Get URL to Take exam" onClick={getUrl}><i className="fa fa-link"></i></button>
           <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={previewExam}><i className="fa fa-eye"></i></button>
           <button className={styles.gTooltip} data-tooltip="Delete exam" onClick={handleDelete}><i className="fa fa-trash"></i></button>
           {/*<button className={`${styles.toolbarBtn} ${styles.primary}`}>Publish</button>*/}
@@ -616,13 +627,14 @@ Render
     
               <div className={styles.lineSeparator} />
   
-              <div className={styles.feedbackOkLabel}>
+              {/* Feedback */}
+              <div className={styles.feedbackOkHeader}>
                 <span className={styles.feedbackIcon}>✔</span>
                 <span>Feedback Correct:</span>
               </div>
 
               <textarea
-                className={styles.textUnderlineInput}
+                className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackOkLabel}`}
                 rows={1}
                 placeholder="Feedback"
                 value={q.feedbackOk}
@@ -632,13 +644,13 @@ Render
                 }}
               />
 
-              <div className={styles.feedbackErrorLabel}>
+              <div className={styles.feedbackErrorHeader}>
                 <span className={styles.feedbackIcon}>✖</span>
                 <span>Feedback Incorrect:</span>
               </div>
 
               <textarea
-                className={styles.textUnderlineInput}
+                className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackErrorLabel}`}
                 rows={1}
                 placeholder="Feedback"
                 value={q.feedbackError}

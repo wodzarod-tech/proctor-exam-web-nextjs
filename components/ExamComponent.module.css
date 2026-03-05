@@ -369,26 +369,42 @@
 .switch input:checked + .slider:before{
     transform: translateX(18px);
 }
-/*REVIEW
-pre{
-    background:#111;
-    color:#0f0;
-    padding:12px;
-    font-size:12px;
-    overflow:auto;
-}
-*/
+
 /* Feedback */
 /* Feedback visibility like Google Forms */
 .feedback{
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin-top: 8px;
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.textUnderlineInput.feedback{
+  padding: 10px 14px;
+  line-height: 1.4;
+
+  min-height: auto;
+  height: auto;
+
+  display: block;
 }
 
 .feedbackOkLabel {
+  font-weight: 500;
+  background: #ecfdf5;
+  border-left: 4px solid #16a34a;
+  color: #065f46;
+}
+
+.feedbackErrorLabel {
+  font-weight: 500;
+  background: #fef2f2;
+  border-left: 4px solid #dc2626;
+  color: #7f1d1d;
+}
+
+.feedbackOkHeader {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -396,17 +412,16 @@ pre{
     font-size: 14px;
     font-weight: 500;
     color: #188038;
-    margin-bottom: 6px;
 }
 
-.feedbackErrorLabel {
+.feedbackErrorHeader {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 13px;
     font-weight: 500;
     color: #ed0b0b;
-    margin-bottom: 6px;
+    margin-top: 10px;
 }
 
 .feedbackIcon {

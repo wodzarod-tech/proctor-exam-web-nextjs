@@ -120,6 +120,9 @@ const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
   // Active/Desactivate question card
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null)
 
+  // Store invalid questions
+  const [invalidQuestions, setInvalidQuestions] = useState<string[]>([]);
+
   const totalPoints = questions?.reduce((sum, q) => sum + (q.points ?? 0), 0) ?? 0;
   const formattedPoints = Number(totalPoints);
 
@@ -541,6 +544,17 @@ useEffect(() => {
     return () => clearInterval(timer)
   }, [timeLeft])
 
+  // resize after loading data
+  useEffect(() => {
+    const textareas = document.querySelectorAll("textarea")
+
+    textareas.forEach((el) => {
+      const ta = el as HTMLTextAreaElement
+      ta.style.height = "auto"
+      ta.style.height = ta.scrollHeight + "px"
+    })
+  }, [questions, description])
+
   // auto-adjust textarea when loading existing content
   function autoResize(e: React.ChangeEvent<HTMLTextAreaElement>) {
     e.currentTarget.style.height = "auto"
@@ -711,6 +725,27 @@ Actions
       alert("⏰ Time is up! Submitting exam automatically.");
     }
     
+    // for required questions
+    const missingRequired: string[] = [];
+
+    questions.forEach((q) => {
+      const selected = answers[q.id] || [];
+
+      if (q.required && selected.length === 0) {
+        missingRequired.push(q.id);
+      }
+    });
+
+    if (missingRequired.length > 0) {
+      setInvalidQuestions(missingRequired);
+      setMsgNav(fmsg,"Some questions still need attention because they are required");
+      return;
+    }
+
+    setInvalidQuestions([]); // clear if everything is ok
+
+    //-------------------------
+
     let score = 0;
 
     // Get user answers
@@ -740,6 +775,7 @@ Actions
     sessionStorage.setItem("examReview", JSON.stringify(reviewData)); // user answers
     sessionStorage.setItem("examScore", String(score));
     sessionStorage.setItem("examTotal", String(total));
+    sessionStorage.setItem("scoreMin", exam.settings.general.scoreMin);
 
     router.push("/result");
   }
@@ -875,7 +911,14 @@ Render
               const realIndex = viewOneByOne ? currentIndex : index;
 
               return (
-                <div key={q.id} className={`${styles.card} ${styles.question} ${activeQuestionId === q.id ? styles.active : ""}`}
+                <div 
+                key={q.id}
+                className={`
+                  ${styles.card} 
+                  ${styles.question} 
+                  ${activeQuestionId === q.id ? styles.active : ""}
+                  ${invalidQuestions.includes(q.id) ? styles.requiredError : ""}
+                  `}
 
                 onClick={() => {
                   if (readOnly) return;
@@ -984,12 +1027,17 @@ Render
                   ))}
                 </div>
         
-                <div className={styles.lineSeparator} />
+                {/*<div className={styles.lineSeparator} />*/}
 
                 <div className={styles.questionFooter}>
                   <div className={styles.footerActions}>
                     <div className={styles.requiredToggle}>
-                      <span className={styles.gfLabel}>Required</span>
+                      {q.required && (
+                        <span className={`${styles.gfLabel} ${styles.requiredActive}`}>
+                          Required
+                        </span>
+                      )}
+                      {/*
                       <label className={styles.switch}>
                         <input
                           type="checkbox"
@@ -1001,6 +1049,7 @@ Render
                         />
                         <span className={styles.slider}></span>
                       </label>
+                      */}
                     </div>
 
                   </div>

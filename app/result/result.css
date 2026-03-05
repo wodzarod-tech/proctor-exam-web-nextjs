@@ -1,10 +1,6 @@
-  body{
-    font-family: system-ui;
-    background:#f6f7fb;
-    padding:40px;
-  }
-
   .card{
+    font-family: system-ui;
+
     max-width:500px;
     margin:auto;
     background:white;
@@ -155,4 +151,21 @@
 
 .homeBtn:hover{
   opacity: 0.9;
+}
+
+.progressBar {
+  width: 100%;
+  max-width: 320px;
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 9999px;
+  margin: 12px auto 18px auto;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.6s ease;
+  background: linear-gradient(90deg, #34a853, #4285f4);
 }

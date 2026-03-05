@@ -136,6 +136,17 @@ useEffect(() => {
   setAnswers(initialAnswers);
 }, [questions]);
 
+  // resize after loading data
+  useEffect(() => {
+    const textareas = document.querySelectorAll("textarea")
+
+    textareas.forEach((el) => {
+      const ta = el as HTMLTextAreaElement
+      ta.style.height = "auto"
+      ta.style.height = ta.scrollHeight + "px"
+    })
+  }, [questions, description])
+  
   // auto-adjust textarea when loading existing content
   function autoResize(e: React.ChangeEvent<HTMLTextAreaElement>) {
     e.currentTarget.style.height = "auto"
@@ -353,6 +364,7 @@ Render
                 <div className={styles.lineSeparator} />
   
                 {/* Feedback */}
+                {q.feedbackOk && (
                 <textarea
                   className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackOkLabel}`}
                   value={q.feedbackOk}
@@ -360,7 +372,9 @@ Render
                     autoResize(e)
                   }}
                 />
+                )}
 
+                {q.feedbackError && (
                 <textarea
                   className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackErrorLabel}`}
                   value={q.feedbackError}
@@ -368,13 +382,19 @@ Render
                     autoResize(e)
                   }}
                 />
+                )}
 
-                <div className={styles.lineSeparator} />
+                {/*<div className={styles.lineSeparator} />*/}
 
                 <div className={styles.questionFooter}>
                   <div className={styles.footerActions}>
                     <div className={styles.requiredToggle}>
-                      <span className={styles.gfLabel}>Required</span>
+                      {q.required && (
+                        <span className={`${styles.gfLabel} ${styles.requiredActive}`}>
+                          Required
+                        </span>
+                      )}
+                      {/*
                       <label className={styles.switch}>
                         <input
                           type="checkbox"
@@ -386,6 +406,7 @@ Render
                         />
                         <span className={styles.slider}></span>
                       </label>
+                      */}
                     </div>
 
                   </div>

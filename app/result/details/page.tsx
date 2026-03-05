@@ -45,15 +45,16 @@ export default function ResultDetailsPage() {
   const [questions, setQuestions] = useState<any[]>([]);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("examReview");
+    const userAnswers = sessionStorage.getItem("examReview");
 
-    if (!stored) {
+    if (!userAnswers) {
       router.push("/");
       return;
     }
 
     try {
-      setQuestions(JSON.parse(stored));
+      console.log("userAnswers=", JSON.parse(userAnswers));
+      setQuestions(JSON.parse(userAnswers));
     } catch (error) {
       console.error("Failed to parse examReview:", error);
       router.push("/");
@@ -68,7 +69,7 @@ export default function ResultDetailsPage() {
   return (
     <ExamResultComponent
       id={""}
-      examQuestion={questions}
+      userAnswers={questions}
       userId={""}
       readOnly
     />

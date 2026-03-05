@@ -3,16 +3,13 @@
 import styles from "./ExamResultComponent.module.css";
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from "next/link"
-import Image from "next/image"
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 
 /***************************
 Types
 ***************************/
 interface ExamPreviewProps {
   id: string;
-  examQuestion: any;
+  userAnswers: any;
   userId: string;
   readOnly: boolean;
 }
@@ -36,54 +33,24 @@ type Option = {
 
 type OptionType = 'radio' | 'checkbox'
 
-type Settings = {
-  general: {
-    shuffleQuestions: boolean
-    shuffleOptions: boolean
-    viewToggleQuestions: boolean
-    viewQuestions: boolean
-    scoreMin: number
-  }
-  timer: {
-    hours: number
-    minutes: number
-  }
-  camera: {
-    enabled: boolean
-    faceAbsence: boolean
-    eyeTracking: boolean
-  }
-  microphone: {
-    enabled: boolean
-  }
-  screen: {
-    tabSwitch: boolean
-    fullscreenExit: boolean
-    devToolsOpen: boolean
-    leaveFullScreen: boolean
-    blockKeyShortcuts: boolean
-    secondMonitor: boolean
-  }
-}
-
 /***************************
 Page
 ***************************/
-const ExamResultComponent = ({ id, examQuestion, userId, readOnly = false }: ExamPreviewProps) => {
-  console.log('examQuestion=', examQuestion);
+const ExamResultComponent = ({ id, userAnswers, userId, readOnly = false }: ExamPreviewProps) => {
+  console.log('userAnswers=', userAnswers);
 
   const router = useRouter()
 
   let formattedQuestions=null;
 
-  if(examQuestion!=null) {
+  if(userAnswers!=null) {
     // Transform Supabase Questions
     const generateId = () =>
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
         : Math.random().toString(36).substring(2);
 
-    formattedQuestions = examQuestion.map((q: any) => ({
+    formattedQuestions = userAnswers.map((q: any) => ({
       id: generateId(),
       text: q.text,
       type: q.type,
@@ -104,8 +71,8 @@ const ExamResultComponent = ({ id, examQuestion, userId, readOnly = false }: Exa
   const optionRefs = useRef<Record<string, HTMLDivElement | null>>({}) // for drag & drop
 
   // Form fields
-  const [title, setTitle] = useState(examQuestion?.title ?? '');
-  const [description, setDescription] = useState(examQuestion?.description ?? '');
+  const [title, setTitle] = useState(userAnswers?.title ?? '');
+  const [description, setDescription] = useState(userAnswers?.description ?? '');
   const [questions, setQuestions] = useState<Question[]>(() =>
     formattedQuestions
   );
@@ -141,6 +108,12 @@ useEffect(() => {
   setAnswers(initialAnswers);
 }, [questions]);
 
+  // auto-adjust textarea when loading existing content
+  function autoResize(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    e.currentTarget.style.height = "auto"
+    e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
+  }
+  
 /***************************
 Actions
 ***************************/
@@ -162,38 +135,6 @@ Actions
 
   function updateQuestion(id: string, patch: Partial<Question>) {
     setQuestions(qs => qs.map(q => (q.id === id ? { ...q, ...patch } : q)))
-  }
-
-  function addOption(qid: string) {
-    setQuestions(prev =>
-      prev.map(q => {
-        if (q.id !== qid) return q
-
-        const optionNumber = q.options.length + 1
-
-        return {
-          ...q,
-          options: [
-            ...q.options,
-            {
-              id: uid(),
-              text: "",
-              checked: false
-            }
-          ]
-        }
-      })
-    )
-  }
-
-  function removeOption(qid: string, oid: string) {
-    setQuestions(prev =>
-      prev.map(q =>
-        q.id === qid && q.options.length > 1
-          ? { ...q, options: q.options.filter(o => o.id !== oid) }
-          : q
-      )
-    )
   }
 
 /***************************

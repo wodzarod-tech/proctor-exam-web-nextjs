@@ -3,9 +3,6 @@
 import styles from "./ExamPreviewComponent.module.css";
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from "next/link"
-import Image from "next/image"
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 
 /***************************
 Types
@@ -436,14 +433,10 @@ useEffect(() => {
 
   // Config
   const NOISE_THRESHOLD = 0.16;   // When “too loud”
-  const SPEAK_THRESHOLD = 0.18;   // When voice detected
-  const MAX_NOISE_TIME = 5;       // Seconds before auto-fail
 
   const audioContextRef = useRef<AudioContext | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
-  const noiseSecondsRef = useRef(0)
   const lastNoiseTimeRef = useRef(0)
-  const failedRef = useRef(false)
   const animationRef = useRef<number | null>(null)
 
   // Duration for messages
@@ -720,6 +713,7 @@ Actions
     
     let score = 0;
 
+    // Get user answers
     const reviewData = questions.map((q) => {
       const correctIds = q.options
         .filter((o) => o.checked)
@@ -743,66 +737,15 @@ Actions
     const total = questions.reduce((sum, q) => sum + q.points, 0);
 
     // Store for review page
-    sessionStorage.setItem("examReview", JSON.stringify(reviewData));
+    sessionStorage.setItem("examReview", JSON.stringify(reviewData)); // user answers
     sessionStorage.setItem("examScore", String(score));
     sessionStorage.setItem("examTotal", String(total));
 
     router.push("/result");
   }
 
-  function filterResults(qid: string) {
-  }
-
-  function addQuestion() {
-    setQuestions(qs => [
-      ...qs,
-      {
-        id: uid(),
-        text: '',
-        type: 'radio',
-        points: 0,
-        required: false,
-        options: [{ id: uid(), text: '', checked: false }],
-        feedbackOk: '',
-        feedbackError: ''
-      }
-    ])
-  }
-
   function updateQuestion(id: string, patch: Partial<Question>) {
     setQuestions(qs => qs.map(q => (q.id === id ? { ...q, ...patch } : q)))
-  }
-
-  function addOption(qid: string) {
-    setQuestions(prev =>
-      prev.map(q => {
-        if (q.id !== qid) return q
-
-        const optionNumber = q.options.length + 1
-
-        return {
-          ...q,
-          options: [
-            ...q.options,
-            {
-              id: uid(),
-              text: "",
-              checked: false
-            }
-          ]
-        }
-      })
-    )
-  }
-
-  function removeOption(qid: string, oid: string) {
-    setQuestions(prev =>
-      prev.map(q =>
-        q.id === qid && q.options.length > 1
-          ? { ...q, options: q.options.filter(o => o.id !== oid) }
-          : q
-      )
-    )
   }
 
   function setMsgNav(flag: boolean, message: string) {

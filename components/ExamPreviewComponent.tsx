@@ -786,28 +786,28 @@ Render
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-          <button className={styles.navBtn} data-tooltip="Back to editor" onClick={() => router.push(`/edit/${id}`)}>⬅ Back</button>
+        <button className={styles.navBtn} data-tooltip="Back to editor" onClick={() => router.push(`/edit/${id}`)}>⬅ Back</button>
 
-          <div className="flex-1 text-center font-bold text-red-600">{msg}</div>
+        <div className="flex-1 text-center font-bold text-red-600">{msg}</div>
 
-          {settings.general.viewToggleQuestions && (
-          <div className={styles.viewToggle} style={{ display: "flex" }}>
-            <span>View:</span>
+        {settings.general.viewToggleQuestions && (
+        <div className={styles.viewToggle} style={{ display: "flex" }}>
+          <span>View:</span>
 
-            <label className={styles.switch}> 
-              <input type="checkbox"
-              checked={viewOneByOne}
-              onChange={(e) => {
-                setViewOneByOne(e.target.checked)
-                setCurrentIndex(0) // reset to first question
-              }}
-              />
-              <span className={styles.slider}></span>
-            </label>
+          <label className={styles.switch}> 
+            <input type="checkbox"
+            checked={viewOneByOne}
+            onChange={(e) => {
+              setViewOneByOne(e.target.checked)
+              setCurrentIndex(0) // reset to first question
+            }}
+            />
+            <span className={styles.slider}></span>
+          </label>
 
-            <span>One by one</span>
-          </div>
-          )}
+          <span>One by one</span>
+        </div>
+        )}
     </div>
     </nav>
 

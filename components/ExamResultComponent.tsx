@@ -90,15 +90,25 @@ const ExamResultComponent = ({ id, userAnswers, userId, readOnly = false }: Exam
   // Filter All, Correct and Incorrect questions answered
   const [filter, setFilter] = useState<"all" | "correct" | "incorrect">("all");
 
-  const filteredQuestions = questions.filter((q) => {
-    const state = getQuestionState(q);
+  const filteredQuestions =
+    filter === "all"
+      ? questions
+      : questions.filter((q) => getQuestionState(q) === filter);
 
-    if (filter === "all") return true;
-    if (filter === "correct") return state === "correct";
-    if (filter === "incorrect") return state === "incorrect";
+  // Filter counts
+  const correctCount = questions.filter(
+    (q) => getQuestionState(q) === "correct"
+  ).length;
 
-    return true;
-  });
+  const incorrectCount = questions.filter(
+    (q) => getQuestionState(q) === "incorrect"
+  ).length;
+
+  const notAnsweredCount = questions.filter(
+    (q) => getQuestionState(q) === "not-answered"
+  ).length;
+
+  const totalCount = questions.length;
 
   // Total points
   const totalPoints = questions?.reduce((sum, q) => sum + (q.points ?? 0), 0) ?? 0;
@@ -177,12 +187,39 @@ Render
     {/* Navbar */}
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-      <button className={styles.navBtn} data-tooltip="Back to editor" onClick={() => router.push(`/result/`)}>⬅ Back</button>
 
-      <div>
-        <button className={filter === "all" ? styles.activeFilter : ""} onClick={() => setFilter("all")}>📋 All</button>
-        <button onClick={() => setFilter("correct")}>✅ Correct</button>
-        <button onClick={() => setFilter("incorrect")}>❌ Incorrect</button>
+      <button className={styles.navBtn} data-tooltip="Back to editor" onClick={() => router.push(`/result/`)}>⬅ Back</button>
+      
+      <div className="flex-1 text-center">
+        <div className={styles.resultFilters}>
+          <button
+            className={filter === "all" ? styles.activeFilter : ""}
+            onClick={() => setFilter("all")}
+          >
+            📋 All ({totalCount})
+          </button>
+
+          <button
+            className={filter === "correct" ? styles.activeFilter : ""}
+            onClick={() => setFilter("correct")}
+          >
+            ✅ Correct ({correctCount})
+          </button>
+
+          <button
+            className={filter === "incorrect" ? styles.activeFilter : ""}
+            onClick={() => setFilter("incorrect")}
+          >
+            ❌ Incorrect ({incorrectCount})
+          </button>
+
+          <button
+            className={filter === "not-answered" ? styles.activeFilter : ""}
+            onClick={() => setFilter("not-answered")}
+          >
+            Not Answered ({notAnsweredCount})
+          </button>
+        </div>
       </div>
 
     </div>
@@ -191,41 +228,6 @@ Render
     <div className={styles.createPage}>
       
       <div className={styles.container} ref={containerRef}>
-
-        {/* Form header */}
-        <div className={`${styles.card} ${styles.headerRow}`}>
-
-          <div className={styles.headerTop}>
-            <div className={styles.totalPoints}>
-              <span>Total points: </span>
-              {formattedPoints}
-            </div>
-          </div>
-
-          <div className={styles.headerFields}>
-            <input
-              className={`${styles.textUnderlineInput} ${styles.formTitle}`}
-              placeholder="Title"
-              value={title}
-              disabled={readOnly}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-
-            <textarea
-              className={`${styles.textUnderlineInput} ${styles.formDescription}`}
-              rows={1}
-              placeholder="Form description"
-              value={description}
-              disabled={readOnly}
-              onChange={(e) => {
-                setDescription(e.target.value)
-                // auto-resize
-                e.currentTarget.style.height = "auto"
-                e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
-              }}
-            />
-          </div>
-        </div>
 
           {/* Questions */}
           <div ref={questionsRef} className="space-y-4">
@@ -315,6 +317,7 @@ Render
                           className={styles.optIcon}
                           type={q.type}
                           checked={q.userAnswers?.includes(opt.id)}
+                          readOnly
                         />
 
                         <textarea

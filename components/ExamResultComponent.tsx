@@ -23,6 +23,8 @@ type Question = {
   options: Option[]
   feedbackOk: string
   feedbackError: string
+  correctIds: string[]
+  userAnswers: string[]
 }
 
 type Option = {
@@ -59,10 +61,12 @@ const ExamResultComponent = ({ id, userAnswers, userId, readOnly = false }: Exam
       feedbackOk: q.feedbackOk || "",
       feedbackError: q.feedbackError || "",
       options: q.options.map((opt: any) => ({
-        id: generateId(),
+        id: opt.id,
         text: opt.text,
         checked: opt.checked || false,
       })),
+      correctIds: q.correctIds || [],
+      userAnswers: q.userAnswers || []
     }));
   }
   //
@@ -83,6 +87,20 @@ const ExamResultComponent = ({ id, userAnswers, userId, readOnly = false }: Exam
   // Active/Desactivate question card
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null)
 
+  // Filter All, Correct and Incorrect questions answered
+  const [filter, setFilter] = useState<"all" | "correct" | "incorrect">("all");
+
+  const filteredQuestions = questions.filter((q) => {
+    const state = getQuestionState(q);
+
+    if (filter === "all") return true;
+    if (filter === "correct") return state === "correct";
+    if (filter === "incorrect") return state === "incorrect";
+
+    return true;
+  });
+
+  // Total points
   const totalPoints = questions?.reduce((sum, q) => sum + (q.points ?? 0), 0) ?? 0;
   const formattedPoints = Number(totalPoints);
 
@@ -117,20 +135,33 @@ useEffect(() => {
 /***************************
 Actions
 ***************************/
-  function addQuestion() {
-    setQuestions(qs => [
-      ...qs,
-      {
-        id: uid(),
-        text: '',
-        type: 'radio',
-        points: 0,
-        required: false,
-        options: [{ id: uid(), text: '', checked: false }],
-        feedbackOk: '',
-        feedbackError: ''
-      }
-    ])
+  function getOptionState(optId: string, q: any) {
+    const correctIds = q.correctIds || [];
+    const userAnswers = q.userAnswers || [];
+
+    const isCorrect = correctIds.includes(optId);
+    const isSelected = userAnswers.includes(optId);
+
+    if (isCorrect && isSelected) return "correct";
+    if (!isCorrect && isSelected) return "incorrect";
+    if (isCorrect && !isSelected) return "missed";
+
+    return "neutral";
+  }
+
+  function getQuestionState(q: any) {
+    const correctIds = q.correctIds || [];
+    const selected = q.userAnswers || [];
+
+    if (selected.length === 0) {
+      return "not-answered";
+    }
+
+    const isCorrect =
+      correctIds.length === selected.length &&
+      correctIds.every((id: string) => selected.includes(id));
+
+    return isCorrect ? "correct" : "incorrect";
   }
 
   function updateQuestion(id: string, patch: Partial<Question>) {
@@ -142,7 +173,21 @@ Render
 ***************************/
 
   return (
-    <>  
+    <>
+    {/* Navbar */}
+    <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
+    <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <button className={styles.navBtn} data-tooltip="Back to editor" onClick={() => router.push(`/result/`)}>⬅ Back</button>
+
+      <div>
+        <button className={filter === "all" ? styles.activeFilter : ""} onClick={() => setFilter("all")}>📋 All</button>
+        <button onClick={() => setFilter("correct")}>✅ Correct</button>
+        <button onClick={() => setFilter("incorrect")}>❌ Incorrect</button>
+      </div>
+
+    </div>
+    </nav>
+
     <div className={styles.createPage}>
       
       <div className={styles.container} ref={containerRef}>
@@ -184,14 +229,16 @@ Render
 
           {/* Questions */}
           <div ref={questionsRef} className="space-y-4">
-          {questions.map((q, index) => {
-              return (
-                <div key={q.id} className={`${styles.card} ${styles.question} ${activeQuestionId === q.id ? styles.active : ""}`}
-
-                onClick={() => {
-                  if (readOnly) return;
-                  setActiveQuestionId(q.id)
-                }}>
+          {filteredQuestions.map((q, index) => {
+            const questionState = getQuestionState(q);
+          
+            return (
+              <div key={q.id}
+                className={`
+                  ${styles.card}
+                  ${styles.question}
+                  ${activeQuestionId === q.id ? styles.active : ""}
+                `}>
 
                 <div className={styles.questionHeader}>
 
@@ -201,6 +248,18 @@ Render
                     marginRight: "auto"
                   }}>
                     {index + 1} de {questions.length}
+
+                    {questionState === "correct" && (
+                      <span className={`${styles.badge} ${styles.correct}`}>Correct</span>
+                    )}
+
+                    {questionState === "incorrect" && (
+                      <span className={`${styles.badge} ${styles.incorrect}`}>Incorrect</span>
+                    )}
+
+                    {questionState === "not-answered" && (
+                      <span className={`${styles.badge} ${styles.neutral}`}>Not Answered</span>
+                    )}
                   </div>
 
                   <div className={styles.qPoints}>
@@ -234,67 +293,79 @@ Render
                   }}
                 />
 
+                {/* Options */}
                 <div
                   ref={(el) => {
                     optionRefs.current[q.id] = el
                   }}
                 >
-                  {q.options.map((opt, index) => (
-                    <div key={opt.id} className={styles.option}>
+                  {q.options.map((opt: any) => {
+                    const state = getOptionState(opt.id, q);
 
-                      <input
-                        className={styles.optIcon}
-                        type={q.type}
-                        name={q.type === 'radio' ? q.id : undefined}
-                        checked={answers[q.id]?.includes(opt.id) || false}
-                        onChange={() => {
-                          setAnswers(prev => {
-                            const current = prev[q.id] || [];
+                    let className = "reviewOption";
+                    if (state === "correct") className += " correct";
+                    if (state === "incorrect") className += " incorrect";
+                    if (state === "missed") className += " missed"
 
-                            if (q.type === "radio") {
-                              return {
-                                ...prev,
-                                [q.id]: [opt.id]
-                              };
-                            }
+                    return (
+                      <div key={opt.id}
+                        className={`${styles.reviewOption} ${styles[state]} ${styles.option}`}>
 
-                            // checkbox
-                            if (current.includes(opt.id)) {
-                              return {
-                                ...prev,
-                                [q.id]: current.filter(id => id !== opt.id)
-                              };
-                            } else {
-                              return {
-                                ...prev,
-                                [q.id]: [...current, opt.id]
-                              };
-                            }
-                          });
-                        }}
-                      />
+                        <input
+                          className={styles.optIcon}
+                          type={q.type}
+                          checked={q.userAnswers?.includes(opt.id)}
+                        />
 
-                      <textarea
-                        className={styles.textUnderlineInput}
-                        rows={1}
-                        placeholder={`Option ${index + 1}`}
-                        value={opt.text}
-                        disabled={readOnly}
-                        onChange={(e) => {
-                          updateQuestion(q.id, {
-                            options: q.options.map(o =>
-                              o.id === opt.id
-                                ? { ...o, text: e.target.value }
-                                : o
-                            )
-                          })
-                          autoResize(e)
-                        }}
-                      />
+                        <textarea
+                          className={styles.textUnderlineInput}
+                          rows={1}
+                          value={opt.text}
+                          disabled={readOnly}
+                          onChange={(e) => {
+                            updateQuestion(q.id, {
+                              options: q.options.map(o =>
+                                o.id === opt.id
+                                  ? { ...o, text: e.target.value }
+                                  : o
+                              )
+                            })
+                            autoResize(e)
+                          }}
+                        />
+                        {state === "correct" && (
+                          <span className="icon">✔</span>
+                        )}
+                        {state === "incorrect" && (
+                          <span className="icon">✖</span>
+                        )}
+                        {state === "missed" && (
+                          <span className="icon">✔</span>
+                        )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
         
+                <div className={styles.lineSeparator} />
+  
+                {/* Feedback */}
+                <textarea
+                  className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackOkLabel}`}
+                  value={q.feedbackOk}
+                  onChange={(e) => {
+                    autoResize(e)
+                  }}
+                />
+
+                <textarea
+                  className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackErrorLabel}`}
+                  value={q.feedbackError}
+                  onChange={(e) => {
+                    autoResize(e)
+                  }}
+                />
+
                 <div className={styles.lineSeparator} />
 
                 <div className={styles.questionFooter}>

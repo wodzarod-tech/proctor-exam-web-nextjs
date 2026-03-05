@@ -1,16 +1,13 @@
 "use client";
 
-import styles from "./ExamSessionComponent.module.css";
+import styles from "./ExamPreviewComponent.module.css";
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from "next/link"
-import Image from "next/image"
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 
 /***************************
 Types
 ***************************/
-interface ExamSessionProps {
+interface ExamPreviewProps {
   id: string;
   exam: any;
   userId: string;
@@ -67,29 +64,10 @@ type Settings = {
 }
 
 /***************************
-Helpers
-***************************/
-
-//const uid = () => crypto.randomUUID()
-/*
-const createEmptyQuestion = (): Question => ({
-  id: uid(),
-  text: '',
-  type: 'radio',
-  points: 0,
-  required: false,
-  options: [
-    { id: uid(), text: '', checked: false }
-  ],
-  feedbackOk: '',
-  feedbackError: ''
-})*/
-
-/***************************
 Page
 ***************************/
-const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamSessionProps) => {
-  //console.log('exam=', exam);
+const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamPreviewProps) => {
+  console.log('exam=', exam);
 
   const router = useRouter()
 
@@ -122,46 +100,16 @@ const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamSessio
   const questionsRef = useRef<HTMLDivElement>(null) // for drag & drop
   const optionRefs = useRef<Record<string, HTMLDivElement | null>>({}) // for drag & drop
 
+  // Camera Settings - Eye Tracking
+  const lastDirectionRef = useRef<string>("center");
+  const directionStartTimeRef = useRef<number>(0);
+
   // Form fields
   const [title, setTitle] = useState(exam?.title ?? '');
   const [description, setDescription] = useState(exam?.description ?? '');
   const [questions, setQuestions] = useState<Question[]>(() =>
     formattedQuestions
   );
-
-  // View One by One questions
-  const [viewOneByOne, setViewOneByOne] = useState(false)
-  const [currentIndex, setCurrentIndex] = useState(0)
-
-  const [settings, setSettings] = useState<Settings>({
-    general: {
-      shuffleQuestions: false,
-      shuffleOptions: false,
-      viewToggleQuestions: false,
-      viewQuestions: false,
-      scoreMin: 0,
-    },
-    timer: {
-      hours: 0,
-      minutes: 0,
-    },
-    camera: {
-      enabled: false,
-      faceAbsence: false,
-      eyeTracking: false,
-    },
-    microphone: {
-      enabled: false,
-    },
-    screen: {
-      tabSwitch: false,
-      fullscreenExit: false,
-      devToolsOpen: false,
-      leaveFullScreen: false,
-      blockKeyShortcuts: false,
-      secondMonitor: false,
-    },
-  })
 
   // For results
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
@@ -172,13 +120,50 @@ const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamSessio
   // Active/Desactivate question card
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null)
 
+  // Store invalid questions
+  const [invalidQuestions, setInvalidQuestions] = useState<string[]>([]);
+
   const totalPoints = questions?.reduce((sum, q) => sum + (q.points ?? 0), 0) ?? 0;
   const formattedPoints = Number(totalPoints);
 
   // message
   const [msg, setMsg] = useState<string>("");
   var fmsg = true; // true = show message on label, false = show message on alert
+
+  //-----------------------
   
+  // Settings
+  
+  // View questions One by One
+  const [viewOneByOne, setViewOneByOne] = useState(
+    exam?.settings?.general?.viewQuestions ?? false
+  )
+
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  const [settings, setSettings] = useState<Settings>(
+    exam?.settings ?? {
+      general: {
+        shuffleQuestions: false,
+        shuffleOptions: false,
+        viewToggleQuestions: false,
+        viewQuestions: false,
+        scoreMin: 0,
+      },
+      timer: { hours: 0, minutes: 0 },
+      camera: { enabled: false, faceAbsence: false, eyeTracking: false },
+      microphone: { enabled: false },
+      screen: {
+        tabSwitch: false,
+        fullscreenExit: false,
+        devToolsOpen: false,
+        leaveFullScreen: false,
+        blockKeyShortcuts: false,
+        secondMonitor: false,
+      },
+    }
+  )
+
 /***************************
 Effects
 ***************************/
@@ -201,24 +186,48 @@ useEffect(() => {
   setAnswers(initialAnswers);
 }, [questions]);
 
+// Apply Question + Option Shuffle
+useEffect(() => {
+  if (!questions) return
+
+  let updated = [...questions]
+
+  // Shuffle questions
+  if (settings.general.shuffleQuestions) {
+    updated = [...updated].sort(() => Math.random() - 0.5)
+  }
+
+  // Shuffle options
+  if (settings.general.shuffleOptions) {
+    updated = updated.map(q => ({
+      ...q,
+      options: [...q.options].sort(() => Math.random() - 0.5)
+    }))
+  }
+
+  setQuestions(updated)
+}, [])
+
   // Camera
   // ---------------------------
   // Face absence detection and eye-tracking
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const overlayRef = useRef<HTMLCanvasElement | null>(null);
 
-//  const modelRef = useRef<any>(null);
-//  const detectLoopRef = useRef<any>(null);
   const faceMeshRef = useRef<any>(null);
   const lastFaceStateRef = useRef<string>("unknown");
 
-  useEffect(() => {
-    const cameraSettings = {
-      faceAbsence: true,
-      eyeTracking: true,
-    }
+  // Eye tracking
+  const lastGazeStateRef = useRef<string>("center"); // Stabilization (Hysteresis + Debounce)
+  const smoothOffsetRef = useRef<number>(0); // Smooth Stabilization
 
-    startCamera(cameraSettings)
+  useEffect(() => {
+    if (!settings.camera.enabled) return
+
+    startCamera({
+      faceAbsence: settings.camera.faceAbsence,
+      eyeTracking: settings.camera.eyeTracking,
+    })
 
     // Stop camera on unmount: prevents camera staying active after leaving page
     return () => {
@@ -227,253 +236,214 @@ useEffect(() => {
         tracks.forEach(track => track.stop())
       }
     }
-  }, [])
+  }, [settings.camera])
 
-    // Face detection
-    async function loadScript(src: string) {
-      return new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
+  // Face detection
+  async function loadScript(src: string) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  // Eye-Tracking (MediaPipe FaceMesh)
+  async function initFaceMesh(cameraSettings: any) {
+    if (!(window as any).FaceMesh) {
+      await loadScript(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"
+      )
     }
 
-    // Face Absence Detection Loop
-    /*
-    function startDetectLoop() {
-      if (detectLoopRef.current) return;
-
-      detectLoopRef.current = setInterval(detectOnce, 700);
-
-      console.log('Detection started');
+    if (!(window as any).Camera) {
+      await loadScript(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+      )
     }
-    
-    /*
-    async function detectOnce() {
-      const video = videoRef.current;
-      const canvas = overlayRef.current;
-      if (!video || !canvas || !modelRef.current) return;
-      if (video.readyState < 2) return;
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+    const video = videoRef.current
+    const canvas = overlayRef.current
+    if (!video || !canvas) return
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
 
-      const predictions = await modelRef.current.estimateFaces(
-        video,
-        false
-      );
+    const faceMesh = new (window as any).FaceMesh({
+      locateFile: (file: string) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+    })
 
-      // predictions is array of face objects with topLeft, bottomRight, probability
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    faceMesh.setOptions({
+      maxNumFaces: 2, // allow multi-face detection
+      refineLandmarks: true,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    })
 
-      let state = "no_face";
+    faceMesh.onResults((results: any) => {
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      if (!predictions || predictions.length === 0) {
-        state = "no_face";
-      } else if (predictions.length === 1) {
-        state = "one_face";
+      const faces = results.multiFaceLandmarks || []
 
-        // draw box
-        const p = predictions[0];
-        const [x1, y1] = p.topLeft;
-        const [x2, y2] = p.bottomRight;
-
-        // label
-        ctx.strokeStyle = "rgba(6,182,212,0.9)";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-      } else {
-        state = "multi";
-      }
-
-      if (state !== lastFaceStateRef.current) {
-        if (state === "no_face") {
-          alert("No face detected. Stay in view.");
-        }
-        if (state === "multi") {
-          alert("Multiple faces detected.");
-        }
-
-        lastFaceStateRef.current = state;
-      }
-    }
-    */
-
-    // Eye-Tracking (MediaPipe FaceMesh)
-    async function initFaceMesh(cameraSettings: any) {
-      if (!(window as any).FaceMesh) {
-        await loadScript(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"
-        )
-      }
-
-      if (!(window as any).Camera) {
-        await loadScript(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
-        )
-      }
-
-      const video = videoRef.current
-      const canvas = overlayRef.current
-      if (!video || !canvas) return
-
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
-
-      const faceMesh = new (window as any).FaceMesh({
-        locateFile: (file: string) =>
-          `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
-      })
-
-      faceMesh.setOptions({
-        maxNumFaces: 2, // allow multi-face detection
-        refineLandmarks: true,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
-      })
-
-      faceMesh.onResults((results: any) => {
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-        const faces = results.multiFaceLandmarks || []
-
-        // Face Absence detection
-        if (cameraSettings.faceAbsence) {
-          if (faces.length === 0) {
-            if (lastFaceStateRef.current !== "no_face") {
-              setMsgNav(fmsg, "❌ No face detected. Stay in view.")
-              lastFaceStateRef.current = "no_face"
-            }
-            return
+      // Face Absence detection
+      if (cameraSettings.faceAbsence) {
+        if (faces.length === 0) {
+          if (lastFaceStateRef.current !== "no_face") {
+            addViolation(fmsg,"⚠ No face detected. Stay in view.")
+            lastFaceStateRef.current = "no_face"
           }
+          return
+        }
 
-          if (faces.length > 1) {
-            if (lastFaceStateRef.current !== "multi_face") {
-              setMsgNav(fmsg,"❌ Multiple faces detected.")
-              lastFaceStateRef.current = "multi_face"
-            }
-            return
+        if (faces.length > 1) {
+          if (lastFaceStateRef.current !== "multi_face") {
+            addViolation(fmsg,"⚠ Multiple faces detected.")
+            lastFaceStateRef.current = "multi_face"
           }
-
-          lastFaceStateRef.current = "one_face"
+          return
         }
 
-        // Draw face box
-        const landmarks = faces[0]
-
-        const xs = landmarks.map((p: any) => p.x * canvas.width)
-        const ys = landmarks.map((p: any) => p.y * canvas.height)
-
-        const minX = Math.min(...xs)
-        const maxX = Math.max(...xs)
-        const minY = Math.min(...ys)
-        const maxY = Math.max(...ys)
-
-        ctx.strokeStyle = "rgba(6,182,212,0.9)"
-        ctx.lineWidth = 3
-        ctx.strokeRect(minX, minY, maxX - minX, maxY - minY)
-
-        // Eye tracking
-        if (cameraSettings.eyeTracking) {
-          analyzeEyes(landmarks)
-          getGazeDirection(landmarks)
-        }
-      })
-
-      faceMeshRef.current = faceMesh
-
-      const camera = new (window as any).Camera(video, {
-        onFrame: async () => {
-          await faceMesh.send({ image: video })
-        },
-        width: 480,
-        height: 360,
-      })
-
-      camera.start()
-    }
-
-    // Eye Analysis Functions
-    function distance(a: any, b: any) {
-      return Math.hypot(a.x - b.x, a.y - b.y);
-    }
-
-    function analyzeEyes(landmarks: any[]) {
-      const LEFT_TOP = 159;
-      const LEFT_BOTTOM = 145;
-      const RIGHT_TOP = 386;
-      const RIGHT_BOTTOM = 374;
-
-      const left =
-        distance(landmarks[LEFT_TOP], landmarks[LEFT_BOTTOM]);
-      const right =
-        distance(landmarks[RIGHT_TOP], landmarks[RIGHT_BOTTOM]);
-
-      const avg = (left + right) / 2;
-
-      if (avg < 0.01) {
-        //console.log("BLINK");
-      }
-    }
-
-    function getGazeDirection(landmarks: any[]) {
-      const leftEyeLeft = landmarks[33];
-      const leftEyeRight = landmarks[133];
-      const leftPupil = landmarks[468];
-
-      const eyeWidth = distance(leftEyeLeft, leftEyeRight);
-      const offset = (leftPupil.x - leftEyeLeft.x) / eyeWidth;
-
-      if (offset < 0.35) {
-        setMsgNav(fmsg,"Looking right detected");
-              console.log("offset=", offset);
-
+        lastFaceStateRef.current = "one_face"
       }
 
-      if (offset > 0.68) {
-        setMsgNav(fmsg,"Looking left detected");
-              console.log("offset=", offset);
-
+      if (faces.length === 0) {
+        return; // stop here if no face
       }
+
+      // Draw face box
+      const landmarks = faces[0]
+
+      const xs = landmarks.map((p: any) => p.x * canvas.width)
+      const ys = landmarks.map((p: any) => p.y * canvas.height)
+
+      const minX = Math.min(...xs)
+      const maxX = Math.max(...xs)
+      const minY = Math.min(...ys)
+      const maxY = Math.max(...ys)
+
+      ctx.strokeStyle = "rgba(6,182,212,0.9)"
+      ctx.lineWidth = 3
+      ctx.strokeRect(minX, minY, maxX - minX, maxY - minY)
+
+      // Eye tracking
+      if (cameraSettings.eyeTracking) {
+        analyzeEyes(landmarks)
+        getGazeDirection(landmarks)
+      }
+    })
+
+    faceMeshRef.current = faceMesh
+
+    const camera = new (window as any).Camera(video, {
+      onFrame: async () => {
+        await faceMesh.send({ image: video })
+      },
+      width: 480,
+      height: 360,
+    })
+
+    camera.start()
+  }
+
+  // Eye Analysis Functions
+  function distance(a: any, b: any) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  function analyzeEyes(landmarks: any[]) {
+    const LEFT_TOP = 159;
+    const LEFT_BOTTOM = 145;
+    const RIGHT_TOP = 386;
+    const RIGHT_BOTTOM = 374;
+
+    const left =
+      distance(landmarks[LEFT_TOP], landmarks[LEFT_BOTTOM]);
+    const right =
+      distance(landmarks[RIGHT_TOP], landmarks[RIGHT_BOTTOM]);
+
+    const avg = (left + right) / 2;
+
+    if (avg < 0.01) {
+      //console.log("BLINK");
     }
+  }
+
+  function getGazeDirection(landmarks: any[]) {
+    const leftEyeLeft = landmarks[33];
+    const leftEyeRight = landmarks[133];
+    const leftPupil = landmarks[468];
+
+    const eyeWidth = distance(leftEyeLeft, leftEyeRight);
+
+    // Smooth Stabilization
+    const rawOffset = (leftPupil.x - leftEyeLeft.x) / eyeWidth;
+      smoothOffsetRef.current = smoothOffsetRef.current * 0.8 + rawOffset * 0.2;
+    const offset = smoothOffsetRef.current;
+
+    const offsetMin = 0.32; // antes 0.35
+    const offsetMax = 0.57; // antes 0.68
+    const now = Date.now();
+    let currentDirection = "center";
+
+    console.log("offset=", offset);
+
+    if (offset < offsetMin) currentDirection = "right";
+    else if (offset > offsetMax) currentDirection = "left";
+
+    // If direction changed → reset timer
+    if (currentDirection !== lastDirectionRef.current) {
+      lastDirectionRef.current = currentDirection;
+      directionStartTimeRef.current = now;
+    }
+
+    // If looking left/right AND stable for 400ms
+    if (currentDirection !== "center" &&
+      now - directionStartTimeRef.current > 400
+    ) {
+      addViolation(fmsg,`⚠ Looking ${currentDirection} detected`);
+    }
+  }
 
   // Microphone
   // ---------------------------
   useEffect(() => {
+    if (!settings.microphone.enabled) return
+
     startMicrophone()
 
     return () => {
       // Cleanup mic stream
-      micStreamRef.current?.getTracks().forEach(track => track.stop())
+      micStreamRef.current?.getTracks().forEach(track => track.stop());
 
       // Cleanup audio context
-      audioContextRef.current?.close()
+      audioContextRef.current?.close();
 
       // Stop animation loop
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
+
+      // cleanup on unmount
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+      }
     }
-  }, [])
+  }, [settings.microphone])
 
   // Config
   const NOISE_THRESHOLD = 0.16;   // When “too loud”
-  const SPEAK_THRESHOLD = 0.18;   // When voice detected
-  const MAX_NOISE_TIME = 5;       // Seconds before auto-fail
 
   const audioContextRef = useRef<AudioContext | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
-  const noiseSecondsRef = useRef(0)
   const lastNoiseTimeRef = useRef(0)
-  const failedRef = useRef(false)
   const animationRef = useRef<number | null>(null)
+
+  // Duration for messages
+  const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   async function startMicrophone() {
     try {
@@ -510,26 +480,19 @@ useEffect(() => {
         const volume = Math.sqrt(sum / timeData.length)
 
         // Check for noise / speaking
+        /*
         if (volume > SPEAK_THRESHOLD) {
-          console.log("🎤 Someone is speaking!")
-          setMsgNav(fmsg,'🎤 Someone is speaking!');
+          addViolation(fmsg,'⚠ Someone is speaking!');
           lastNoiseTimeRef.current = Date.now()
         } else if (volume > NOISE_THRESHOLD) {
-          console.log("⚠ Too loud!")
-          setMsgNav(fmsg,'⚠ Too loud!');
+          addViolation(fmsg,'⚠ Too loud!');
           lastNoiseTimeRef.current = Date.now()
         }
-
-        // Count continuous noise time
-        if (Date.now() - lastNoiseTimeRef.current < 1000)
-          noiseSecondsRef.current++
-        else
-          noiseSecondsRef.current = 0
-
-        if (!failedRef.current && noiseSecondsRef.current >= MAX_NOISE_TIME) {
-          failedRef.current = true
-          setMsgNav(fmsg,"❌ Exam failed: too much noise.")
-        }
+        */
+        if (volume > NOISE_THRESHOLD) {
+          addViolation(fmsg,'⚠ Noise detected!');
+          lastNoiseTimeRef.current = Date.now()
+        } 
 
         animationRef.current = requestAnimationFrame(update)
       }
@@ -537,7 +500,6 @@ useEffect(() => {
       update()
 
     } catch (e: any) {
-      console.warn("Microphone error:", e)
       setMsgNav(fmsg,"❌ Microphone error: " + e.message)
     }
   }
@@ -545,6 +507,7 @@ useEffect(() => {
   // Timer
   // ---------------------------
   const [timeLeft, setTimeLeft] = useState(0);
+  const [timerInitialized, setTimerInitialized] = useState(false);
 
   const hoursTimer = Math.max(0, Math.floor(timeLeft / 3600));
   const minutesTimer = Math.max(0, Math.floor((timeLeft % 3600) / 60));
@@ -556,28 +519,41 @@ useEffect(() => {
 
   // Set initial time on load
   useEffect(() => {
-    const hours = 1;
-    const minutes = 20;
-    const seconds = 10;
-
     const total =
-      Number(hours || 0) * 3600 +
-      Number(minutes || 0) * 60 +
-      Number(seconds || 0);
+    (settings.timer.hours || 0) * 3600 +
+    (settings.timer.minutes || 0) * 60
 
     setTimeLeft(total);
+    setTimerInitialized(true); // mark timer ready
   }, []);
 
   // Countdown Logic
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (timeLeft <= 0) return // Timer Stops at 0
 
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
 
-    return () => clearInterval(interval);
-  }, [timeLeft]);
+    return () => clearInterval(timer)
+  }, [timeLeft])
+
+  // resize after loading data
+  useEffect(() => {
+    const textareas = document.querySelectorAll("textarea")
+
+    textareas.forEach((el) => {
+      const ta = el as HTMLTextAreaElement
+      ta.style.height = "auto"
+      ta.style.height = ta.scrollHeight + "px"
+    })
+  }, [questions, description])
 
   // auto-adjust textarea when loading existing content
   function autoResize(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -585,10 +561,6 @@ useEffect(() => {
     e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
   }
 
-  /*
-  let camera = null;
-  const video = document.getElementById('video');
-  */
   async function startCamera(cameraSettings?: any) {
     if (!videoRef.current) return
 
@@ -607,22 +579,131 @@ useEffect(() => {
       await videoRef.current.play();
 
       if (faceAbsence || eyeTracking) {
-        //await loadModelIfNeeded();
-        //startDetectLoop();
-
-        //if (eyeTracking) {
-          initFaceMesh(cameraSettings)
-        //}
+        initFaceMesh(cameraSettings)
       }
     } catch(e) {
-      console.warn('Camera error', e);
       setMsgNav(fmsg,'❌ Camera error');
     }
   }
 
+  // Auto-submit when timer hits 0
+  const [autoSubmitted, setAutoSubmitted] = useState(false) // prevents multiple submits
+
+  useEffect(() => {
+    if (!timerInitialized) return;  // prevent early fire
+
+    if (timeLeft === 0 && !autoSubmitted) {
+      setAutoSubmitted(true)
+      submitExam(true) // pass flag if you want to indicate auto submit
+    }
+  }, [timeLeft, autoSubmitted, timerInitialized])
+
+  // Screen
+  // ---------------------------
+  useEffect(() => {
+    const screen = settings.screen;
+
+    if (!screen) return;
+
+    // Screen-switch detection (tab change + blur/focus)
+    const handleVisibilityChange = () => {
+      if (document.hidden && screen.tabSwitch) {
+        addViolation(fmsg,"⚠ Tab switch or minimize detected");
+      }
+    };
+
+    // Detect leaving fullscreen
+    const handleFullscreenChange = () => {
+      if (
+        screen.fullscreenExit &&
+        !document.fullscreenElement
+      ) {
+        addViolation(fmsg,"⚠ Exited fullscreen");
+      }
+    };
+
+    // Block Keyboard Shortcuts (as many as possible)
+    // Blocks Ctrl+T, W, N, R, F5, F11, Esc
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!screen.blockKeyShortcuts) return;
+
+      const blocked =
+        (e.ctrlKey && ["t", "w", "n", "r"].includes(e.key.toLowerCase())) ||
+        ["F11", "F5", "Escape"].includes(e.key);
+
+      if (blocked) {
+        e.preventDefault();
+        addViolation(fmsg,`⚠ Blocked shortcut: ${e.key}`);
+      }
+    };
+
+    // Detect devtools size change
+    const detectDevTools = () => {
+      if (!screen.devToolsOpen) return;
+
+      const threshold = 160;
+      const devToolsOpen =
+        window.outerWidth - window.innerWidth > threshold ||
+        window.outerHeight - window.innerHeight > threshold;
+
+      if (devToolsOpen) {
+        addViolation(fmsg,"⚠ DevTools detected");
+      }
+    };
+
+    // Second Monitor Detection
+    const detectSecondMonitor = () => {
+      if (!screen.secondMonitor) return;
+
+      if (window.screen.availWidth > window.innerWidth + 100) {
+        addViolation(fmsg,"⚠ Second monitor detected");
+      }
+    };
+
+    // Cannot
+    // - Truly block Alt+Tab
+    // - Truly block OS-level shortcuts
+    // - Truly detect all monitor setups
+
+    // Attach listeners
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("keydown", handleKeyDown);
+
+    const devToolsInterval = setInterval(detectDevTools, 2000);
+    const monitorInterval = setInterval(detectSecondMonitor, 3000);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("keydown", handleKeyDown);
+      clearInterval(devToolsInterval);
+      clearInterval(monitorInterval);
+    };
+
+  }, [settings.screen]);
+
 /***************************
 Actions
 ***************************/
+  // Auto Submit After X Violations
+  const violationCountRef = useRef(0);
+  const MAX_VIOLATIONS = 10;
+
+  function addViolation(flag: boolean, reason: string) {
+    violationCountRef.current++;
+
+    setMsgNav(flag, `Violation: ${reason}`);
+    //setMsgNav(flag, `Violation ${violationCountRef.current}: ${reason}`);
+
+    /*console.log("violationCountRef.current = ", violationCountRef.current);
+    if (violationCountRef.current >= MAX_VIOLATIONS) {
+      submitExam(true);
+    }*/
+  }
+
+  // Navigation buttons
   function prevQuestion() {
     if (!viewOneByOne) return;
 
@@ -639,9 +720,35 @@ Actions
     );
   }
 
-  function submitExam() {
+  function submitExam(auto = false) {
+    if (auto) {
+      alert("⏰ Time is up! Submitting exam automatically.");
+    }
+    
+    // for required questions
+    const missingRequired: string[] = [];
+
+    questions.forEach((q) => {
+      const selected = answers[q.id] || [];
+
+      if (q.required && selected.length === 0) {
+        missingRequired.push(q.id);
+      }
+    });
+
+    if (missingRequired.length > 0) {
+      setInvalidQuestions(missingRequired);
+      setMsgNav(fmsg,"Some questions still need attention because they are required");
+      return;
+    }
+
+    setInvalidQuestions([]); // clear if everything is ok
+
+    //-------------------------
+
     let score = 0;
 
+    // Get user answers
     const reviewData = questions.map((q) => {
       const correctIds = q.options
         .filter((o) => o.checked)
@@ -665,73 +772,44 @@ Actions
     const total = questions.reduce((sum, q) => sum + q.points, 0);
 
     // Store for review page
-    sessionStorage.setItem("examReview", JSON.stringify(reviewData));
+    sessionStorage.setItem("examReview", JSON.stringify(reviewData)); // user answers
     sessionStorage.setItem("examScore", String(score));
     sessionStorage.setItem("examTotal", String(total));
+    sessionStorage.setItem("scoreMin", exam.settings.general.scoreMin);
 
     router.push("/result");
-  }
-
-  function filterResults(qid: string) {
-  }
-
-  function addQuestion() {
-    setQuestions(qs => [
-      ...qs,
-      {
-        id: uid(),
-        text: '',
-        type: 'radio',
-        points: 0,
-        required: false,
-        options: [{ id: uid(), text: '', checked: false }],
-        feedbackOk: '',
-        feedbackError: ''
-      }
-    ])
   }
 
   function updateQuestion(id: string, patch: Partial<Question>) {
     setQuestions(qs => qs.map(q => (q.id === id ? { ...q, ...patch } : q)))
   }
 
-  function addOption(qid: string) {
-    setQuestions(prev =>
-      prev.map(q => {
-        if (q.id !== qid) return q
+  function setMsgNav(flag: boolean, message: string) {
+    if (!flag) {
+      alert(message);
+      return;
+    }
 
-        const optionNumber = q.options.length + 1
+    // Clear any existing timeout
+    if (messageTimeoutRef.current) {
+      clearTimeout(messageTimeoutRef.current);
+      messageTimeoutRef.current = null;
+    }
 
-        return {
-          ...q,
-          options: [
-            ...q.options,
-            {
-              id: uid(),
-              text: "",
-              checked: false
-            }
-          ]
-        }
-      })
-    )
-  }
+    // If empty message → just clear immediately
+    if (!message) {
+      setMsg("");
+      return;
+    }
 
-  function removeOption(qid: string, oid: string) {
-    setQuestions(prev =>
-      prev.map(q =>
-        q.id === qid && q.options.length > 1
-          ? { ...q, options: q.options.filter(o => o.id !== oid) }
-          : q
-      )
-    )
-  }
+    // Set message
+    setMsg(message);
 
-  function setMsgNav(flag: boolean, msg: string){
-    if(flag)
-      setMsg(msg);
-    else
-      alert(msg)
+    // Auto clear after 3 seconds
+    messageTimeoutRef.current = setTimeout(() => {
+      setMsg("");
+      messageTimeoutRef.current = null;
+    }, 3000);
   }
 
 /***************************
@@ -744,30 +822,35 @@ Render
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-          <div className="flex-1 text-center font-bold text-red-600">{msg}</div>
+        <div className="flex-1 text-center font-bold text-red-600">{msg}</div>
 
-          <div className={styles.viewToggle} style={{ display: "flex" }}>
-            <span>View:</span>
+        {settings.general.viewToggleQuestions && (
+        <div className={styles.viewToggle} style={{ display: "flex" }}>
+          <span>View:</span>
 
-            <label className={styles.switch}> 
-              <input type="checkbox"
-              checked={viewOneByOne}
-              onChange={(e) => {
-                setViewOneByOne(e.target.checked)
-                setCurrentIndex(0) // reset to first question
-              }}
-              />
-              <span className={styles.slider}></span>
-            </label>
+          <label className={styles.switch}> 
+            <input type="checkbox"
+            checked={viewOneByOne}
+            onChange={(e) => {
+              setViewOneByOne(e.target.checked)
+              setCurrentIndex(0) // reset to first question
+            }}
+            />
+            <span className={styles.slider}></span>
+          </label>
 
-            <span>One by one</span>
-          </div>
+          <span>One by one</span>
+        </div>
+        )}
     </div>
     </nav>
 
+    {/* Timer */}
+    <div className={styles.timer}>{formattedTime}</div>
+
     {/* Webcam */}
+    {settings.camera.enabled && (
     <div className={styles.webcam}>
-      <div className={styles.timer}>{formattedTime}</div>
       <video
         ref={videoRef}
         autoPlay
@@ -776,6 +859,7 @@ Render
       ></video>
       <canvas ref={overlayRef} className={styles.overlay} style={{ display: "none" }}></canvas> {/* <!-- face detection */}
     </div>
+    )}
   
     <div className={styles.createPage}>
       
@@ -825,7 +909,14 @@ Render
               const realIndex = viewOneByOne ? currentIndex : index;
 
               return (
-                <div key={q.id} className={`${styles.card} ${styles.question} ${activeQuestionId === q.id ? styles.active : ""}`}
+                <div 
+                key={q.id}
+                className={`
+                  ${styles.card} 
+                  ${styles.question} 
+                  ${activeQuestionId === q.id ? styles.active : ""}
+                  ${invalidQuestions.includes(q.id) ? styles.requiredError : ""}
+                  `}
 
                 onClick={() => {
                   if (readOnly) return;
@@ -934,12 +1025,17 @@ Render
                   ))}
                 </div>
         
-                <div className={styles.lineSeparator} />
+                {/*<div className={styles.lineSeparator} />*/}
 
                 <div className={styles.questionFooter}>
                   <div className={styles.footerActions}>
                     <div className={styles.requiredToggle}>
-                      <span className={styles.gfLabel}>Required</span>
+                      {q.required && (
+                        <span className={`${styles.gfLabel} ${styles.requiredActive}`}>
+                          Required
+                        </span>
+                      )}
+                      {/*
                       <label className={styles.switch}>
                         <input
                           type="checkbox"
@@ -951,6 +1047,7 @@ Render
                         />
                         <span className={styles.slider}></span>
                       </label>
+                      */}
                     </div>
 
                   </div>
@@ -958,11 +1055,6 @@ Render
               </div>
               )
           })}
-
-
-
-
-
         </div>
 
         {/* Navigation Buttons */}
@@ -983,7 +1075,7 @@ Render
           </div>
 
           <button className={styles.submitBtn}
-            onClick={submitExam}
+            onClick={() => submitExam(false)}
               style={{
               visibility:
                 (!viewOneByOne || currentIndex === questions.length - 1)

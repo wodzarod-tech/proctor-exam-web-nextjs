@@ -776,7 +776,7 @@ Actions
     sessionStorage.setItem("examScore", String(score));
     sessionStorage.setItem("examTotal", String(total));
     sessionStorage.setItem("scoreMin", exam.settings.general.scoreMin);
-
+    
     router.push("/result");
   }
 

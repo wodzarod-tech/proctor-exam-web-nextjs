@@ -10,38 +10,10 @@
     text-align:center;
   }
 
-  /* list elements */
-  ul{
-    margin-top:20px;
-    padding-left:20px;
-    text-align:left;       /* ⬅ left justify text */
-  }
-
-  li{
-    margin-bottom:8px;
-    line-height:1.4;
-  }
-
   .score{
     font-size:48px;
     font-weight:bold;
     color:#673ab7;
-  }
-
-  /* Certificate */
-  #certificateBtn{
-    margin-top:12px;
-    padding:10px 16px;
-    border:none;
-    border-radius:20px;
-    background:#2e7d32;
-    color:white;
-    font-size:14px;
-    cursor:pointer;
-  }
-
-  #certificateBtn:hover{
-    opacity:.9;
   }
 
   /* details/page.tsx */
@@ -123,7 +95,7 @@
   right: 0;
 
   margin-right: 12px;
-  background: var(--purple);
+  background: rgb(0, 97, 253);
   color: rgb(255, 255, 255);
   border: none;
   padding: 8px 16px;
@@ -132,7 +104,7 @@
 }
 
 .resultsBtn:hover{
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 .homeBtn{
@@ -141,7 +113,7 @@
   right: 0;
 
   margin-right: 12px;
-  background: var(--purple);
+  background: rgb(0, 97, 253);
   color: rgb(255, 255, 255);
   border: none;
   padding: 8px 16px;
@@ -150,7 +122,7 @@
 }
 
 .homeBtn:hover{
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 .progressBar {

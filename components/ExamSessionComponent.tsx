@@ -91,7 +91,7 @@ const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
       options: q.options.map((opt: any) => ({
         id: generateId(),
         text: opt.text,
-        checked: opt.checked || false,
+        checked: opt.checked ?? false,
       })),
     }));
   }
@@ -167,6 +167,7 @@ const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
 /***************************
 Effects
 ***************************/
+/*
 // Initialize answers on load
 useEffect(() => {
   if (!questions) return;
@@ -184,7 +185,7 @@ useEffect(() => {
   });
 
   setAnswers(initialAnswers);
-}, [questions]);
+}, [questions]);*/
 
 // Apply Question + Option Shuffle
 useEffect(() => {
@@ -777,6 +778,11 @@ Actions
     sessionStorage.setItem("examTotal", String(total));
     sessionStorage.setItem("scoreMin", exam.settings.general.scoreMin);
 
+    console.log("ExamSessionComponent.examReview=",JSON.stringify(reviewData));
+    console.log("ExamSessionComponent.examScore=",score);
+    console.log("ExamSessionComponent.examTotal=",total);
+    console.log("ExamSessionComponent.scoreMin=",exam.settings.general.scoreMin);
+
     router.push("/result");
   }
 
@@ -977,10 +983,13 @@ Render
                         type={q.type}
                         name={q.type === 'radio' ? q.id : undefined}
                         checked={answers[q.id]?.includes(opt.id) || false}
-                        onChange={() => {
-                          setAnswers(prev => {
-                            const current = prev[q.id] || [];
+                        onChange={(e) => {
+                          const checked = e.target.checked;
 
+                          setAnswers(prev => {
+                            const current = prev[q.id] ?? [];
+
+                            // radio
                             if (q.type === "radio") {
                               return {
                                 ...prev,
@@ -989,15 +998,15 @@ Render
                             }
 
                             // checkbox
-                            if (current.includes(opt.id)) {
+                            if (checked) {
                               return {
                                 ...prev,
-                                [q.id]: current.filter(id => id !== opt.id)
+                                [q.id]: [...current, opt.id]
                               };
                             } else {
                               return {
                                 ...prev,
-                                [q.id]: [...current, opt.id]
+                                [q.id]: current.filter(id => id !== opt.id)
                               };
                             }
                           });

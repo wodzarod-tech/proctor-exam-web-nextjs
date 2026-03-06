@@ -32,9 +32,12 @@ const ExamCard = ({
   const hours = settings?.timer?.hours ?? 0;
   const minutes = settings?.timer?.minutes ?? 0;
 
+  console.log("hours=",hours);
+  console.log("minutes=",minutes);
+
   let durationLabel = "No time limit";
     
-  if (settings?.timer?.enabled) {
+  if(!((hours==0 && minutes==0) || (hours!=0 && minutes==0))) {
     const hourLabel =
       hours > 0
         ? `${hours} hour${hours === 1 ? "" : "s"}`

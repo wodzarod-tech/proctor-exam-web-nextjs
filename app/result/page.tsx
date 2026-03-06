@@ -11,7 +11,9 @@ export default function ResultPage() {
   const [score, setScore] = useState(0)
   const [total, setTotal] = useState(0)
   const [scoreMin, setScoreMin] = useState(0)
+  const percentage = total > 0 ? Math.round((score / total) * 100) : 0
 
+  // get values
   useEffect(() => {
     const storedScore = sessionStorage.getItem("examScore")
     const storedTotal = sessionStorage.getItem("examTotal")
@@ -22,18 +24,17 @@ export default function ResultPage() {
     if (storedScoreMin) setScoreMin(Number(storedScoreMin))
   }, [])
 
-  const percentage =
-    total > 0 ? Math.round((score / total) * 100) : 0
-
-  // 🎉 trigger confetti if passed
-  if (score >= scoreMin) {
+  // trigger confetti if passed
+  useEffect(() => {
+    if (score >= scoreMin && scoreMin !== 0) {
       setTimeout(() => {
         fireConfetti()
       }, 500)
     }
 
-  function fireConfetti() {
+  }, [score, scoreMin])
 
+  function fireConfetti() {
     const duration = 3000
     const animationEnd = Date.now() + duration
 
@@ -97,8 +98,8 @@ export default function ResultPage() {
 
       <p>
         {score >= scoreMin
-          ? "✅ Congratulations! You passed."
-          : "❌ You did not reach the minimum score (" + scoreMin + " points.)"}
+          ? "✅ Congratulations! You passed. Minimum score (" + scoreMin + " points)"
+          : "❌ You did not reach the minimum score (" + scoreMin + " points)"}
       </p>
 
       <button className="resultsBtn" onClick={() => router.push("/result/details")}>

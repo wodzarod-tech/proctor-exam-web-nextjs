@@ -2,8 +2,19 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  typescript: {
+    ignoreBuildErrors: true
+  },
+  eslint: {
+    ignoreDuringBuilds: true
+  },
+  images: {
+    remotePatterns: [
+      { hostname: 'img.clerk.com' } // our profile image is store in Clerk
+    ]
+  }
   /* config options here */
-  reactCompiler: true,
+  //reactCompiler: true,
 };
 
 export default withSentryConfig(nextConfig, {

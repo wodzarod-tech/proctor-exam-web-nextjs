@@ -91,6 +91,104 @@ const createEmptyQuestion = (): Question => ({
 
 let uuid = "";
 
+/* for drag & drop image */
+// DropZone component
+type DropImageProps = {
+  onFile: (file: File) => void
+}
+
+type ImageModalProps = {
+  open: boolean
+  onClose: () => void
+  onFile: (file: File) => void
+}
+
+function ImageUploadModal({ open, onClose, onFile }: ImageModalProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
+
+  if (!open) return null
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+
+    const file = e.dataTransfer.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith("image/")) return
+
+    onFile(file)
+    onClose()
+  }
+
+  function handleBrowse(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    onFile(file)
+    onClose()
+  }
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.45)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1000
+      }}
+    >
+      <div
+        style={{
+          background: "white",
+          padding: 30,
+          borderRadius: 10,
+          width: 420
+        }}
+      >
+        <h3 style={{ marginBottom: 20 }}>Insert image</h3>
+
+        <div
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragging(true)
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={handleDrop}
+          style={{
+            border: "2px dashed #dadce0",
+            borderRadius: 10,
+            padding: 40,
+            textAlign: "center",
+            background: dragging ? "#f1f3f4" : "transparent",
+            cursor: "pointer"
+          }}
+          onClick={() => inputRef.current?.click()}
+        >
+          📂 Drag image here<br />
+          or<br />
+          <strong>Browse file</strong>
+        </div>
+
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleBrowse}
+        />
+
+        <div style={{ marginTop: 20, textAlign: "right" }}>
+          <button onClick={onClose}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /***************************
 Page
 ***************************/
@@ -140,6 +238,16 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
 
   // For delete an exam
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+
+  // to upload image
+  // state for upload modal image
+  // qid -> question image
+  // qid + oid -> option image
+  const [imageModal, setImageModal] = useState<{
+    open: boolean
+    qid?: string
+    oid?: string
+  }>({ open: false })
 
   // If creating new exam → uses default settings
   const defaultSettings: Settings = {
@@ -428,6 +536,12 @@ Actions
 
   // to add image (base64) in question
   function handleImageUpload(qid: string, file: File) {
+    // limit size to 2MB
+    if (file.size > 2 * 1024 * 1024) {
+      setMsgNav("Image must be under 2MB")
+      return
+    }
+
     const reader = new FileReader()
 
     reader.onload = () => {
@@ -445,6 +559,12 @@ Actions
 
   // to add image (base64) in option
   function handleOptionImageUpload(qid: string, oid: string, file: File) {
+    // limit size to 2MB
+    if (file.size > 2 * 1024 * 1024) {
+      setMsgNav("Image must be under 2MB")
+      return
+    }
+
     const reader = new FileReader()
 
     reader.onload = () => {
@@ -630,17 +750,12 @@ Render
 
               {/* upload image */}
               <label className={`${styles.btnLink} ${styles.gTooltip}`}
-                data-tooltip="Add image">
+                data-tooltip="Add image"
+                onClick={() =>
+                  setImageModal({ open: true, qid: q.id })
+                }
+                >
                 <i className="fa-solid fa-image"></i>
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) handleImageUpload(q.id, file)
-                  }}
-                />
               </label>
               
               {/* image preview */}
@@ -731,17 +846,15 @@ Render
 
                     {/* upload image */}
                     <label className={`${styles.btnLink} ${styles.gTooltip}`}
-                      data-tooltip="Add image">
+                      data-tooltip="Add image"
+                      onClick={() =>
+                        setImageModal({
+                          open: true,
+                          qid: q.id,
+                          oid: opt.id
+                        })
+                      }>
                       <i className="fa-solid fa-image"></i>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) handleOptionImageUpload(q.id, opt.id, file)
-                        }}
-                      />
                     </label>
                     
                     <button
@@ -1339,6 +1452,24 @@ Render
       </div>
     </div>
     )}
+
+    <ImageUploadModal
+      open={imageModal.open}
+      onClose={() => setImageModal({ open: false })}
+      onFile={(file) => {
+        if (!imageModal.qid) return
+
+        if (imageModal.oid) {
+          handleOptionImageUpload(
+            imageModal.qid,
+            imageModal.oid,
+            file
+          )
+        } else {
+          handleImageUpload(imageModal.qid, file)
+        }
+      }}
+    />
     </>
   )
 }

@@ -21,6 +21,7 @@ interface ExamSessionProps {
 type Question = {
   id: string
   text: string
+  image?: string
   type: OptionType
   points: number
   required: boolean
@@ -76,6 +77,7 @@ const uid = () => crypto.randomUUID()
 const createEmptyQuestion = (): Question => ({
   id: uid(),
   text: '',
+  image: '',
   type: 'radio',
   points: 0,
   required: false,
@@ -109,6 +111,7 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
     formattedQuestions = exam.questions.map((q: any) => ({
       id: generateId(),
       text: q.text,
+      image: q.image || "",
       type: q.type,
       points: q.points || 0,
       required: q.required || false,
@@ -301,6 +304,7 @@ Actions
         description,
         questions: questions.map(q => ({
           text: q.text,
+          image: q.image,
           type: q.type,
           points: q.points,
           required: q.required,
@@ -417,6 +421,23 @@ Actions
           : q
       )
     )
+  }
+
+  // to add image (base64) in question
+  function handleImageUpload(qid: string, file: File) {
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      setQuestions(prev =>
+        prev.map(q =>
+          q.id === qid
+            ? { ...q, image: reader.result as string }
+            : q
+        )
+      )
+    }
+
+    reader.readAsDataURL(file)
   }
 
 /***************************
@@ -553,17 +574,61 @@ Render
                 }}
               />
 
-              <select className={styles.qType}
-                value={q.type}
-                onChange={(e) =>
-                  updateQuestion(q.id, {
-                    type: e.target.value as OptionType
-                  })
-                }
-              >
-                <option value="radio">◉ One choice</option>
-                <option value="checkbox">☑ Multiple choices</option>
-              </select>
+              {/* upload image */}
+              <div>
+                <label className={`${styles.btnLink} ${styles.gTooltip}`}
+                  data-tooltip="Add image">
+                  <i className="fa-solid fa-image"></i>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleImageUpload(q.id, file)
+                    }}
+                  />
+                </label>
+              </div>
+              
+              {/* image preview */}
+              {q.image && (
+                <div className={styles.questionImageWrapper}>
+                  <Image
+                    src={q.image}
+                    alt="Question image"
+                    width={500}
+                    height={300}
+                    style={{ maxWidth: "100%" }}
+                    className={styles.questionImage}
+                  />
+
+                  {activeQuestionId === q.id && (
+                  <button
+                    className={`${styles.removeImageX} ${styles.gTooltip}`}
+                    data-tooltip="Remove image"
+                    onClick={() => updateQuestion(q.id, { image: "" })}
+                  >
+                    ×
+                  </button>
+                  )}
+                </div>
+              )}              
+
+              {/* Select option type */}
+              <div>
+                <select className={styles.qType}
+                  value={q.type}
+                  onChange={(e) =>
+                    updateQuestion(q.id, {
+                      type: e.target.value as OptionType
+                    })
+                  }
+                >
+                  <option value="radio">◉ One choice</option>
+                  <option value="checkbox">☑ Multiple choices</option>
+                </select>
+              </div>
 
               <div
                 ref={(el) => {

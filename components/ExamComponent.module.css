@@ -264,6 +264,8 @@
 
     cursor: pointer;
     transition: background 0.2s ease;
+
+    z-index: 10; /* ensures tooltip is on front */
 }
 
 .gTooltip::after {
@@ -758,4 +760,38 @@
 .noRecordingWrapper:hover .tooltip {
   visibility: visible;
   opacity: 1;
+}
+
+
+/* image */
+.questionImageWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.questionImage {
+  max-width: 100%;
+  height: auto;
+}
+
+.removeImageX {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+
+.removeImageX:hover {
+  background: rgba(0,0,0,0.8);
 }

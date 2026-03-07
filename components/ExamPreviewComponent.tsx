@@ -167,6 +167,14 @@ const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
 /***************************
 Effects
 ***************************/
+// if user refreshes or closes the tab then stop everything
+useEffect(() => {
+  return () => {
+    stopCamera()
+    stopMicrophone()
+  }
+}, [])
+
 // Initialize answers on load
 useEffect(() => {
   if (!questions) return;
@@ -210,6 +218,8 @@ useEffect(() => {
 
   // Camera
   // ---------------------------
+  const mediaPipeCameraRef = useRef<any>(null) // store the MediaPipe camera
+
   // Face absence detection and eye-tracking
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const overlayRef = useRef<HTMLCanvasElement | null>(null);
@@ -231,10 +241,7 @@ useEffect(() => {
 
     // Stop camera on unmount: prevents camera staying active after leaving page
     return () => {
-      if (videoRef.current?.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
-        tracks.forEach(track => track.stop())
-      }
+      stopCamera()
     }
   }, [settings.camera])
 
@@ -338,7 +345,7 @@ useEffect(() => {
 
     faceMeshRef.current = faceMesh
 
-    const camera = new (window as any).Camera(video, {
+    mediaPipeCameraRef.current = new (window as any).Camera(video, {
       onFrame: async () => {
         await faceMesh.send({ image: video })
       },
@@ -346,7 +353,7 @@ useEffect(() => {
       height: 360,
     })
 
-    camera.start()
+    mediaPipeCameraRef.current.start()
   }
 
   // Eye Analysis Functions
@@ -410,22 +417,18 @@ useEffect(() => {
 
   // Microphone
   // ---------------------------
+  // stop microphone
+  const micSourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const freqAnalyserRef = useRef<AnalyserNode | null>(null)
+
   useEffect(() => {
     if (!settings.microphone.enabled) return
 
     startMicrophone()
 
     return () => {
-      // Cleanup mic stream
-      micStreamRef.current?.getTracks().forEach(track => track.stop());
-
-      // Cleanup audio context
-      audioContextRef.current?.close();
-
-      // Stop animation loop
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
+      stopMicrophone()
 
       // cleanup on unmount
       if (messageTimeoutRef.current) {
@@ -446,6 +449,8 @@ useEffect(() => {
   const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   async function startMicrophone() {
+    if (audioContextRef.current || micStreamRef.current) return
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       micStreamRef.current = stream
@@ -463,6 +468,11 @@ useEffect(() => {
       mic.connect(analyser)
       mic.connect(freqAnalyser)
 
+      // to stop microphone
+      micSourceRef.current = mic
+      analyserRef.current = analyser
+      freqAnalyserRef.current = freqAnalyser
+      // 
       const timeData = new Uint8Array(analyser.fftSize)
       const freqData = new Uint8Array(freqAnalyser.frequencyBinCount)
 
@@ -501,6 +511,43 @@ useEffect(() => {
 
     } catch (e: any) {
       setMsgNav(fmsg,"❌ Microphone error: " + e.message)
+    }
+  }
+
+  async function stopMicrophone() {
+    // stop animation loop
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+
+    // disconnect audio nodes
+    if (micSourceRef.current) {
+      micSourceRef.current.disconnect()
+      micSourceRef.current = null
+    }
+
+    if (analyserRef.current) {
+      analyserRef.current.disconnect()
+      analyserRef.current = null
+    }
+
+    if (freqAnalyserRef.current) {
+      freqAnalyserRef.current.disconnect()
+      freqAnalyserRef.current = null
+    }
+
+    // stop mic tracks
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach(track => track.stop())
+      micStreamRef.current = null
+    }
+
+    // close AudioContext safely
+    if (audioContextRef.current) {
+      await audioContextRef.current.suspend()
+      await audioContextRef.current.close()
+      audioContextRef.current = null
     }
   }
 
@@ -583,6 +630,27 @@ useEffect(() => {
       }
     } catch(e) {
       setMsgNav(fmsg,'❌ Camera error');
+    }
+  }
+
+  function stopCamera() {
+    // Stop MediaPipe camera loop
+    if (mediaPipeCameraRef.current) {
+      mediaPipeCameraRef.current.stop()
+      mediaPipeCameraRef.current = null
+    }
+    
+    // stop video stream
+    if (videoRef.current?.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+
+    // Close FaceMesh
+    if (faceMeshRef.current) {
+      faceMeshRef.current.close()
+      faceMeshRef.current = null
     }
   }
 
@@ -777,6 +845,8 @@ Actions
     sessionStorage.setItem("examTotal", String(total));
     sessionStorage.setItem("scoreMin", exam.settings.general.scoreMin);
     
+    stopCamera();
+    stopMicrophone();
     router.push("/result");
   }
 
@@ -822,7 +892,19 @@ Render
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-        <button className={styles.navBtn} data-tooltip="Back to editor" onClick={() => router.push(`/edit/${id}`)}>⬅ Back</button>
+        <button 
+        className={styles.navBtn} 
+        data-tooltip="Back to editor" 
+        onClick={async () => {
+          await stopCamera()
+          await stopMicrophone()
+
+          // force browser to release media devices
+          //await new Promise((r) => setTimeout(r, 800))
+
+          //router.push(`/edit/${id}`)
+          window.location.href = `/edit/${id}`
+        }}>⬅ Back</button>
 
         <div className="flex-1 text-center font-bold text-red-600">{msg}</div>
 

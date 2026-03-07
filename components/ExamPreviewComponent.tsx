@@ -128,7 +128,6 @@ const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
 
   // message
   const [msg, setMsg] = useState<string>("");
-  var fmsg = true; // true = show message on label, false = show message on alert
 
   //-----------------------
   
@@ -300,7 +299,7 @@ useEffect(() => {
       if (cameraSettings.faceAbsence) {
         if (faces.length === 0) {
           if (lastFaceStateRef.current !== "no_face") {
-            addViolation(fmsg,"⚠ No face detected. Stay in view.")
+            addViolation("⚠ No face detected. Stay in view.")
             lastFaceStateRef.current = "no_face"
           }
           return
@@ -308,7 +307,7 @@ useEffect(() => {
 
         if (faces.length > 1) {
           if (lastFaceStateRef.current !== "multi_face") {
-            addViolation(fmsg,"⚠ Multiple faces detected.")
+            addViolation("⚠ Multiple faces detected.")
             lastFaceStateRef.current = "multi_face"
           }
           return
@@ -411,7 +410,7 @@ useEffect(() => {
     if (currentDirection !== "center" &&
       now - directionStartTimeRef.current > 400
     ) {
-      addViolation(fmsg,`⚠ Looking ${currentDirection} detected`);
+      addViolation(`⚠ Looking ${currentDirection} detected`);
     }
   }
 
@@ -492,15 +491,15 @@ useEffect(() => {
         // Check for noise / speaking
         /*
         if (volume > SPEAK_THRESHOLD) {
-          addViolation(fmsg,'⚠ Someone is speaking!');
+          addViolation('⚠ Someone is speaking!');
           lastNoiseTimeRef.current = Date.now()
         } else if (volume > NOISE_THRESHOLD) {
-          addViolation(fmsg,'⚠ Too loud!');
+          addViolation('⚠ Too loud!');
           lastNoiseTimeRef.current = Date.now()
         }
         */
         if (volume > NOISE_THRESHOLD) {
-          addViolation(fmsg,'⚠ Noise detected!');
+          addViolation('⚠ Noise detected!');
           lastNoiseTimeRef.current = Date.now()
         } 
 
@@ -510,7 +509,7 @@ useEffect(() => {
       update()
 
     } catch (e: any) {
-      setMsgNav(fmsg,"❌ Microphone error: " + e.message)
+      setMsgNav("❌ Microphone error: " + e.message)
     }
   }
 
@@ -629,7 +628,7 @@ useEffect(() => {
         initFaceMesh(cameraSettings)
       }
     } catch(e) {
-      setMsgNav(fmsg,'❌ Camera error');
+      setMsgNav('❌ Camera error');
     }
   }
 
@@ -676,7 +675,7 @@ useEffect(() => {
     // Screen-switch detection (tab change + blur/focus)
     const handleVisibilityChange = () => {
       if (document.hidden && screen.tabSwitch) {
-        addViolation(fmsg,"⚠ Tab switch or minimize detected");
+        addViolation("⚠ Tab switch or minimize detected");
       }
     };
 
@@ -686,7 +685,7 @@ useEffect(() => {
         screen.fullscreenExit &&
         !document.fullscreenElement
       ) {
-        addViolation(fmsg,"⚠ Exited fullscreen");
+        addViolation("⚠ Exited fullscreen");
       }
     };
 
@@ -701,7 +700,7 @@ useEffect(() => {
 
       if (blocked) {
         e.preventDefault();
-        addViolation(fmsg,`⚠ Blocked shortcut: ${e.key}`);
+        addViolation(`⚠ Blocked shortcut: ${e.key}`);
       }
     };
 
@@ -715,7 +714,7 @@ useEffect(() => {
         window.outerHeight - window.innerHeight > threshold;
 
       if (devToolsOpen) {
-        addViolation(fmsg,"⚠ DevTools detected");
+        addViolation("⚠ DevTools detected");
       }
     };
 
@@ -724,7 +723,7 @@ useEffect(() => {
       if (!screen.secondMonitor) return;
 
       if (window.screen.availWidth > window.innerWidth + 100) {
-        addViolation(fmsg,"⚠ Second monitor detected");
+        addViolation("⚠ Second monitor detected");
       }
     };
 
@@ -759,11 +758,11 @@ Actions
   const violationCountRef = useRef(0);
   const MAX_VIOLATIONS = 10;
 
-  function addViolation(flag: boolean, reason: string) {
+  function addViolation(reason: string) {
     violationCountRef.current++;
 
-    setMsgNav(flag, `Violation: ${reason}`);
-    //setMsgNav(flag, `Violation ${violationCountRef.current}: ${reason}`);
+    setMsgNav(`Violation: ${reason}`);
+    //setMsgNav(`Violation ${violationCountRef.current}: ${reason}`);
 
     /*console.log("violationCountRef.current = ", violationCountRef.current);
     if (violationCountRef.current >= MAX_VIOLATIONS) {
@@ -806,7 +805,7 @@ Actions
 
     if (missingRequired.length > 0) {
       setInvalidQuestions(missingRequired);
-      setMsgNav(fmsg,"Some questions still need attention because they are required");
+      setMsgNav("Some questions still need attention because they are required");
       return;
     }
 
@@ -854,12 +853,7 @@ Actions
     setQuestions(qs => qs.map(q => (q.id === id ? { ...q, ...patch } : q)))
   }
 
-  function setMsgNav(flag: boolean, message: string) {
-    if (!flag) {
-      alert(message);
-      return;
-    }
-
+  function setMsgNav(message: string) {
     // Clear any existing timeout
     if (messageTimeoutRef.current) {
       clearTimeout(messageTimeoutRef.current);

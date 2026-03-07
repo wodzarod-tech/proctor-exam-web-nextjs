@@ -95,6 +95,12 @@
     align-items:center;
     gap:8px;
     margin-bottom:8px;
+    
+    z-index: 0; /* tooltip is on front */
+}
+
+.option:hover {
+    z-index: 5;
 }
 
 /* Base state: no line */
@@ -265,7 +271,7 @@
     cursor: pointer;
     transition: background 0.2s ease;
 
-    z-index: 10; /* ensures tooltip is on front */
+    z-index: 2; /* tooltip is on front */
 }
 
 .gTooltip::after {
@@ -295,8 +301,7 @@
     background: #f1f3f4;
 }
 
-.gTooltip:hover::after,
-.gTooltip:focus-visible::after{
+.gTooltip:hover::after {
     opacity: 1;
 }
 
@@ -762,22 +767,30 @@
   opacity: 1;
 }
 
-
 /* image */
 .questionImageWrapper {
   position: relative;
   display: inline-block;
+  margin-top: 8px;
 }
 
 .questionImage {
   max-width: 100%;
   height: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.optionImageWrapper{
+  margin-left: 42px;
+  margin-top: 6px;
+  position: relative;
 }
 
 .removeImageX {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: -13px;
+  right: -13px;
   width: 26px;
   height: 26px;
   border-radius: 50%;

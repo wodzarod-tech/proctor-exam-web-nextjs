@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./ExamComponent.module.css";
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Sortable from 'sortablejs'
 import { redirect, useRouter } from 'next/navigation'
 import Link from "next/link"
@@ -21,19 +21,20 @@ interface ExamSessionProps {
 type Question = {
   id: string
   text: string
-  image?: string
   type: OptionType
   points: number
   required: boolean
   options: Option[]
   feedbackOk: string
   feedbackError: string
+  image?: string
 }
 
 type Option = {
   id: string
   text: string
   checked: boolean
+  image?: string
 }
 
 type OptionType = 'radio' | 'checkbox'
@@ -77,15 +78,15 @@ const uid = () => crypto.randomUUID()
 const createEmptyQuestion = (): Question => ({
   id: uid(),
   text: '',
-  image: '',
   type: 'radio',
   points: 0,
   required: false,
   options: [
-    { id: uid(), text: '', checked: false }
+    { id: uid(), text: '', checked: false, image: "" }
   ],
   feedbackOk: '',
-  feedbackError: ''
+  feedbackError: '',
+  image: ''
 })
 
 let uuid = "";
@@ -111,7 +112,6 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
     formattedQuestions = exam.questions.map((q: any) => ({
       id: generateId(),
       text: q.text,
-      image: q.image || "",
       type: q.type,
       points: q.points || 0,
       required: q.required || false,
@@ -121,7 +121,9 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
         id: generateId(),
         text: opt.text,
         checked: opt.checked || false,
+        image: opt.image || ""
       })),
+      image: q.image || "",
     }));
   }
   //
@@ -193,7 +195,7 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
       router.push("/")
     } catch (error) {
       console.error(error)
-      alert("Failed to delete exam")
+      setMsgNav("Failed to delete exam ❌")
     }
   }
 
@@ -304,23 +306,24 @@ Actions
         description,
         questions: questions.map(q => ({
           text: q.text,
-          image: q.image,
           type: q.type,
           points: q.points,
           required: q.required,
           options: q.options.map(o => ({
             text: o.text,
-            checked: o.checked
+            checked: o.checked,
+            image: o.image || ""
           })),
           feedbackOk: q.feedbackOk,
-          feedbackError: q.feedbackError
+          feedbackError: q.feedbackError,
+          image: q.image || "",
         })),
         settings
       }
       
       // Dont save or preview if no title
       if(examPayload.title == "") {
-        alert("Add title ⚠️");
+        setMsgNav("Add title ⚠️");
         return false;
       }
       else {
@@ -336,14 +339,14 @@ Actions
         }
 
         if(!flag)
-          alert("Saved successfully ✅")
+          setMsgNav("Saved successfully ✓")
 
         return true;
       }
 
     } catch (error: any) {
       console.error(error)
-      alert(error.message || "Failed to save exam")
+      setMsgNav(error.message || "❌ Failed to save exam")
       return false;
     }
   }
@@ -358,9 +361,9 @@ Actions
 
     try {
       await navigator.clipboard.writeText(fullUrl);
-      alert("🔗 URL copied to clipboard!");
+      setMsgNav("🔗 URL copied to clipboard");
     } catch (err) {
-      alert("❌ Failed to copy URL");
+      setMsgNav("❌ Failed to copy URL");
     }
   }
 
@@ -380,7 +383,7 @@ Actions
         type: 'radio',
         points: 0,
         required: false,
-        options: [{ id: uid(), text: '', checked: false }],
+        options: [{ id: uid(), text: '', checked: false, image: "" }],
         feedbackOk: '',
         feedbackError: ''
       }
@@ -405,7 +408,8 @@ Actions
             {
               id: uid(),
               text: "",
-              checked: false
+              checked: false,
+              image: ""
             }
           ]
         }
@@ -440,6 +444,55 @@ Actions
     reader.readAsDataURL(file)
   }
 
+  // to add image (base64) in option
+  function handleOptionImageUpload(qid: string, oid: string, file: File) {
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      setQuestions(prev =>
+        prev.map(q =>
+          q.id === qid
+            ? {
+                ...q,
+                options: q.options.map(o =>
+                  o.id === oid ? { ...o, image: reader.result as string } : o
+                )
+              }
+            : q
+        )
+      )
+    }
+
+    reader.readAsDataURL(file)
+  }
+
+  // Duration for messages
+  const [msg, setMsg] = useState<string>("");
+  const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  function setMsgNav(message: string) {
+    // Clear any existing timeout
+    if (messageTimeoutRef.current) {
+      clearTimeout(messageTimeoutRef.current);
+      messageTimeoutRef.current = null;
+    }
+
+    // If empty message → just clear immediately
+    if (!message) {
+      setMsg("");
+      return;
+    }
+
+    // Set message
+    setMsg(message);
+
+    // Auto clear after 3 seconds
+    messageTimeoutRef.current = setTimeout(() => {
+      setMsg("");
+      messageTimeoutRef.current = null;
+    }, 3000);
+  }
+
 /***************************
 Render
 ***************************/
@@ -461,6 +514,8 @@ Render
             EasyExam
         </span>
         </Link>
+
+        <div className="flex-1 text-center text-blue-600">{msg}</div>
 
         <div className="flex items-center gap-8">
         
@@ -575,21 +630,19 @@ Render
               />
 
               {/* upload image */}
-              <div>
-                <label className={`${styles.btnLink} ${styles.gTooltip}`}
-                  data-tooltip="Add image">
-                  <i className="fa-solid fa-image"></i>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleImageUpload(q.id, file)
-                    }}
-                  />
-                </label>
-              </div>
+              <label className={`${styles.btnLink} ${styles.gTooltip}`}
+                data-tooltip="Add image">
+                <i className="fa-solid fa-image"></i>
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleImageUpload(q.id, file)
+                  }}
+                />
+              </label>
               
               {/* image preview */}
               {q.image && (
@@ -609,7 +662,7 @@ Render
                     data-tooltip="Remove image"
                     onClick={() => updateQuestion(q.id, { image: "" })}
                   >
-                    ×
+                    ✕
                   </button>
                   )}
                 </div>
@@ -630,13 +683,15 @@ Render
                 </select>
               </div>
 
+              {/* Options */}  
               <div
                 ref={(el) => {
                   optionRefs.current[q.id] = el
                 }}
               >
                 {q.options.map((opt, index) => (
-                  <div key={opt.id} className={styles.option}>
+                  <React.Fragment key={opt.id}>
+                  <div className={styles.option}>
 
                     <div className={styles.optDrag}>⋮⋮</div>
 
@@ -675,6 +730,21 @@ Render
                       }}
                     />
 
+                    {/* upload image */}
+                    <label className={`${styles.btnLink} ${styles.gTooltip}`}
+                      data-tooltip="Add image">
+                      <i className="fa-solid fa-image"></i>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleOptionImageUpload(q.id, opt.id, file)
+                        }}
+                      />
+                    </label>
+                    
                     <button
                       className={styles.btnLink}
                       onClick={() => removeOption(q.id, opt.id)}
@@ -683,6 +753,37 @@ Render
                     </button>
 
                   </div>
+
+                  {/* image preview */}
+                  {opt.image && (
+                    <div className={styles.questionImageWrapper}>
+                      <Image
+                        src={opt.image}
+                        alt="Option image"
+                        width={150}
+                        height={100}
+                        style={{ maxWidth: "100%" }}
+                        className={styles.optionImage}
+                      />
+
+                      {activeQuestionId === q.id && (
+                      <button
+                        className={`${styles.removeImageX} ${styles.gTooltip}`}
+                        data-tooltip="Remove image"
+                        onClick={() =>
+                          updateQuestion(q.id, {
+                            options: q.options.map(o =>
+                              o.id === opt.id ? { ...o, image: "" } : o
+                            )
+                          })
+                        }
+                      >
+                        ✕
+                      </button>
+                      )}
+                    </div>
+                  )} 
+                  </React.Fragment>
                 ))}
               </div>
 

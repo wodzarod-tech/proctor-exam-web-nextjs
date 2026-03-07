@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { deleteExam } from "@/lib/actions/exam.actions"
 import { useRouter } from "next/navigation"
+import { useRef, useState } from "react";
+import styles from "./ExamCard.module.css";
 
 interface ExamCardProps {
   id: string;
@@ -54,23 +56,50 @@ const ExamCard = ({
   }
 
   // Delete exam
+  // For delete an exam
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+
   const router = useRouter()
 
   const handleDelete = async () => {
-    const confirmDelete = confirm("Are you sure you want to delete this exam?")
-
-    if (!confirmDelete) return
-
     try {
       await deleteExam(id)
       router.refresh() // refresh page to remove card
     } catch (error) {
       console.error(error)
-      alert("Failed to delete exam")
+      setMsgNav("❌ Failed to delete exam")
     }
   }
 
+  // Duration for messages
+  const [msg, setMsg] = useState<string>("");
+  const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  function setMsgNav(message: string) {
+    // Clear any existing timeout
+    if (messageTimeoutRef.current) {
+      clearTimeout(messageTimeoutRef.current);
+      messageTimeoutRef.current = null;
+    }
+
+    // If empty message → just clear immediately
+    if (!message) {
+      setMsg("");
+      return;
+    }
+
+    // Set message
+    setMsg(message);
+
+    // Auto clear after 3 seconds
+    messageTimeoutRef.current = setTimeout(() => {
+      setMsg("");
+      messageTimeoutRef.current = null;
+    }, 3000);
+  }
+
   return (
+    <>
     <article className="companion-card" style={{backgroundColor: color}}>
       <div className="flex justify-between items-center">
         <div className="subject-badge">{title}</div>
@@ -88,7 +117,7 @@ const ExamCard = ({
           <button
             className="icon-btn g-tooltip"
             data-tooltip="Delete exam"
-            onClick={handleDelete}>
+            onClick={() => setIsDeleteOpen(true)}>
             <i className="fa fa-trash text-sm"></i>
           </button>
         </div>
@@ -112,6 +141,43 @@ const ExamCard = ({
       </Link>
 
     </article>
+
+    {/* delete exam modal*/}
+    {isDeleteOpen && (
+    <div className={styles.modalOverlay}>
+      <div className={styles.confirmModal}>
+
+        <h3>Delete exam?</h3>
+
+        <p>
+          Are you sure you want to delete this exam?  
+        </p>
+
+        <div className={styles.modalActions}>
+
+          <button
+            className={styles.modalCancel}
+            onClick={() => setIsDeleteOpen(false)}
+          >
+            Cancel
+          </button>
+
+          <button
+            className={styles.modalDelete}
+            onClick={async () => {
+              await handleDelete()
+              setIsDeleteOpen(false)
+            }}
+          >
+            Delete
+          </button>
+
+        </div>
+
+      </div>
+    </div>
+    )}
+    </>
   );
 };
 

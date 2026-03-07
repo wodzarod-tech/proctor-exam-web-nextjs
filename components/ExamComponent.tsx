@@ -138,6 +138,9 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
     formattedQuestions ?? [createEmptyQuestion()]
   );
 
+  // For delete an exam
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+
   // If creating new exam → uses default settings
   const defaultSettings: Settings = {
       general: {
@@ -185,17 +188,13 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
 
   // Delete exam
   const handleDelete = async () => {
-    const confirmDelete = confirm("Are you sure you want to delete this exam?")
-
-    if (!confirmDelete) return
-
     try {
       console.log("id=", id);
       await deleteExam(id)
       router.push("/")
     } catch (error) {
       console.error(error)
-      setMsgNav("Failed to delete exam ❌")
+      setMsgNav("❌ Failed to delete exam")
     }
   }
 
@@ -323,7 +322,7 @@ Actions
       
       // Dont save or preview if no title
       if(examPayload.title == "") {
-        setMsgNav("Add title ⚠️");
+        setMsgNav("⚠️ Add title");
         return false;
       }
       else {
@@ -527,7 +526,7 @@ Render
           <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={() => saveExam(false)}><i className="fa fa-save"></i></button>
           <button className={styles.gTooltip} data-tooltip="Get URL to Take exam" onClick={getUrl}><i className="fa fa-link"></i></button>
           <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={previewExam}><i className="fa fa-eye"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Delete exam" onClick={handleDelete}><i className="fa fa-trash"></i></button>
+          <button className={styles.gTooltip} data-tooltip="Delete exam" onClick={() => setIsDeleteOpen(true)}><i className="fa fa-trash"></i></button>
           {/*<button className={`${styles.toolbarBtn} ${styles.primary}`}>Publish</button>*/}
         </nav>
 
@@ -1304,6 +1303,42 @@ Render
         </div>
       </div>
     </div>
+
+    {/* delete exam modal*/}
+    {isDeleteOpen && (
+    <div className={styles.modalOverlay}>
+      <div className={styles.confirmModal}>
+
+        <h3>Delete exam?</h3>
+
+        <p>
+          Are you sure you want to delete this exam?
+        </p>
+
+        <div className={styles.modalActions}>
+
+          <button
+            className={styles.modalCancel}
+            onClick={() => setIsDeleteOpen(false)}
+          >
+            Cancel
+          </button>
+
+          <button
+            className={styles.modalDelete}
+            onClick={async () => {
+              await handleDelete()
+              setIsDeleteOpen(false)
+            }}
+          >
+            Delete
+          </button>
+
+        </div>
+
+      </div>
+    </div>
+    )}
     </>
   )
 }

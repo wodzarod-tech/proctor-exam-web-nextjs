@@ -6,6 +6,7 @@
   align-items:center;
   justify-content:center;
   z-index:3000;
+  backdrop-filter: blur(2px); /* Lock background scroll when modal opens */
 }
 
 .confirmModal{
@@ -15,6 +16,18 @@
   border-radius:12px;
   padding:24px;
   box-shadow:0 10px 30px rgba(0,0,0,.25);
+  animation: modalPop .18s ease;
+}
+
+@keyframes modalPop{
+  from{
+    transform:scale(.92);
+    opacity:0;
+  }
+  to{
+    transform:scale(1);
+    opacity:1;
+  }
 }
 
 .confirmModal h3{

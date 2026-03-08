@@ -4,22 +4,19 @@ import { redirect } from "next/navigation";
 import ExamComponent from "@/components/ExamComponent";
 
 interface EditExamPageProps {
-  params: Promise<{ id: string}>;
+  params: { id: string};
 }
 
 const EditExam = async({ params }: EditExamPageProps) => {
+  const user = await currentUser();
+  if(!user) redirect('/sign-in');
+
   const { id } = await params;
   const exam = await getExam(id);
-  console.log('exam = ', exam);
-
-  const user = await currentUser();
-
-  if(!user) redirect('/sign-in');
-  if(!exam.title) redirect('/');
 
   return (
     <ExamComponent
-      id={id}
+      id={params.id}
       exam={exam}
       userId={user.id}
     />

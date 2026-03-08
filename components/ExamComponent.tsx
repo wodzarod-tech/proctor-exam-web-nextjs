@@ -8,6 +8,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 import { createExam, deleteExam, updateExam } from "@/lib/actions/exam.actions"
+import { createEmptyQuestion, uid } from "@/lib/utils";
+import ImageUploadModal from "./ImageUploadModal/ImageUploadModal";
 
 /***************************
 Types
@@ -70,134 +72,16 @@ type Settings = {
 }
 
 /***************************
-Helpers
-***************************/
-
-const uid = () => crypto.randomUUID()
-
-const createEmptyQuestion = (): Question => ({
-  id: uid(),
-  text: '',
-  type: 'radio',
-  points: 0,
-  required: false,
-  options: [
-    { id: uid(), text: '', checked: false, image: "" }
-  ],
-  feedbackOk: '',
-  feedbackError: '',
-  image: ''
-})
-
-let uuid = "";
-
-/* for drag & drop image */
-// DropZone component
-type DropImageProps = {
-  onFile: (file: File) => void
-}
-
-type ImageModalProps = {
-  open: boolean
-  onClose: () => void
-  onFile: (file: File) => void
-}
-
-function ImageUploadModal({ open, onClose, onFile }: ImageModalProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [dragging, setDragging] = useState(false)
-
-  if (!open) return null
-
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault()
-    setDragging(false)
-
-    const file = e.dataTransfer.files?.[0]
-    if (!file) return
-    if (!file.type.startsWith("image/")) return
-
-    onFile(file)
-    onClose()
-  }
-
-  function handleBrowse(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    onFile(file)
-    onClose()
-  }
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.45)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 1000
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          padding: 30,
-          borderRadius: 10,
-          width: 420
-        }}
-      >
-        <h3 style={{ marginBottom: 20 }}>Insert image</h3>
-
-        <div
-          onDragOver={(e) => {
-            e.preventDefault()
-            setDragging(true)
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-          style={{
-            border: "2px dashed #dadce0",
-            borderRadius: 10,
-            padding: 40,
-            textAlign: "center",
-            background: dragging ? "#f1f3f4" : "transparent",
-            cursor: "pointer"
-          }}
-          onClick={() => inputRef.current?.click()}
-        >
-          📂 Drag image here<br />
-          or<br />
-          <strong>Browse file</strong>
-        </div>
-
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          style={{ display: "none" }}
-          onChange={handleBrowse}
-        />
-
-        <div style={{ marginTop: 20, textAlign: "right" }}>
-          <button onClick={onClose}>Cancel</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/***************************
 Page
 ***************************/
-const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
-  console.log('ExamComponent.exam=', exam);
+let uuid = "";
 
+const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
   const router = useRouter()
 
-  let formattedQuestions=null;
+  //const uuid = useRef<string>("")
+  
+  let formattedQuestions = null;
 
   // To edit exam
   if(exam != null) {
@@ -239,14 +123,11 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
   // For delete an exam
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
-  // to upload image
-  // state for upload modal image
-  // qid -> question image
-  // qid + oid -> option image
+  // upload image
   const [imageModal, setImageModal] = useState<{
     open: boolean
-    qid?: string
-    oid?: string
+    qid?: string // for question
+    oid?: string // for option
   }>({ open: false })
 
   // If creating new exam → uses default settings
@@ -302,7 +183,7 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
       router.push("/")
     } catch (error) {
       console.error(error)
-      setMsgNav("❌ Failed to delete exam")
+      setMsg("❌ Failed to delete exam")
     }
   }
 
@@ -430,7 +311,7 @@ Actions
       
       // Dont save or preview if no title
       if(examPayload.title == "") {
-        setMsgNav("⚠️ Add title");
+        setMsg("⚠️ Add title");
         return false;
       }
       else {
@@ -446,14 +327,14 @@ Actions
         }
 
         if(!flag)
-          setMsgNav("Saved successfully ✓")
+          setMsg("Saved successfully ✓")
 
         return true;
       }
 
     } catch (error: any) {
       console.error(error)
-      setMsgNav(error.message || "❌ Failed to save exam")
+      setMsg(error.message || "❌ Failed to save exam")
       return false;
     }
   }
@@ -468,9 +349,9 @@ Actions
 
     try {
       await navigator.clipboard.writeText(fullUrl);
-      setMsgNav("🔗 URL copied to clipboard");
+      setMsg("🔗 URL copied to clipboard");
     } catch (err) {
-      setMsgNav("❌ Failed to copy URL");
+      setMsg("❌ Failed to copy URL");
     }
   }
 
@@ -535,10 +416,10 @@ Actions
   }
 
   // to add image (base64) in question
-  function handleImageUpload(qid: string, file: File) {
+  function handleQuestionImageUpload(qid: string, file: File) {
     // limit size to 2MB
     if (file.size > 2 * 1024 * 1024) {
-      setMsgNav("Image must be under 2MB")
+      setMsg("Image must be under 2MB")
       return
     }
 
@@ -561,7 +442,7 @@ Actions
   function handleOptionImageUpload(qid: string, oid: string, file: File) {
     // limit size to 2MB
     if (file.size > 2 * 1024 * 1024) {
-      setMsgNav("Image must be under 2MB")
+      setMsg("Image must be under 2MB")
       return
     }
 
@@ -585,32 +466,18 @@ Actions
     reader.readAsDataURL(file)
   }
 
-  // Duration for messages
+  // Show message
   const [msg, setMsg] = useState<string>("");
-  const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  function setMsgNav(message: string) {
-    // Clear any existing timeout
-    if (messageTimeoutRef.current) {
-      clearTimeout(messageTimeoutRef.current);
-      messageTimeoutRef.current = null;
-    }
+  useEffect(() => {
+    if (!msg) return
 
-    // If empty message → just clear immediately
-    if (!message) {
-      setMsg("");
-      return;
-    }
+    const timer = setTimeout(() => {
+      setMsg("")
+    }, 3000)
 
-    // Set message
-    setMsg(message);
-
-    // Auto clear after 3 seconds
-    messageTimeoutRef.current = setTimeout(() => {
-      setMsg("");
-      messageTimeoutRef.current = null;
-    }, 3000);
-  }
+    return () => clearTimeout(timer)
+  }, [msg])
 
 /***************************
 Render
@@ -1453,21 +1320,19 @@ Render
     </div>
     )}
 
+    {/* Image modal */}
     <ImageUploadModal
       open={imageModal.open}
       onClose={() => setImageModal({ open: false })}
-      onFile={(file) => {
-        if (!imageModal.qid) return
-
-        if (imageModal.oid) {
-          handleOptionImageUpload(
-            imageModal.qid,
-            imageModal.oid,
-            file
-          )
-        } else {
-          handleImageUpload(imageModal.qid, file)
+      onSelect={(file) => {
+        if (imageModal.qid && imageModal.oid) {
+          handleOptionImageUpload(imageModal.qid, imageModal.oid, file)
+        } else if (imageModal.qid) {
+          handleQuestionImageUpload(imageModal.qid, file)
         }
+
+        // close modal after selecting
+        setImageModal({ open: false })
       }}
     />
     </>

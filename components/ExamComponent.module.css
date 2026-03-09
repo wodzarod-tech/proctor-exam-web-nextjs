@@ -448,100 +448,10 @@
     }
 }
 
-/* Settings modal */
-.settingsModal{
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-    /*backdrop-filter: blur(2px);*/
-}
-
-.settingsModal.hidden{
-    display: none;
-}
-
-.settingsCard{
-    background: #ffffff;
-    width: 560px;
-    max-width: 95%;
-    border-radius: 12px;
-
-    box-shadow:
-        0 2px 6px rgba(0,0,0,.15),
-        0 8px 24px rgba(0,0,0,.2);
-
-    overflow: hidden;
-}
-
-.settingsHeader{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    padding: 20px 24px;
-
-    font-size: 18px;
-    font-weight: 500;
-
-    border-bottom: 1px solid #e8eaed;
-}
-
-.settingsBack {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  background: none;
-  border: none;
-  padding: 0;
-
-  font-size: 18px;
-  font-weight: 500;
-  color: #202124;
-
-  cursor: pointer;
-}
-
-.backArrow {
-  font-size: 24px;   /* 🔥 bigger arrow */
-  line-height: 1;
-  transition: color 0.2s ease;
-}
-
-.settingsBack:hover .backArrow {
-  color: #1a73e8;
-}
-
 /* Google Forms style toggle row */
-.gfToggleRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 0;
-}
-
 .gfLabel {
     font-size: 14px;
     color: #202124;
-}
-
-.settingsContent{
-    padding: 24px;
-}
-
-/* Section titles */
-.settingsContent strong {
-    font-size: 13px;
-    font-weight: 600;
-    color: #5f6368;
-    letter-spacing: .3px;
-    text-transform: uppercase;
-    display: block;
-    margin: 18px 0 8px 0;
 }
 
 .btnIcon{
@@ -593,7 +503,6 @@
 .qPoints input[type="number"],
 .option input[type="number"],
 .requiredToggle input[type="number"],
-.gfToggleRow input[type="number"],
 .headerFields input[type="number"]
 {
     pointer-events: auto;
@@ -721,50 +630,6 @@
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-.subSetting {
-  padding-left: 28px; /* adjust for perfect alignment */
-}
-
-.noRecordingWrapper {
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
-  margin-left: 6px;
-}
-
-.noRecording {
-  color: white;
-  background: #d93025;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 12px;
-  margin-left: 6px;
-}
-
-.tooltip {
-  visibility: hidden;
-  opacity: 0;
-  width: 260px;
-  background-color: #202124;
-  color: #fff;
-  text-align: left;
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-
-  position: absolute;
-  bottom: 130%;
-  left: 0;
-
-  transition: opacity 0.2s ease;
-  z-index: 10;
-}
-
-.noRecordingWrapper:hover .tooltip {
-  visibility: visible;
-  opacity: 1;
 }
 
 /* image */

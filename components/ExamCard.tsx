@@ -2,9 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { deleteExam } from "@/lib/actions/exam.actions"
-import { useRouter } from "next/navigation"
-import { useState } from "react";
+import { useDeleteExam } from "@/hooks/useDeleteExam"
 import DeleteExamModal from "@/components/DeleteExamModal/DeleteExamModal"
 
 /***************************
@@ -34,8 +32,6 @@ const ExamCard = ({
   color
 }: ExamCardProps) => {
 
-const router = useRouter()
-
 // Show time limit
 // ---------------------------
 const hours = settings?.timer?.hours ?? 0;
@@ -56,21 +52,7 @@ const durationLabel = (() => {
 })()
 
 // Delete exam
-// ---------------------------
-const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-const [deleting, setDeleting] = useState(false)
-
-const handleDelete = async () => {
-  try {
-    setDeleting(true)
-    await deleteExam(id)
-    router.refresh() // refresh page after remove card
-  } catch (error) {
-    console.error("Failed to delete exam:", error)
-  } finally {
-    setDeleting(false)
-  }
-}
+const { isDeleteOpen, setIsDeleteOpen, deleting, handleDelete } = useDeleteExam()
 
 /***************************
 Render
@@ -131,7 +113,7 @@ return (
     deleting={deleting}
     onCancel={() => setIsDeleteOpen(false)}
     onConfirm={async () => {
-      await handleDelete()
+      await handleDelete(id)
       setIsDeleteOpen(false)
     }}
   />

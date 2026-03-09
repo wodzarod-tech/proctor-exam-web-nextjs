@@ -16,7 +16,7 @@ const EditExam = async({ params }: EditExamPageProps) => {
 
   return (
     <ExamComponent
-      id={params.id}
+      id={id}
       exam={exam}
       userId={user.id}
     />

@@ -10,6 +10,9 @@ import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 import { createExam, deleteExam, updateExam } from "@/lib/actions/exam.actions"
 import { createEmptyQuestion, uid } from "@/lib/utils";
 import ImageUploadModal from "./ImageUploadModal/ImageUploadModal";
+import { useDeleteExam } from "@/hooks/useDeleteExam"
+import DeleteExamModal from "@/components/DeleteExamModal/DeleteExamModal"
+import SettingsModal from "@/components/SettingsModal/SettingsModal"
 
 /***************************
 Types
@@ -120,9 +123,6 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
     formattedQuestions ?? [createEmptyQuestion()]
   );
 
-  // For delete an exam
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-
   // upload image
   const [imageModal, setImageModal] = useState<{
     open: boolean
@@ -174,18 +174,6 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
 
   const totalPoints = questions?.reduce((sum, q) => sum + (q.points ?? 0), 0) ?? 0;
   const formattedPoints = Number(totalPoints);
-
-  // Delete exam
-  const handleDelete = async () => {
-    try {
-      console.log("id=", id);
-      await deleteExam(id)
-      router.push("/")
-    } catch (error) {
-      console.error(error)
-      setMsg("❌ Failed to delete exam")
-    }
-  }
 
 /***************************
 Effects
@@ -478,6 +466,9 @@ Actions
 
     return () => clearTimeout(timer)
   }, [msg])
+
+  // Delete exam
+  const { isDeleteOpen, setIsDeleteOpen, deleting, handleDelete } = useDeleteExam()
 
 /***************************
 Render
@@ -847,478 +838,25 @@ Render
       </div>
       
       {/* Settings Modal */}
-      <div className={`${styles.settingsModal} ${!isSettingsOpen ? styles.hidden : ""}`}>
-        
-        <div className={styles.settingsCard}>
+      <SettingsModal
+        open={isSettingsOpen}
+        settings={settings}
+        setSettings={setSettings}
+        onClose={() => setIsSettingsOpen(false)}
+      />
 
-          <div className={styles.settingsHeader}>
-            <button className={styles.settingsBack} 
-              onClick={() => setIsSettingsOpen(false)}>
-              <span className={styles.backArrow}>← </span>
-              <span>Settings</span>
-            </button>
-          </div>
-          
-          <div className={styles.settingsContent}>
-
-              <div className={styles.gfToggleRow}>
-                <span className={styles.gfLabel}>
-                  Shuffle questions
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.general.shuffleQuestions}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        general: {
-                          ...prev.general,
-                          shuffleQuestions: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              <div className={styles.gfToggleRow}>
-                <span className={styles.gfLabel}>
-                  Shuffle options
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.general.shuffleOptions}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        general: {
-                          ...prev.general,
-                          shuffleOptions: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              <div className={styles.gfToggleRow}>
-                <span className={styles.gfLabel}>
-                  View toggle One by One/All questions
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.general.viewToggleQuestions}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        general: {
-                          ...prev.general,
-                          viewToggleQuestions: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              <div className={styles.gfToggleRow}>
-                <span className={styles.gfLabel}>
-                  View questions One by One
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.general.viewQuestions}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        general: {
-                          ...prev.general,
-                          viewQuestions: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              <div className={styles.gfToggleRow}>
-                <span className={styles.gfLabel}>
-                  Points minimum to pass
-                </span>
-
-                <div className={styles.qPoints}>
-                  <input
-                    type="number"
-                    className={styles.pointsInput}
-                    min="0"
-                    step="0.1"
-                    value={settings.general.scoreMin}
-                    onChange={(e) => {
-                      const value = Number(e.target.value) || 0
-                      setSettings(prev => ({
-                        ...prev,
-                        general: {
-                          ...prev.general,
-                          scoreMin: value
-                        }
-                      }))
-                    }}
-                  /> points
-                </div>
-              </div>
-            
-              <div className={styles.lineSeparator} />
-
-              <div>
-                <span className={styles.gfLabel}>
-                  <h2><strong>PROCTOR</strong></h2>
-                </span>
-              </div>
-
-              {/* Timer */}
-              <div className={styles.gfToggleRow}>
-                <span className={styles.gfLabel}>
-                  Timer Left
-                </span>
-
-                <div className={styles.qPoints}>
-                  <input
-                    type="number"
-                    className={styles.pointsInput}
-                    min="0"
-                    max="24"
-                    step="1"
-                    value={settings.timer.hours}
-                    onChange={(e) => {
-                      const value = Math.max(0, Math.min(24, Number(e.target.value)))
-                      setSettings(prev => ({
-                        ...prev,
-                        timer: {
-                          ...prev.timer,
-                          hours: value
-                        }
-                      }))
-                    }}
-                  />hour
-                  <span>:</span>
-                  <input
-                    type="number"
-                    className={styles.pointsInput}
-                    min="0"
-                    max="59"
-                    step="1"
-                    value={settings.timer.minutes}
-                    onChange={(e) => {
-                      const value = Math.max(0, Math.min(59, Number(e.target.value)))
-                      setSettings(prev => ({
-                        ...prev,
-                        timer: {
-                          ...prev.timer,
-                          minutes: value
-                        }
-                      }))
-                    }}
-                  />min
-                </div>
-              </div>
-
-              {/* Camera */}
-              <div className={styles.gfToggleRow}>
-                <span className={styles.gfLabel}>
-                  Camera{" "}
-                  <span className={styles.noRecordingWrapper}>
-                    <span className={styles.noRecording}>(no recording)</span>
-                    <span className={styles.tooltip}>
-                      Your camera is used only for live proctoring.
-                      No video is recorded, stored, or transmitted.
-                    </span>
-                  </span>
-                </span>
-
-                <label className={styles.switch}>
-                <input
-                  type="checkbox"
-                  checked={settings.camera.enabled}
-                  onChange={(e) =>
-                    setSettings(prev => ({
-                      ...prev,
-                      camera: {
-                        ...prev.camera,
-                        enabled: e.target.checked
-                      }
-                    }))
-                  }
-                />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              {/* show only if camera enabled */}
-              {settings.camera.enabled && (
-              <>
-              <div className={`${styles.gfToggleRow} ${styles.subSetting}`}>
-                <span className={styles.gfLabel}>
-                  Detect Face absence
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.camera.faceAbsence}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        camera: {
-                          ...prev.camera,
-                          faceAbsence: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              <div className={`${styles.gfToggleRow} ${styles.subSetting}`}>
-                <span className={styles.gfLabel}>
-                  Eye-Tracking: Gaze Direction
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.camera.eyeTracking}
-                    onChange={(e) =>
-                    setSettings(prev => ({
-                      ...prev,
-                      camera: {
-                        ...prev.camera,
-                        eyeTracking: e.target.checked
-                      }
-                    }))
-                  }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-              </>
-              )}
-              
-              {/* Microphone */}
-              <div className={styles.gfToggleRow}>
-                <span className={styles.gfLabel}>
-                  Microphone: Noise-detection{" "}
-                  <span className={styles.noRecordingWrapper}>
-                    <span className={styles.noRecording}>(no recording)</span>
-                      <span className={styles.tooltip}>
-                        Your microphone is used only for live proctoring.
-                        No audio is recorded, stored, or transmitted.
-                      </span>
-                    </span>
-                  </span>
-
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.microphone.enabled}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        microphone: {
-                          ...prev.microphone,
-                          enabled: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              {/* Screen */}
-              <div>
-                <span className={styles.gfLabel}>
-                  Screen
-                </span>
-              </div>
-
-              <div className={`${styles.gfToggleRow} ${styles.subSetting}`}>
-                <span className={styles.gfLabel}>
-                  Detect tab switching or minimize
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.screen.tabSwitch}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        screen: {
-                          ...prev.screen,
-                          tabSwitch: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              <div className={`${styles.gfToggleRow} ${styles.subSetting}`}>
-                <span className={styles.gfLabel}>
-                  Detect fullscreen exit
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.screen.fullscreenExit}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        screen: {
-                          ...prev.screen,
-                          fullscreenExit: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              <div className={`${styles.gfToggleRow} ${styles.subSetting}`}>
-                <span className={styles.gfLabel}>
-                  Detect DevTools Opening
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.screen.devToolsOpen}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        screen: {
-                          ...prev.screen,
-                          devToolsOpen: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              <div className={`${styles.gfToggleRow} ${styles.subSetting}`}>
-                <span className={styles.gfLabel}>
-                  Detect leaving fullscreen
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.screen.leaveFullScreen}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        screen: {
-                          ...prev.screen,
-                          leaveFullScreen: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              <div className={`${styles.gfToggleRow} ${styles.subSetting}`}>
-                <span className={styles.gfLabel}>
-                  Block Keyboard Shortcuts
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.screen.blockKeyShortcuts}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        screen: {
-                          ...prev.screen,
-                          blockKeyShortcuts: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-
-              <div className={`${styles.gfToggleRow} ${styles.subSetting}`}>
-                <span className={styles.gfLabel}>
-                  Second Monitor Detection
-                </span>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={settings.screen.secondMonitor}
-                    onChange={(e) =>
-                      setSettings(prev => ({
-                        ...prev,
-                        screen: {
-                          ...prev.screen,
-                          secondMonitor: e.target.checked
-                        }
-                      }))
-                    }
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-          </div>
-        </div>
-      </div>
     </div>
 
-    {/* delete exam modal*/}
-    {isDeleteOpen && (
-    <div className={styles.modalOverlay}>
-      <div className={styles.confirmModal}>
-
-        <h3>Delete exam?</h3>
-
-        <p>
-          Are you sure you want to delete this exam?
-        </p>
-
-        <div className={styles.modalActions}>
-
-          <button
-            className={styles.modalCancel}
-            onClick={() => setIsDeleteOpen(false)}
-          >
-            Cancel
-          </button>
-
-          <button
-            className={styles.modalDelete}
-            onClick={async () => {
-              await handleDelete()
-              setIsDeleteOpen(false)
-            }}
-          >
-            Delete
-          </button>
-
-        </div>
-
-      </div>
-    </div>
-    )}
+    {/* Delete Modal */}
+    <DeleteExamModal
+      open={isDeleteOpen}
+      deleting={deleting}
+      onCancel={() => setIsDeleteOpen(false)}
+      onConfirm={async () => {
+        await handleDelete(id)
+        setIsDeleteOpen(false)
+      }}
+    />
 
     {/* Image modal */}
     <ImageUploadModal

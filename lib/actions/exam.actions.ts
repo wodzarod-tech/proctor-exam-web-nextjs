@@ -1,3 +1,4 @@
+// Server logic
 'use server'; // this file is executed on the server
 
 import {auth} from "@clerk/nextjs/server";

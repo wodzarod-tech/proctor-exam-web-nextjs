@@ -49,7 +49,7 @@ return (
     className={styles.modal}
     onClick={(e) => e.stopPropagation()}
     >
-    <h3>Upload image</h3>
+    <h3>Insert image</h3>
 
     <div
         className={styles.dropZone}

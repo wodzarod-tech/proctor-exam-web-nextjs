@@ -3,11 +3,11 @@
 import styles from "./ExamComponent.module.css";
 import React, { useEffect, useRef, useState } from 'react'
 import Sortable from 'sortablejs'
-import { redirect, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from "next/link"
 import Image from "next/image"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
-import { createExam, deleteExam, updateExam } from "@/lib/actions/exam.actions"
+import { createExam, updateExam } from "@/lib/actions/exam.actions"
 import { createEmptyQuestion, uid } from "@/lib/utils";
 import ImageUploadModal from "./ImageUploadModal/ImageUploadModal";
 import { useDeleteExam } from "@/hooks/useDeleteExam"
@@ -81,14 +81,12 @@ let uuid = "";
 
 const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
   const router = useRouter()
-
-  //const uuid = useRef<string>("")
   
   let formattedQuestions = null;
 
   // To edit exam
   if(exam != null) {
-    // Transform Supabase Questions
+    // transform supabase questions
     const generateId = () =>
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
@@ -123,7 +121,7 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
     formattedQuestions ?? [createEmptyQuestion()]
   );
 
-  // upload image
+  // Upload image
   const [imageModal, setImageModal] = useState<{
     open: boolean
     qid?: string // for question
@@ -253,7 +251,7 @@ Effects
     }
   }, [])
 
-  // resize after loading data
+  // Resize after loading data
   useEffect(() => {
     const textareas = document.querySelectorAll("textarea")
 
@@ -733,7 +731,6 @@ Render
                         width={150}
                         height={100}
                         style={{ maxWidth: "100%" }}
-                        className={styles.optionImage}
                       />
 
                       {activeQuestionId === q.id && (

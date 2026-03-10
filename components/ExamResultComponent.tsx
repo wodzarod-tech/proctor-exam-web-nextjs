@@ -117,24 +117,24 @@ const ExamResultComponent = ({ id, userAnswers, userId, readOnly = false }: Exam
 /***************************
 Effects
 ***************************/
-// Initialize answers on load
-useEffect(() => {
-  if (!questions) return;
+  // Initialize answers on load
+  useEffect(() => {
+    if (!questions) return;
 
-  const initialAnswers: Record<string, string[]> = {};
+    const initialAnswers: Record<string, string[]> = {};
 
-  questions.forEach(q => {
-    const checkedIds = q.options
-      .filter(o => o.checked)
-      .map(o => o.id);
+    questions.forEach(q => {
+      const checkedIds = q.options
+        .filter(o => o.checked)
+        .map(o => o.id);
 
-    if (checkedIds.length > 0) {
-      initialAnswers[q.id] = checkedIds;
-    }
-  });
+      if (checkedIds.length > 0) {
+        initialAnswers[q.id] = checkedIds;
+      }
+    });
 
-  setAnswers(initialAnswers);
-}, [questions]);
+    setAnswers(initialAnswers);
+  }, [questions]);
 
   // resize after loading data
   useEffect(() => {
@@ -192,7 +192,6 @@ Actions
 /***************************
 Render
 ***************************/
-
   return (
     <>
     {/* Navbar */}
@@ -240,180 +239,180 @@ Render
       
       <div className={styles.container} ref={containerRef}>
 
-          {/* Questions */}
-          <div ref={questionsRef} className="space-y-4">
-          {filteredQuestions.map((q, index) => {
-            const questionState = getQuestionState(q);
-          
-            return (
-              <div key={q.id}
-                className={`
-                  ${styles.card}
-                  ${styles.question}
-                  ${activeQuestionId === q.id ? styles.active : ""}
-                `}>
-
-                <div className={styles.questionHeader}>
-
-                  <div className={styles.qCounter} style={{
-                    fontSize: "13px",
-                    color: "#5f6368",
-                    marginRight: "auto"
-                  }}>
-                    {index + 1} de {questions.length}
-
-                    {questionState === "correct" && (
-                      <span className={`${styles.badge} ${styles.correct}`}>Correct</span>
-                    )}
-
-                    {questionState === "incorrect" && (
-                      <span className={`${styles.badge} ${styles.incorrect}`}>Incorrect</span>
-                    )}
-
-                    {questionState === "not-answered" && (
-                      <span className={`${styles.badge} ${styles.neutral}`}>Not Answered</span>
-                    )}
-                  </div>
-
-                  <div className={styles.qPoints}>
-                    <input
-                      type="number"
-                      className={styles.pointsInput}
-                      min="0"
-                      step="0.1"
-                      placeholder="0"
-                      value={q.points}
-                      disabled={readOnly}
-                      onChange={(e) =>
-                        updateQuestion(q.id, {
-                          points: Number(e.target.value) || 0
-                        })
-                      }
-                    />
-                    <span>points</span>
-                  </div>
-                </div>
-
-                <textarea
-                  className={`${styles.textUnderlineInput} ${styles.qTitle}`}
-                  rows={1}
-                  placeholder="Question"
-                  value={q.text}
-                  disabled={readOnly}
-                  onChange={(e) => {
-                    updateQuestion(q.id, { text: e.target.value })
-                    autoResize(e)
-                  }}
-                />
-
-                {/* Options */}
-                <div
-                  ref={(el) => {
-                    optionRefs.current[q.id] = el
-                  }}
-                >
-                  {q.options.map((opt: any) => {
-                    const state = getOptionState(opt.id, q);
-
-                    let className = "reviewOption";
-                    if (state === "correct") className += " correct";
-                    if (state === "incorrect") className += " incorrect";
-                    if (state === "missed") className += " missed"
-
-                    return (
-                      <div key={opt.id}
-                        className={`${styles.reviewOption} ${styles[state]} ${styles.option}`}>
-
-                        <input
-                          className={styles.optIcon}
-                          type={q.type}
-                          checked={q.userAnswers?.includes(opt.id)}
-                          readOnly
-                        />
-
-                        <textarea
-                          className={styles.textUnderlineInput}
-                          rows={1}
-                          value={opt.text}
-                          disabled={readOnly}
-                          onChange={(e) => {
-                            updateQuestion(q.id, {
-                              options: q.options.map(o =>
-                                o.id === opt.id
-                                  ? { ...o, text: e.target.value }
-                                  : o
-                              )
-                            })
-                            autoResize(e)
-                          }}
-                        />
-                        {state === "correct" && (
-                          <span className="icon">✔</span>
-                        )}
-                        {state === "incorrect" && (
-                          <span className="icon">✖</span>
-                        )}
-                        {state === "missed" && (
-                          <span className="icon">✔</span>
-                        )}
-                    </div>
-                    );
-                  })}
-                </div>
+        {/* Questions */}
+        <div ref={questionsRef} className="space-y-4">
+        {filteredQuestions.map((q, index) => {
+          const questionState = getQuestionState(q);
         
-                <div className={styles.lineSeparator} />
-  
-                {/* Feedback */}
-                {q.feedbackOk && (
-                <textarea
-                  className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackOkLabel}`}
-                  value={q.feedbackOk}
-                  onChange={(e) => {
-                    autoResize(e)
-                  }}
-                />
-                )}
+          return (
+            <div key={q.id}
+              className={`
+                ${styles.card}
+                ${styles.question}
+                ${activeQuestionId === q.id ? styles.active : ""}
+              `}>
 
-                {q.feedbackError && (
-                <textarea
-                  className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackErrorLabel}`}
-                  value={q.feedbackError}
-                  onChange={(e) => {
-                    autoResize(e)
-                  }}
-                />
-                )}
+              <div className={styles.questionHeader}>
 
-                {/*<div className={styles.lineSeparator} />*/}
+                <div className={styles.qCounter} style={{
+                  fontSize: "13px",
+                  color: "#5f6368",
+                  marginRight: "auto"
+                }}>
+                  {index + 1} de {questions.length}
 
-                <div className={styles.questionFooter}>
-                  <div className={styles.footerActions}>
-                    <div className={styles.requiredToggle}>
-                      {q.required && (
-                        <span className={`${styles.gfLabel} ${styles.requiredActive}`}>
-                          Required
-                        </span>
-                      )}
-                      {/*
-                      <label className={styles.switch}>
-                        <input
-                          type="checkbox"
-                          checked={q.required}
-                          disabled={readOnly}
-                          onChange={(e) =>
-                            updateQuestion(q.id, { required: e.target.checked })
-                          }
-                        />
-                        <span className={styles.slider}></span>
-                      </label>
-                      */}
-                    </div>
+                  {questionState === "correct" && (
+                    <span className={`${styles.badge} ${styles.correct}`}>Correct</span>
+                  )}
 
-                  </div>
+                  {questionState === "incorrect" && (
+                    <span className={`${styles.badge} ${styles.incorrect}`}>Incorrect</span>
+                  )}
+
+                  {questionState === "not-answered" && (
+                    <span className={`${styles.badge} ${styles.neutral}`}>Not Answered</span>
+                  )}
+                </div>
+
+                <div className={styles.qPoints}>
+                  <input
+                    type="number"
+                    className={styles.pointsInput}
+                    min="0"
+                    step="0.1"
+                    placeholder="0"
+                    value={q.points}
+                    disabled={readOnly}
+                    onChange={(e) =>
+                      updateQuestion(q.id, {
+                        points: Number(e.target.value) || 0
+                      })
+                    }
+                  />
+                  <span>points</span>
                 </div>
               </div>
-              )
-          })}
+
+              <textarea
+                className={`${styles.textUnderlineInput} ${styles.qTitle}`}
+                rows={1}
+                placeholder="Question"
+                value={q.text}
+                disabled={readOnly}
+                onChange={(e) => {
+                  updateQuestion(q.id, { text: e.target.value })
+                  autoResize(e)
+                }}
+              />
+
+              {/* Options */}
+              <div
+                ref={(el) => {
+                  optionRefs.current[q.id] = el
+                }}
+              >
+                {q.options.map((opt: any) => {
+                  const state = getOptionState(opt.id, q);
+
+                  let className = "reviewOption";
+                  if (state === "correct") className += " correct";
+                  if (state === "incorrect") className += " incorrect";
+                  if (state === "missed") className += " missed"
+
+                  return (
+                    <div key={opt.id}
+                      className={`${styles.reviewOption} ${styles[state]} ${styles.option}`}>
+
+                      <input
+                        className={styles.optIcon}
+                        type={q.type}
+                        checked={q.userAnswers?.includes(opt.id)}
+                        readOnly
+                      />
+
+                      <textarea
+                        className={styles.textUnderlineInput}
+                        rows={1}
+                        value={opt.text}
+                        disabled={readOnly}
+                        onChange={(e) => {
+                          updateQuestion(q.id, {
+                            options: q.options.map(o =>
+                              o.id === opt.id
+                                ? { ...o, text: e.target.value }
+                                : o
+                            )
+                          })
+                          autoResize(e)
+                        }}
+                      />
+                      {state === "correct" && (
+                        <span className="icon">✔</span>
+                      )}
+                      {state === "incorrect" && (
+                        <span className="icon">✖</span>
+                      )}
+                      {state === "missed" && (
+                        <span className="icon">✔</span>
+                      )}
+                  </div>
+                  );
+                })}
+              </div>
+      
+              <div className={styles.lineSeparator} />
+
+              {/* Feedback */}
+              {q.feedbackOk && (
+              <textarea
+                className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackOkLabel}`}
+                value={q.feedbackOk}
+                onChange={(e) => {
+                  autoResize(e)
+                }}
+              />
+              )}
+
+              {q.feedbackError && (
+              <textarea
+                className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackErrorLabel}`}
+                value={q.feedbackError}
+                onChange={(e) => {
+                  autoResize(e)
+                }}
+              />
+              )}
+
+              {/*<div className={styles.lineSeparator} />*/}
+
+              <div className={styles.questionFooter}>
+                <div className={styles.footerActions}>
+                  <div className={styles.requiredToggle}>
+                    {q.required && (
+                      <span className={`${styles.gfLabel} ${styles.requiredActive}`}>
+                        Required
+                      </span>
+                    )}
+                    {/*
+                    <label className={styles.switch}>
+                      <input
+                        type="checkbox"
+                        checked={q.required}
+                        disabled={readOnly}
+                        onChange={(e) =>
+                          updateQuestion(q.id, { required: e.target.checked })
+                        }
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                    */}
+                  </div>
+
+                </div>
+              </div>
+            </div>
+            )
+        })}
         </div>
       </div>
     </div>

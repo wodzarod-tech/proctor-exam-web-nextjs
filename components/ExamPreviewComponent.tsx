@@ -1,8 +1,9 @@
 "use client";
 
 import styles from "./ExamPreviewComponent.module.css";
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from "next/image";
 
 /***************************
 Types
@@ -23,12 +24,14 @@ type Question = {
   options: Option[]
   feedbackOk: string
   feedbackError: string
+  image?: string
 }
 
 type Option = {
   id: string
   text: string
   checked: boolean
+  image?: string
 }
 
 type OptionType = 'radio' | 'checkbox'
@@ -67,12 +70,11 @@ type Settings = {
 Page
 ***************************/
 const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPreviewProps) => {
-  console.log('exam=', exam);
-
   const router = useRouter()
 
   let formattedQuestions=null;
 
+  // To edit exam
   if(exam!=null) {
     // Transform Supabase Questions
     const generateId = () =>
@@ -92,7 +94,9 @@ const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
         id: generateId(),
         text: opt.text,
         checked: opt.checked || false,
+        image: opt.image || ""
       })),
+      image: q.image || "",
     }));
   }
   //
@@ -166,54 +170,54 @@ const ExamPreviewComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
 /***************************
 Effects
 ***************************/
-// if user refreshes or closes the tab then stop everything
-useEffect(() => {
-  return () => {
-    stopCamera()
-    stopMicrophone()
-  }
-}, [])
-
-// Initialize answers on load
-useEffect(() => {
-  if (!questions) return;
-
-  const initialAnswers: Record<string, string[]> = {};
-
-  questions.forEach(q => {
-    const checkedIds = q.options
-      .filter(o => o.checked)
-      .map(o => o.id);
-
-    if (checkedIds.length > 0) {
-      initialAnswers[q.id] = checkedIds;
+  // if user refreshes or closes the tab then stop everything
+  useEffect(() => {
+    return () => {
+      stopCamera()
+      stopMicrophone()
     }
-  });
+  }, [])
 
-  setAnswers(initialAnswers);
-}, [questions]);
+  // Initialize answers on load
+  useEffect(() => {
+    if (!questions) return;
 
-// Apply Question + Option Shuffle
-useEffect(() => {
-  if (!questions) return
+    const initialAnswers: Record<string, string[]> = {};
 
-  let updated = [...questions]
+    questions.forEach(q => {
+      const checkedIds = q.options
+        .filter(o => o.checked)
+        .map(o => o.id);
 
-  // Shuffle questions
-  if (settings.general.shuffleQuestions) {
-    updated = [...updated].sort(() => Math.random() - 0.5)
-  }
+      if (checkedIds.length > 0) {
+        initialAnswers[q.id] = checkedIds;
+      }
+    });
 
-  // Shuffle options
-  if (settings.general.shuffleOptions) {
-    updated = updated.map(q => ({
-      ...q,
-      options: [...q.options].sort(() => Math.random() - 0.5)
-    }))
-  }
+    setAnswers(initialAnswers);
+  }, [questions]);
 
-  setQuestions(updated)
-}, [])
+  // Apply Question + Option Shuffle
+  useEffect(() => {
+    if (!questions) return
+
+    let updated = [...questions]
+
+    // Shuffle questions
+    if (settings.general.shuffleQuestions) {
+      updated = [...updated].sort(() => Math.random() - 0.5)
+    }
+
+    // Shuffle options
+    if (settings.general.shuffleOptions) {
+      updated = updated.map(q => ({
+        ...q,
+        options: [...q.options].sort(() => Math.random() - 0.5)
+      }))
+    }
+
+    setQuestions(updated)
+  }, [])
 
   // Camera
   // ---------------------------
@@ -879,7 +883,6 @@ Actions
 /***************************
 Render
 ***************************/
-
   return (
     <>
     {/* Navbar */}
@@ -1041,14 +1044,30 @@ Render
                     autoResize(e)
                   }}
                 />
+                
+                {/* image preview */}
+                {q.image && (
+                  <div className={styles.questionImageWrapper}>
+                    <Image
+                      src={q.image}
+                      alt="Question image"
+                      width={500}
+                      height={300}
+                      style={{ maxWidth: "100%" }}
+                      className={styles.questionImage}
+                    />
+                  </div>
+                )}              
 
+                {/* Options */}
                 <div
                   ref={(el) => {
                     optionRefs.current[q.id] = el
                   }}
                 >
                   {q.options.map((opt, index) => (
-                    <div key={opt.id} className={styles.option}>
+                    <React.Fragment key={opt.id}>
+                    <div className={styles.option}>
 
                       <input
                         className={styles.optIcon}
@@ -1100,6 +1119,20 @@ Render
                         }}
                       />
                     </div>
+
+                    {/* image preview */}
+                    {opt.image && (
+                      <div className={styles.questionImageWrapper}>
+                        <Image
+                          src={opt.image}
+                          alt="Option image"
+                          width={150}
+                          height={100}
+                          style={{ maxWidth: "100%" }}
+                        />
+                      </div>
+                    )} 
+                    </React.Fragment>
                   ))}
                 </div>
         

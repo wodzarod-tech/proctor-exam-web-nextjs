@@ -1,8 +1,9 @@
 "use client";
 
 import styles from "./ExamPreviewComponent.module.css";
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from "next/image";
 
 /***************************
 Types
@@ -23,12 +24,14 @@ type Question = {
   options: Option[]
   feedbackOk: string
   feedbackError: string
+  image?: string
 }
 
 type Option = {
   id: string
   text: string
   checked: boolean
+  image?: string
 }
 
 type OptionType = 'radio' | 'checkbox'
@@ -92,7 +95,9 @@ const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
         id: generateId(),
         text: opt.text,
         checked: opt.checked ?? false,
+        image: opt.image || ""
       })),
+      image: q.image || "",
     }));
   }
   //
@@ -167,26 +172,6 @@ const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamPrevie
 /***************************
 Effects
 ***************************/
-/*
-// Initialize answers on load
-useEffect(() => {
-  if (!questions) return;
-
-  const initialAnswers: Record<string, string[]> = {};
-
-  questions.forEach(q => {
-    const checkedIds = q.options
-      .filter(o => o.checked)
-      .map(o => o.id);
-
-    if (checkedIds.length > 0) {
-      initialAnswers[q.id] = checkedIds;
-    }
-  });
-
-  setAnswers(initialAnswers);
-}, [questions]);*/
-
 // Apply Question + Option Shuffle
 useEffect(() => {
   if (!questions) return
@@ -970,13 +955,29 @@ Render
                   }}
                 />
 
+                {/* image preview */}
+                {q.image && (
+                  <div className={styles.questionImageWrapper}>
+                    <Image
+                      src={q.image}
+                      alt="Question image"
+                      width={500}
+                      height={300}
+                      style={{ maxWidth: "100%" }}
+                      className={styles.questionImage}
+                    />
+                  </div>
+                )}   
+                
+                {/* Options */}
                 <div
                   ref={(el) => {
                     optionRefs.current[q.id] = el
                   }}
                 >
                   {q.options.map((opt, index) => (
-                    <div key={opt.id} className={styles.option}>
+                    <React.Fragment key={opt.id}>
+                    <div className={styles.option}>
 
                       <input
                         className={styles.optIcon}
@@ -1031,6 +1032,20 @@ Render
                         }}
                       />
                     </div>
+
+                    {/* image preview */}
+                    {opt.image && (
+                      <div className={styles.questionImageWrapper}>
+                        <Image
+                          src={opt.image}
+                          alt="Option image"
+                          width={150}
+                          height={100}
+                          style={{ maxWidth: "100%" }}
+                        />
+                      </div>
+                    )} 
+                    </React.Fragment>
                   ))}
                 </div>
         

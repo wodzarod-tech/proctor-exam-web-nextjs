@@ -369,15 +369,7 @@
 .switch input:checked + .slider:before{
     transform: translateX(18px);
 }
-/*REVIEW
-pre{
-    background:#111;
-    color:#0f0;
-    padding:12px;
-    font-size:12px;
-    overflow:auto;
-}
-*/
+
 /* Feedback */
 /* Feedback visibility like Google Forms */
 .feedback{
@@ -416,11 +408,6 @@ pre{
 
 /* for mobile */
 @media (max-width: 600px){
-    /*textarea,
-    input[type="text"] REVIEW{
-    font-size: 16px; /* prevents iOS zoom *//*
-    }*/
-
     .optDrag{
     left: -10px;
     }
@@ -538,13 +525,6 @@ pre{
 .timer-input:focus{
     border-bottom-color:#1a73e8;
 }
-
-/* keep native steppers */
-/*    .timer-input::-webkit-inner-spin-button,
-.timer-input::-webkit-outer-spin-button{
-    opacity:1;
-}
-*/
 
 .headerFields input[type="number"], 
 .qPoints input[type="number"],
@@ -779,4 +759,24 @@ pre{
 .requiredError {
   border: 2px solid #dc2626;
   box-shadow: 0 0 0 2px rgba(220,38,38,0.15);
+}
+
+/* image */
+.questionImageWrapper {
+  position: relative;
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.questionImage {
+  max-width: 100%;
+  height: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.optionImageWrapper{
+  margin-left: 42px;
+  margin-top: 6px;
+  position: relative;
 }

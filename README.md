@@ -76,8 +76,12 @@ replace <html>, <head> and global imports
 app/page.tsx
 app/global.css
 
-- Authentication: Clerk Auth
-application name: Proctor Exam Simulator
+- Authentication: Supabase Auth
+
+Instead of: Clerk Auth
+  application name: Proctor Exam Simulator
+
+command: npm install @supabase/ssr @supabase/supabase-js
 
 - Database: Supabase (PostgreSQL):
 organization: wodzarod

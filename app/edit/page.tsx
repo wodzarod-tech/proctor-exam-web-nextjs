@@ -3,9 +3,11 @@ import { redirect } from "next/navigation";
 import ExamComponent from "@/components/ExamComponent";
 
 const NewExam = async() => {
-  const user = await currentUser();
-  console.log("user=", user);
-  if(!user) redirect('/sign-in');
+  //const user = await currentUser();
+  const user = 'e18dfee9-3e99-4cc1-a86a-6d98a3ab1e49';
+  console.log("NewExam.user=", user);
+  if(!user) redirect('/login');
+  //if(!user) redirect('/sign-in');
 
   return (
     <ExamComponent

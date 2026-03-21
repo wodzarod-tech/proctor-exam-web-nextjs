@@ -2,13 +2,16 @@
 'use server'; // this file is executed on the server
 
 import {auth} from "@clerk/nextjs/server";
-import {createSupabaseClient} from "@/lib/supabase";
+//import {createSupabaseClient} from "@/lib/supabase";
+import {createSupabaseServerClient} from "@/lib/supabase/server-client";
+
 import {revalidatePath} from "next/cache";
 
 export const createExam = async (formData: CreateExam) => {
     const { userId: author } = await auth(); // Get the authenticated user's ID from Clerk server
 
-    const supabase = createSupabaseClient();
+    const supabase = await createSupabaseServerClient();
+    //const supabase = createSupabaseClient();
 
     const { data, error } = await supabase
         .from('exams')
@@ -26,7 +29,8 @@ export const updateExam = async (
 ) => {
   const { userId } = await auth(); // authenticated user
 
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseServerClient();
+  //const supabase = createSupabaseClient();
 
   const { data, error } = await supabase
     .from("exams")
@@ -43,7 +47,8 @@ export const updateExam = async (
 };
 
 export const getAllExams = async ({ limit = 10, page = 1, title }: GetAllExams) => {
-    const supabase = createSupabaseClient();
+    const supabase = await createSupabaseServerClient();
+    //const supabase = createSupabaseClient();
 
     let query = supabase.from('exams').select();
 
@@ -61,7 +66,8 @@ export const getAllExams = async ({ limit = 10, page = 1, title }: GetAllExams) 
 }
 
 export const getExam = async (id: string) => {
-    const supabase = createSupabaseClient();
+    const supabase = await createSupabaseServerClient();
+    //const supabase = createSupabaseClient();
 
     const { data, error } = await supabase
         .from('exams')
@@ -74,7 +80,8 @@ export const getExam = async (id: string) => {
 }
 
 export const deleteExam = async (id: string) => {
-    const supabase = createSupabaseClient();
+    const supabase = await createSupabaseServerClient();
+    //const supabase = createSupabaseClient();
 
     const { error } = await supabase
         .from('exams')
@@ -85,11 +92,12 @@ export const deleteExam = async (id: string) => {
 
     return { sucess: true };
 }
-
+/*
 // Store conversation in session history (session_history)
 export const addToSessionHistory = async (companionId: string) => {
     const { userId } = await auth(); // Get the authenticated user's ID from Clerk server
-    const supabase = createSupabaseClient();
+    const supabase = createSupabaseServerClient();
+    //const supabase = createSupabaseClient();
     const { data, error } = await supabase.from('session_history')
         .insert({
             companion_id: companionId,
@@ -221,3 +229,4 @@ export const getBookmarkedCompanions = async (userId: string) => {
   // We don't need the bookmarks data, so we return only the companions
   return data.map(({ companions }) => companions);
 };
+*/

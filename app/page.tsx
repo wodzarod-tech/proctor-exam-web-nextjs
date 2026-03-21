@@ -6,6 +6,7 @@ import SearchInput from "@/components/SearchInput";
 import ExamCard from "@/components/ExamCard";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 
 const Page = async ({ searchParams }: SearchParams) => {
   const filters = await searchParams;
@@ -18,9 +19,16 @@ const Page = async ({ searchParams }: SearchParams) => {
   const title = filters.title ? filters.title : '';
   const exams = await getAllExams({ title });
 
+  // get user from supabase
+  const supabase = await createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  console.log( { user });
+  
   return (
     <>
-    <Navbar />
+    <Navbar user={user} />
     <main>
       <section className="flex items-center gap-6">
         <h1 className="whitespace-nowrap">My Exams</h1>

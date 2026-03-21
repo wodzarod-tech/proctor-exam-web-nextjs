@@ -78,21 +78,23 @@ app/global.css
 
 - Authentication: Supabase Auth
 
-Instead of: Clerk Auth
-  application name: Proctor Exam Simulator
-
 command: npm install @supabase/ssr @supabase/supabase-js
+
+before:
+  Instead of: Clerk Auth
+  application name: Proctor Exam Simulator
 
 - Database: Supabase (PostgreSQL):
 organization: wodzarod
 project name: Proctor Exam Simulator
 Database password: Serafines@2025
 
-Integrate Clerk Authenticacion into Supabase:
-    Clerk domain: https://boss-piglet-44.clerk.accounts.dev
-
 Create Table in Supabase:
     ...
+
+before:
+  Integrate Clerk Authenticacion into Supabase:
+    Clerk domain: https://boss-piglet-44.clerk.accounts.dev
 
 - Error Tracking: Sentry
 Automatic Configuration:

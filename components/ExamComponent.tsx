@@ -506,7 +506,7 @@ Render
           {/*<button className={`${styles.toolbarBtn} ${styles.primary}`}>Publish</button>*/}
         </nav>
 
-        <SignedOut>
+        {/*<SignedOut>
             <SignInButton>
             <button className="btn-signin">Sign In</button>
             </SignInButton>
@@ -514,7 +514,7 @@ Render
 
         <SignedIn>
             <UserButton />
-        </SignedIn>
+        </SignedIn>*/}
         </div>
     </div>
     </nav>

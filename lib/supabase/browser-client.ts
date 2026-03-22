@@ -1,3 +1,4 @@
+/* Client side */
 "use client";
 
 import { createBrowserClient } from "@supabase/ssr";

@@ -6,9 +6,12 @@ import {auth} from "@clerk/nextjs/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server-client";
 
 import {revalidatePath} from "next/cache";
+import { getUser } from "../auth/user-server";
 
 export const createExam = async (formData: CreateExam) => {
-    const { userId: author } = await auth(); // Get the authenticated user's ID from Clerk server
+    //const { userId: author } = await auth(); // Get the authenticated user's ID from Clerk server
+    const user = await getUser();
+    const author = user?.id;
 
     const supabase = await createSupabaseServerClient();
     //const supabase = createSupabaseClient();
@@ -27,7 +30,9 @@ export const updateExam = async (
   id: string,
   formData: Partial<CreateExam>
 ) => {
-  const { userId } = await auth(); // authenticated user
+  //const { userId } = await auth(); // authenticated user
+  const user = await getUser();
+  const author = user?.id;
 
   const supabase = await createSupabaseServerClient();
   //const supabase = createSupabaseClient();
@@ -36,7 +41,7 @@ export const updateExam = async (
     .from("exams")
     .update(formData)
     .eq("id", id)
-    .eq("author", userId) // ✅ security: only owner can update
+    .eq("author", author) // ✅ security: only owner can update
     .select();
 
   if (error || !data || data.length === 0) {

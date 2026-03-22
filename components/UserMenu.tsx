@@ -4,7 +4,7 @@ import { User } from "@supabase/supabase-js";
 import { useState, useRef, useEffect } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { useRouter } from "next/navigation";
-import { getUserProfile } from "@/lib/auth/getUserProfile";
+import { getUserProfile } from "@/lib/auth/user-client";
 
 type Props = {
   user: User;
@@ -15,8 +15,8 @@ export default function UserMenu({ user }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  console.log("UserMenu.user=",user);
-  console.log(user.user_metadata);
+  //console.log("UserMenu.user=",user);
+  //console.log(user.user_metadata);
   const profile = getUserProfile(user);
   console.log("UserMenu.profile=",profile);
 

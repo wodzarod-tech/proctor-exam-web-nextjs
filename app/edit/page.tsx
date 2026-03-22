@@ -1,13 +1,14 @@
-import { currentUser } from "@clerk/nextjs/server";
+//import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import ExamComponent from "@/components/ExamComponent";
+import { getUser } from "@/lib/auth/user-server";
 
 const NewExam = async() => {
   //const user = await currentUser();
-  const user = 'e18dfee9-3e99-4cc1-a86a-6d98a3ab1e49';
-  console.log("NewExam.user=", user);
-  if(!user) redirect('/login');
   //if(!user) redirect('/sign-in');
+  const user = await getUser();
+  if(!user) redirect('/login');
+  console.log("NewExam.user.id=", user.id);
 
   return (
     <ExamComponent

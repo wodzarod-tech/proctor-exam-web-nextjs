@@ -18,9 +18,9 @@ import SettingsModal from "@/components/SettingsModal/SettingsModal"
 Types
 ***************************/
 interface ExamSessionProps {
-  id: any;
-  exam: any;
-  userId: string;
+  id: any; // exam id
+  exam: any; // exam info, questions, answers
+  userId: string; // user auth
 }
 
 type Question = {

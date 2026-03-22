@@ -7,6 +7,7 @@ import ExamCard from "@/components/ExamCard";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { getUser } from "@/lib/auth/user-server";
 
 const Page = async ({ searchParams }: SearchParams) => {
   const filters = await searchParams;
@@ -18,14 +19,9 @@ const Page = async ({ searchParams }: SearchParams) => {
 
   const title = filters.title ? filters.title : '';
   const exams = await getAllExams({ title });
-
-  // get user from supabase
-  const supabase = await createSupabaseServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  console.log( { user });
   
+  const user = await getUser();
+
   return (
     <>
     <Navbar user={user} />

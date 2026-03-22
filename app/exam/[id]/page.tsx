@@ -2,6 +2,7 @@ import { getExam } from "@/lib/actions/exam.actions";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import ExamSessionComponent from "@/components/ExamSessionComponent";
+import { getUser } from "@/lib/auth/user-server";
 
 interface ExamSessionPageProps {
   params: Promise<{ id: string}>;
@@ -12,9 +13,11 @@ const ExamSession = async({ params }: ExamSessionPageProps) => {
   const exam = await getExam(id);
   console.log('exam = ', exam);
 
-  const user = await currentUser();
-
-  if(!user) redirect('/sign-in');
+  //const user = await currentUser();
+  //if(!user) redirect('/sign-in');
+  const user = await getUser();
+  if(!user) redirect('/login');
+  
   if(!exam.title) redirect('/');
 
   return (

@@ -1,5 +1,7 @@
+/* Client side */
 import { User } from "@supabase/supabase-js";
 
+// get user profile (name, email, avatar)
 export function getUserProfile(user: User) {
   const meta = user.user_metadata || {};
 

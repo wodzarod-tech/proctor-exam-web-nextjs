@@ -93,9 +93,9 @@ export default function UserMenu({ user }: Props) {
             Sign out
           </button>
 
-          <div className="text-center text-xs text-gray-400 py-3 border-t">
+          {/*<div className="text-center text-xs text-gray-400 py-3 border-t">
             Secured by Supabase
-          </div>
+          </div>*/}
 
         </div>
       )}

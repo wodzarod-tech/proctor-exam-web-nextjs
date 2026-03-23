@@ -24,10 +24,12 @@ const SettingsModal = ({
     <div className={styles.settingsCard}>
 
         <div className={styles.settingsHeader}>
-        <button className={styles.settingsBack} onClick={onClose}>
-            <span className={styles.backArrow}>← </span>
             <span>Settings</span>
-        </button>
+            <button className={`${styles.settingsBack} ${styles.gTooltip}`} 
+                data-tooltip="Continue"
+                onClick={onClose}>
+                <span className={styles.backArrow}>→ </span>
+            </button>
         </div>
         
         <div className={styles.settingsContent}>
@@ -80,7 +82,7 @@ const SettingsModal = ({
         {/* View toggle One by One/All questions */}
         <div className={styles.gfToggleRow}>
         <span className={styles.gfLabel}>
-            View toggle One by One/All questions
+            View toggle "All / One by One" questions
         </span>
         <label className={styles.switch}>
             <input

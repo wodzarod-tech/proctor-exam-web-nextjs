@@ -113,6 +113,14 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
   const containerRef = useRef<HTMLDivElement>(null) // when click outside question card
   const questionsRef = useRef<HTMLDivElement>(null) // for drag & drop
   const optionRefs = useRef<Record<string, HTMLDivElement | null>>({}) // for drag & drop
+  const optionInputRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
+  const titleRef = useRef<HTMLInputElement | null>(null)
+  const activeQuestionRef = useRef<string | null>(null)
+  const questionInputRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
+
+  // store exam id
+  const [examId, setExamId] = useState<string | null>(id ?? null)
+  const [saving, setSaving] = useState(false) // prevent Users might click Save multiple times quickly
 
   // Form fields
   const [title, setTitle] = useState(exam?.title ?? '');
@@ -176,6 +184,13 @@ const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
 /***************************
 Effects
 ***************************/
+  // focus title
+  useEffect(() => {
+    if (titleRef.current) {
+      titleRef.current.focus()
+    }
+  }, [])
+
   // drag & drop a question card
   useEffect(() => {
     if (!questionsRef.current) return
@@ -244,10 +259,10 @@ Effects
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('click', handleClickOutside)
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('click', handleClickOutside)
     }
   }, [])
 
@@ -272,7 +287,12 @@ Effects
 Actions
 ***************************/
   let saveExamDB;
-  async function saveExam(flag: boolean = false): Promise<boolean> {
+  async function saveExam(flag: boolean = false): Promise<string | null> {
+    
+    // prevent spam clicks
+    if (saving) return null
+
+    setSaving(true)
     
     try {
       const examPayload = {
@@ -298,40 +318,43 @@ Actions
       // Dont save or preview if no title
       if(examPayload.title == "") {
         setMsg("⚠️ Add title");
-        return false;
+        return null;
       }
+
+      let saved
+
+      // CREATE only if no examId yet
+      if (!examId) {
+        saved = await createExam(examPayload)
+        setExamId(saved.id) // store it for future updates
+        console.log("create exam: saved.id=",saved.id)
+        if (flag) setMsg("Saved successfully ✓")
+        return saved.id;
+      } 
+      // UPDATE if already exists
       else {
-        if(id == null && uuid == "") {
-          saveExamDB = await createExam(examPayload);
-          uuid = saveExamDB.id;
-          console.log("create exam.uuid=", uuid);
-        } else {
-          if(id!=null)
-            uuid = id;
-          saveExamDB = await updateExam(uuid, examPayload);
-          console.log("update exam.uuid=", uuid);
-        }
-
-        if(!flag)
-          setMsg("Saved successfully ✓")
-
-        return true;
-      }
-
+        saved = await updateExam(examId, examPayload)
+        console.log("update exam: saved.id=",saved.id)
+        if (flag) setMsg("Saved successfully ✓")
+        return examId;
+      }  
     } catch (error: any) {
       console.error(error)
       setMsg(error.message || "❌ Failed to save exam")
-      return false;
+      return null;
+    } finally {
+      // ALWAYS reset saving (even if error happens)
+      setSaving(false)
     }
   }
 
   async function getUrl() {
     // Make sure exam is saved first
-    const success = await saveExam(true);
+    const id = await saveExam(false);
 
-    if (!success) return;
+    if (!id) return;
 
-    const fullUrl = `${window.location.origin}/exam/${uuid}`;
+    const fullUrl = `${window.location.origin}/exam/${id}`;
 
     try {
       await navigator.clipboard.writeText(fullUrl);
@@ -342,26 +365,57 @@ Actions
   }
 
   async function previewExam() {
-    const success = await saveExam(true);
+    const id = await saveExam(false);
+    if (!id) return;
 
-    if(success)
-      router.push(`/preview/${uuid}`);
+    if(id)
+      router.push(`/preview/${id}`);
   }
 
   function addQuestion() {
-    setQuestions(qs => [
-      ...qs,
-      {
-        id: uid(),
-        text: '',
-        type: 'radio',
-        points: 0,
-        required: false,
-        options: [{ id: uid(), text: '', checked: false, image: "" }],
-        feedbackOk: '',
-        feedbackError: ''
+    const newQuestion: Question = {
+      id: uid(),
+      text: '',
+      type: 'radio',
+      points: 0,
+      required: false,
+      options: [{ id: uid(), text: '', checked: false, image: "" }],
+      feedbackOk: '',
+      feedbackError: ''
+    }
+
+    const currentActiveId = activeQuestionId
+
+    setQuestions(prev => {
+      // if no active question → add at end
+      if (!currentActiveId) {
+        return [...prev, newQuestion]
       }
-    ])
+
+      // find index of active question
+      const index = prev.findIndex(q => q.id === currentActiveId)
+
+      if (index === -1) return [...prev, newQuestion]
+
+      // insert BELOW active question
+      const updated = [...prev]
+      updated.splice(index + 1, 0, newQuestion)
+
+      return updated
+    })
+
+    // make new question active
+    setActiveQuestionId(newQuestion.id)
+
+    setTimeout(() => {
+      // scroll AFTER render
+      const el = document.getElementById(newQuestion.id)
+      el?.scrollIntoView({ behavior: "smooth", block: "center" })
+
+      // focus AFTER render
+      const input = questionInputRefs.current[newQuestion.id]
+      input?.focus()
+    }, 0)
   }
 
   function updateQuestion(id: string, patch: Partial<Question>) {
@@ -369,18 +423,20 @@ Actions
   }
 
   function addOption(qid: string) {
+    let newOptionId = ""
+
     setQuestions(prev =>
       prev.map(q => {
         if (q.id !== qid) return q
 
-        const optionNumber = q.options.length + 1
+        newOptionId = uid()
 
         return {
           ...q,
           options: [
             ...q.options,
             {
-              id: uid(),
+              id: newOptionId,
               text: "",
               checked: false,
               image: ""
@@ -389,6 +445,14 @@ Actions
         }
       })
     )
+
+    // wait for DOM update, then focus
+    setTimeout(() => {
+      const el = optionInputRefs.current[newOptionId]
+      if (el) {
+        el.focus()
+      }
+    }, 0)
   }
 
   function removeOption(qid: string, oid: string) {
@@ -499,7 +563,7 @@ Render
           <button className={styles.gTooltip} data-tooltip="Add question" onClick={addQuestion}><i className="fa fa-plus"></i></button>
           <button className={styles.gTooltip} data-tooltip="Settings" onClick={() => setIsSettingsOpen(true)}><i className="fa fa-gear"></i></button>
           {/*<button className={styles.gTooltip} data-tooltip="Import Exam"><i className="fa fa-upload"></i></button>*/}
-          <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={() => saveExam(false)}><i className="fa fa-save"></i></button>
+          <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={() => saveExam(true)} disabled={saving}><i className="fa fa-save"></i></button>
           <button className={styles.gTooltip} data-tooltip="Get URL to Take exam" onClick={getUrl}><i className="fa fa-link"></i></button>
           <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={previewExam}><i className="fa fa-eye"></i></button>
           <button className={styles.gTooltip} data-tooltip="Delete exam" onClick={() => setIsDeleteOpen(true)}><i className="fa fa-trash"></i></button>
@@ -535,6 +599,7 @@ Render
 
           <div className={styles.headerFields}>
             <input
+              ref={titleRef}
               className={`${styles.textUnderlineInput} ${styles.formTitle}`}
               placeholder="Title"
               value={title}
@@ -559,9 +624,12 @@ Render
           {/* Questions */}
           <div ref={questionsRef} className="space-y-4">
           {questions.map((q, index) => (
-            <div key={q.id} className={`${styles.card} ${styles.question} ${activeQuestionId === q.id ? styles.active : ""}`}
-
-              onClick={() => setActiveQuestionId(q.id)}>
+            <div id={q.id}
+              key={q.id}
+              className={`${styles.card} ${styles.question} ${activeQuestionId === q.id ? styles.active : ""}`}
+              onClick={() => {
+                setActiveQuestionId(q.id)
+              }}>
 
               <div className={styles.drag}>: : :</div>
 
@@ -594,6 +662,9 @@ Render
               </div>
 
               <textarea
+                ref={(el) => {
+                  questionInputRefs.current[q.id] = el
+                }}
                 className={`${styles.textUnderlineInput} ${styles.qTitle}`}
                 rows={1}
                 placeholder="Question"
@@ -684,6 +755,9 @@ Render
                     />
 
                     <textarea
+                      ref={(el) => {
+                        optionInputRefs.current[opt.id] = el
+                      }}
                       className={styles.textUnderlineInput}
                       rows={1}
                       placeholder={`Option ${index + 1}`}
@@ -761,31 +835,32 @@ Render
               <div className={styles.lineSeparator} />
   
               {/* Feedback */}
+              {/*
               <div className={styles.feedbackOkHeader}>
                 <span className={styles.feedbackIcon}>✔</span>
-                <span>Feedback Correct:</span>
+                <span>Answer feedback correct:</span>
               </div>
-
+              */}
               <textarea
                 className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackOkLabel}`}
                 rows={1}
-                placeholder="Feedback"
+                placeholder="Answer feedback correct"
                 value={q.feedbackOk}
                 onChange={(e) => {
                   updateQuestion(q.id, { feedbackOk: e.target.value })
                   autoResize(e)
                 }}
               />
-
+              {/*
               <div className={styles.feedbackErrorHeader}>
                 <span className={styles.feedbackIcon}>✖</span>
-                <span>Feedback Incorrect:</span>
+                <span>Answer feedback incorrect:</span>
               </div>
-
+              */}
               <textarea
                 className={`${styles.textUnderlineInput} ${styles.feedback} ${styles.feedbackErrorLabel}`}
                 rows={1}
-                placeholder="Feedback"
+                placeholder="Answer feedback incorrect"
                 value={q.feedbackError}
                 onChange={(e) => {
                   updateQuestion(q.id, { feedbackError: e.target.value })

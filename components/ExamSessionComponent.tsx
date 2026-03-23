@@ -830,7 +830,7 @@ Render
             <span className={styles.slider}></span>
           </label>
 
-          <span>One by one</span>
+          <span>All / One by one</span>
         </div>
         )}
     </div>

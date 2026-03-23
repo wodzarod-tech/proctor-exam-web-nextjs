@@ -20,6 +20,7 @@ export default function LoginDemo({ user }: LoginDemoProps) {
   const [showPassword, setShowPassword] = useState(false);
   const supabase = getSupabaseBrowserClient();
   const [currentUser, setCurrentUser] = useState<User | null>(user);
+  const [resetSent, setResetSent] = useState(false); // forgot password
 
   const router = useRouter();
   /*
@@ -117,6 +118,27 @@ export default function LoginDemo({ user }: LoginDemoProps) {
     }
   }
 
+  // Forgot password
+  //-------------------------
+  async function handleForgotPassword() {
+    if (!email) {
+      setStatus("⚠️ Enter your email first");
+      return;
+    }
+
+    setStatus("Sending reset email...");
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    if (error) {
+      setStatus(error.message);
+    } else {
+      setStatus("Password reset email sent");
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       
@@ -125,10 +147,10 @@ export default function LoginDemo({ user }: LoginDemoProps) {
         {/* Header */}
         <div className="px-8 pt-8 pb-4 text-center">
           <h1 className="text-xl font-semibold text-gray-800">
-            {mode === "signup" ? "Create your account" : "Sign in to auth-demo"}
+            {mode === "signup" ? "Create your account" : "Sign in"}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Welcome back! Please sign in to continue
+            {mode === "signup" ? "No credit card required." : "Welcome back! Please sign in to continue"}
           </p>
         </div>
 
@@ -171,7 +193,7 @@ export default function LoginDemo({ user }: LoginDemoProps) {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="mt-1 w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
@@ -188,7 +210,7 @@ export default function LoginDemo({ user }: LoginDemoProps) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="w-full rounded-lg border px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
 
                 <button
@@ -200,12 +222,24 @@ export default function LoginDemo({ user }: LoginDemoProps) {
                 </button>
 
               </div>
+
+              {mode === "signin" && (
+              <div className="text-right mt-1">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-blue-500 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              )}
             </div>
 
             {/* Continue Button */}
             <button
               type="submit"
-              className="w-full mt-2 rounded-lg py-2.5 font-semibold text-white bg-orange-500 hover:bg-orange-600 transition"
+              className="w-full mt-2 rounded-lg py-2.5 font-semibold text-white bg-blue-500 hover:bg-blue-600 transition"
             >
               Continue
             </button>
@@ -230,7 +264,7 @@ export default function LoginDemo({ user }: LoginDemoProps) {
                   setMode("signup");
                   setStatus("");
                 }}
-                className="text-orange-500 font-medium hover:underline"
+                className="text-blue-500 font-medium hover:underline"
               >
                 Sign up
               </button>
@@ -243,7 +277,7 @@ export default function LoginDemo({ user }: LoginDemoProps) {
                   setMode("signin");
                   setStatus("");
                 }}
-                className="text-orange-500 font-medium hover:underline"
+                className="text-blue-500 font-medium hover:underline"
               >
                 Sign in
               </button>
@@ -252,10 +286,10 @@ export default function LoginDemo({ user }: LoginDemoProps) {
         </div>
 
         {/* Bottom */}
-        <div className="text-center text-xs text-gray-400 pb-4">
+        {/*<div className="text-center text-xs text-gray-400 pb-4">
           Secured by Supabase
         </div>
-
+          */}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { getUser } from "@/lib/auth/user-server";
+import FeedbackModal from "@/components/feedback/FeedbackModal";
 
 const Page = async ({ searchParams }: SearchParams) => {
   const filters = await searchParams;
@@ -78,6 +79,8 @@ const Page = async ({ searchParams }: SearchParams) => {
       ) : (
         <p className="text-center mt-10">Please sign in to see your exams</p>
       )}
+
+      <FeedbackModal type="general" />
     </main>
     </>
   )

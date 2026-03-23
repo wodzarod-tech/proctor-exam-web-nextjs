@@ -325,7 +325,7 @@ Actions
 
       // CREATE only if no examId yet
       if (!examId) {
-        saved = await createExam(examPayload)
+        saved = await createExam(userId, examPayload)
         setExamId(saved.id) // store it for future updates
         console.log("create exam: saved.id=",saved.id)
         if (flag) setMsg("Saved successfully ✓")
@@ -541,7 +541,14 @@ Render
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         
-        <Link href="/" className="flex items-center gap-3">
+        <button 
+        className={styles.navBtn} 
+        data-tooltip="Back to editor" 
+        onClick={async () => {
+          window.location.href = `/`
+        }}>⬅ Back</button>
+
+        {/*<Link href="/" className="flex items-center gap-3">
         <Image
             src="/images/logo.png"
             alt="EasyExam logo"
@@ -552,7 +559,7 @@ Render
         <span className="text-2xl font-semibold tracking-tight">
             EasyExam
         </span>
-        </Link>
+        </Link>*/}
 
         <div className="flex-1 text-center text-blue-600">{msg}</div>
 

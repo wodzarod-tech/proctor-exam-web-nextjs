@@ -6,14 +6,24 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { deleteExam } from "@/lib/actions/exam.actions"
 
-export function useDeleteExam() {
+export function useDeleteExam(user: any)  {
   const router = useRouter()
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  const handleOpenDelete = () => {
+    if (!user) {
+      router.push("/login")
+      return
+    }
+
+    setIsDeleteOpen(true)
+  }
+
   const handleDelete = async (id: string) => {
     console.log("id=", id);
+    
     try {
       setDeleting(true)
       await deleteExam(id)
@@ -29,7 +39,7 @@ export function useDeleteExam() {
 
   return {
     isDeleteOpen,
-    setIsDeleteOpen,
+    setIsDeleteOpen: handleOpenDelete,
     deleting,
     handleDelete
   }

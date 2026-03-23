@@ -161,10 +161,26 @@ body {
     @apply flex gap-4 justify-between items-start w-full max-lg:flex-col-reverse max-lg:items-center;
   }
   .exams-grid {
-    @apply flex flex-wrap gap-4 w-full max-md:justify-center;
+    @apply grid gap-6 w-full;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    /*@apply flex flex-wrap gap-4 w-full max-md:justify-center;*/
   }
+ 
+  @media (max-width: 1024px) {
+    .exams-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .exams-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
   .companion-card {
-    @apply flex flex-col rounded-4xl border border-black px-4 py-4 gap-5 w-full min-lg:max-w-[410px] justify-between;
+    @apply flex flex-col rounded-4xl border border-black px-4 py-4 gap-5 w-full justify-between;
+    /*@apply flex flex-col rounded-4xl border border-black px-4 py-4 gap-5 w-full min-lg:max-w-[410px] justify-between;*/
   }
   .subject-badge {
     @apply bg-black text-white rounded-4xl text-sm px-2 py-1 capitalize;
@@ -191,7 +207,13 @@ body {
     @apply flex items-center justify-between mx-auto w-full px-14 py-4 bg-white max-sm:px-4;
   }
   .btn-signin {
-    @apply border border-black rounded-4xl px-4 py-2.5 text-sm font-semibold flex items-center gap-2 cursor-pointer;
+    @apply px-5 py-2.5 rounded-lg font-semibold text-white 
+           bg-gradient-to-r from-yellow-400 to-yellow-500
+           hover:from-yellow-500 hover:to-yellow-600
+           shadow-sm hover:shadow-md
+           transition-all duration-200
+           hover:scale-[1.02] active:scale-[0.98]
+    /*@apply border border-black rounded-4xl px-4 py-2.5 text-sm font-semibold flex items-center gap-2 cursor-pointer;*/
   }
   .companion-list {
     @apply rounded-4xl border border-black px-7 pt-7 pb-10 max-lg:w-full bg-white;

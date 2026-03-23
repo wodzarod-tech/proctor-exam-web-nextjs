@@ -8,7 +8,17 @@ import {createSupabaseServerClient} from "@/lib/supabase/server-client";
 import {revalidatePath} from "next/cache";
 import { getUser } from "../auth/user-server";
 
-export const createExam = async (formData: CreateExam) => {
+const MAX_EXAMS = 10;
+
+export const createExam = async (userId: string, formData: CreateExam) => {
+    
+    // limit to max exams
+    const existingExams = await getUserExams(userId);
+
+    if (existingExams.length >= MAX_EXAMS) {
+        throw new Error("You have reached the maximum of 10 exams.");
+    }
+
     //const { userId: author } = await auth(); // Get the authenticated user's ID from Clerk server
     const user = await getUser();
     const author = user?.id;
@@ -68,6 +78,26 @@ export const getAllExams = async ({ limit = 10, page = 1, title }: GetAllExams) 
     if(error) throw new Error(error.message);
 
     return companions;
+}
+
+export const getUserExams = async (userId: string, title?: string) => {
+    const supabase = await createSupabaseServerClient();
+
+    let query = supabase
+        .from('exams')
+        .select()
+        .eq('author', userId)
+        .order('title', { ascending: true });
+
+    if (title) {
+        query = query.ilike('title', `%${title}%`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw new Error(error.message);
+
+    return data;
 }
 
 export const getExam = async (id: string) => {

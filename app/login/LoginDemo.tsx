@@ -13,7 +13,7 @@ type LoginDemoProps = {
 type Mode = "signup" | "signin"
 
 export default function LoginDemo({ user }: LoginDemoProps) {
-  const [mode, setMode] = useState("signup");
+  const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");

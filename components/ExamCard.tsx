@@ -4,6 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useDeleteExam } from "@/hooks/useDeleteExam"
 import DeleteExamModal from "@/components/DeleteExamModal/DeleteExamModal"
+import { useEffect, useState } from "react";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+import { setUser, User } from "@sentry/nextjs";
 
 /***************************
 Types
@@ -32,6 +35,16 @@ const ExamCard = ({
   color
 }: ExamCardProps) => {
 
+// get user
+const [user, setUser] = useState<User | null>(null)
+useEffect(() => {
+  const supabase = getSupabaseBrowserClient()
+
+  supabase.auth.getUser().then(({ data }) => {
+    setUser(data.user)
+  })
+}, [])
+
 // Show time limit
 // ---------------------------
 const hours = settings?.timer?.hours ?? 0;
@@ -52,7 +65,7 @@ const durationLabel = (() => {
 })()
 
 // Delete exam
-const { isDeleteOpen, setIsDeleteOpen, deleting, handleDelete } = useDeleteExam()
+const { isDeleteOpen, setIsDeleteOpen, deleting, handleDelete } = useDeleteExam(user)
 
 /***************************
 Render

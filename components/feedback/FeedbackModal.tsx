@@ -72,9 +72,12 @@ export default function FeedbackModal({
       {type === 'general' && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-[9999] bg-blue-600 text-white px-5 py-3 rounded-full shadow-xl hover:bg-blue-700 hover:scale-105 transition-all"
-        >
-          Feedback
+          className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 
+           bg-blue-600 text-white px-5 py-3 rounded-full shadow-xl
+           hover:bg-blue-700 active:scale-95 transition-all duration-150
+           animate-bounce"
+>
+          💬 Help us improve
         </button>
       )}
 
@@ -145,13 +148,17 @@ export default function FeedbackModal({
                 )}
 
                 {/* Actions */}
-                <button
-                  onClick={submit}
-                  disabled={!rating || loading}
-                  className="w-full bg-black text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
-                >
-                  {loading ? 'Sending...' : 'Send feedback'}
-                </button>
+                {rating && (
+                  <button
+                    onClick={submit}
+                    disabled={loading}
+                    className="w-full py-3 rounded-xl bg-blue-600 text-white font-medium shadow-md 
+                              hover:bg-blue-700 active:scale-[0.98] transition-all duration-150
+                              disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Sending...' : 'Send feedback'}
+                  </button>
+                )}
               </>
             )}
           </div>

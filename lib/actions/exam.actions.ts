@@ -8,7 +8,7 @@ import {createSupabaseServerClient} from "@/lib/supabase/server-client";
 import {revalidatePath} from "next/cache";
 import { getUser } from "../auth/user-server";
 
-const MAX_EXAMS = 10;
+const MAX_EXAMS = 20;
 
 export const createExam = async (userId: string, formData: CreateExam) => {
     

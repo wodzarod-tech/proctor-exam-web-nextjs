@@ -27,7 +27,7 @@ const Page = async ({ searchParams }: SearchParams) => {
   if(user)
     exams = await getUserExams(user.id, title);
   
-  const MAX_EXAMS = 10;
+  const MAX_EXAMS = 20;
   const examCount = exams?.length || 0;
   const canCreate = examCount < MAX_EXAMS;
 
@@ -79,9 +79,11 @@ const Page = async ({ searchParams }: SearchParams) => {
       ) : (
         <p className="text-center mt-10">Please sign in to see your exams</p>
       )}
-
-      <FeedbackModal type="general" />
     </main>
+
+    {user && exams && exams.length > 0 && (
+      <FeedbackModal type="general" />
+    )}
     </>
   )
 }

@@ -106,4 +106,5 @@ npx @sentry/wizard@latest -i nextjs --saas --org wodzarod --project proctor-exam
 npm install @fortawesome/fontawesome-free
 
 - Deploy in Vercel:
+https://proctor-exam-web-nextjs.vercel.app/
 https://proctor-exam-web-nextjs-uuf5.vercel.app/

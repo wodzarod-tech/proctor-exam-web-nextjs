@@ -22,6 +22,7 @@ const Page = async ({ searchParams }: SearchParams) => {
   const title = filters.title ? filters.title : '';
   //const exams = await getAllExams({ title });
   const user = await getUser();
+  console.log("Page user=", user);
   //let profile = null;
 
   // Get ONLY user's exams

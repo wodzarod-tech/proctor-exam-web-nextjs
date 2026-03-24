@@ -10,25 +10,34 @@ import { getUser } from "../auth/user-server";
 
 const MAX_EXAMS = 20;
 
-export const createExam = async (userId: string, formData: CreateExam) => {
+type Profile = {
+  name?: string;
+  email?: string;
+};
+
+export const createExam = async (userId: string, profile: Profile, formData: CreateExam) => {
     
     // limit to max exams
     const existingExams = await getUserExams(userId);
 
     if (existingExams.length >= MAX_EXAMS) {
-        throw new Error("You have reached the maximum of 10 exams.");
+        throw new Error("You have reached the maximum of 20 exams.");
     }
 
-    //const { userId: author } = await auth(); // Get the authenticated user's ID from Clerk server
-    const user = await getUser();
-    const author = user?.id;
+    //const user = await getUser();
+    //const user_id = user?.id;
 
     const supabase = await createSupabaseServerClient();
     //const supabase = createSupabaseClient();
 
     const { data, error } = await supabase
         .from('exams')
-        .insert({...formData, author })
+        .insert({
+        ...formData,
+        user_id: userId,
+        user_name: profile?.name || null,
+        user_email: profile?.email || null,
+        })
         .select();
 
     if(error || !data) throw new Error(error?.message || 'Failed to create a exam');
@@ -42,7 +51,7 @@ export const updateExam = async (
 ) => {
   //const { userId } = await auth(); // authenticated user
   const user = await getUser();
-  const author = user?.id;
+  const user_id = user?.id;
 
   const supabase = await createSupabaseServerClient();
   //const supabase = createSupabaseClient();
@@ -51,7 +60,7 @@ export const updateExam = async (
     .from("exams")
     .update(formData)
     .eq("id", id)
-    .eq("author", author) // ✅ security: only owner can update
+    .eq("user_id", user_id) // ✅ security: only owner can update
     .select();
 
   if (error || !data || data.length === 0) {
@@ -86,7 +95,7 @@ export const getUserExams = async (userId: string, title?: string) => {
     let query = supabase
         .from('exams')
         .select()
-        .eq('author', userId)
+        .eq('user_id', userId)
         .order('title', { ascending: true });
 
     if (title) {

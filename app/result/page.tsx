@@ -3,11 +3,14 @@ import "./result.css"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import confetti from "canvas-confetti"
+import FeedbackModal from "@/components/feedback/FeedbackModal"
 
 export default function ResultPage() {
 
   const router = useRouter()
 
+  const [userId, setUserId] = useState("")
+  const [examId, setExamId] = useState("")
   const [score, setScore] = useState(0)
   const [total, setTotal] = useState(0)
   const [scoreMin, setScoreMin] = useState(0)
@@ -15,6 +18,11 @@ export default function ResultPage() {
 
   // get values
   useEffect(() => {
+    const userId = sessionStorage.getItem("userId")
+    const examId = sessionStorage.getItem("examId")
+    if (userId) setUserId(userId)
+    if (examId) setExamId(examId)
+
     const storedScore = sessionStorage.getItem("examScore")
     const storedTotal = sessionStorage.getItem("examTotal")
     const storedScoreMin = sessionStorage.getItem("scoreMin")
@@ -74,11 +82,28 @@ export default function ResultPage() {
     }, 250)
   }
 
+  const [hover, setHover] = useState(false);
+  
   return (
     <>
     {/* Navbar */}
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <button 
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        style={{
+          padding: "8px 16px",
+          borderRadius: "6px",
+          background: hover ? "rgba(10, 77, 233, 0.1)" : "#f1f3f4",
+          border: "1px solid #dadce0",
+          cursor: "pointer",
+          transition: "background 0.2s ease",
+        }}
+        data-tooltip="Back to Home" 
+        onClick={async () => {
+          window.location.href = `/`
+        }}>⬅ Home</button>
     </div>
     </nav>
 
@@ -106,10 +131,15 @@ export default function ResultPage() {
         📊 See results
       </button>
 
-      <button className="homeBtn" onClick={() => router.push("/")}>
+      {/*<button className="homeBtn" onClick={() => router.push("/")}>
         🏠 Home
-      </button>
+      </button>*/}
     </div>
+
+    <FeedbackModal 
+      userId={userId}
+      examId={examId}
+    />
     </>
   )
 }

@@ -1,26 +1,30 @@
 'use client';
+import { User } from "@supabase/supabase-js";
+import styles from "./FeedbackModal.module.css";
 
 import { useEffect, useState } from 'react';
+import { getUserProfile } from "@/lib/auth/user-client";
 
-export default function FeedbackModal({
-  type,
-  examId,
-}: {
-  type: 'general' | 'post_exam' | 'result';
+/*
+type Profile = {
+  name?: string;
+  email?: string;
+};*/
+
+type Props = {
+  userId?: string;
   examId?: string;
-}) {
+  //profile: Profile | null;
+};
+
+export default function FeedbackModal({ userId, examId }: Props) {
+  console.log("FeedbackModal=", userId, examId);
+
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-
-  // 🎯 Context-based questions
-  const questions = {
-    general: 'How is your experience so far?',
-    post_exam: 'Did the proctoring feel realistic?',
-    result: 'Was the result fair and clear?',
-  };
 
   // ⭐ Emoji ratings
   const ratings = [
@@ -31,14 +35,8 @@ export default function FeedbackModal({
     { value: 5, emoji: '😍' },
   ];
 
-  // ⚡ Auto-open after exam
-  useEffect(() => {
-    if (type === 'post_exam') {
-      setOpen(true);
-    }
-  }, [type]);
-
   const submit = async () => {
+    console.log("submit rating=",rating);
     if (!rating) return;
 
     setLoading(true);
@@ -50,8 +48,8 @@ export default function FeedbackModal({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          type,
-          exam_id: examId,
+          user_id: userId || null,
+          exam_id: examId || null,
           rating,
           comment,
         }),
@@ -69,98 +67,166 @@ export default function FeedbackModal({
   return (
     <>
       {/* Floating button (for general use) */}
-      {type === 'general' && (
-        <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 
-           bg-blue-600 text-white px-5 py-3 rounded-full shadow-xl
-           hover:bg-blue-700 active:scale-95 transition-all duration-150
-           animate-bounce"
->
-          💬 Help us improve
-        </button>
-      )}
+      <button
+        onClick={() => setOpen(true)}
+        style={{
+          position: "fixed",
+          top: "50%",
+          right: "0",
+          transform: "translateY(-50%)",
+          width: "28px",
+          height: "130px",
+          backgroundColor: "#4B5563", // gray-700
+          color: "white",
+          borderTopLeftRadius: "50px",
+          borderBottomLeftRadius: "50px",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+          zIndex: 9999,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          transition: "all 0.25s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = "#1f2937"; // darker
+          e.currentTarget.style.width = "35px"; // expand
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = "#4B5563"; // original
+          e.currentTarget.style.width = "28px"; // back
+        }}
+      >
+        <span
+          style={{
+            transform: "rotate(-90deg)",
+            whiteSpace: "nowrap",
+            fontSize: "14px",
+            fontWeight: 500,
+          }}
+        >
+          💬 Feedback
+        </span>
+      </button>
 
       {/* Modal */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className={styles.settingsModal}
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl relative animate-in fade-in zoom-in"
+            className={styles.settingsCard}
             onClick={(e) => e.stopPropagation()}
+            style={{ position: "relative" }} // 👈 needed for absolute button
           >
-            {/* Close */}
+            {/* Close button */}
             <button
               onClick={() => setOpen(false)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-black"
+              style={{
+                position: "absolute",
+                top: "12px",
+                right: "12px",
+                fontSize: "18px",
+                color: "#9ca3af",
+                cursor: "pointer",
+                background: "none",
+                border: "none",
+              }}
             >
               ✕
             </button>
 
-            {/* Success state */}
-            {sent ? (
-              <div className="text-center py-6">
-                <p className="text-lg font-semibold">
-                  ✅ Thanks for your feedback!
-                </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  This helps us improve the simulator.
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Question */}
-                <h3 className="text-lg font-semibold mb-4 text-center">
-                  {questions[type]}
-                </h3>
+            {/* Content */}
+            <div
+              style={{
+                padding: "40px 24px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+              }}
+            >
+              {sent ? (
+                <>
+                  <p style={{ fontSize: "18px", fontWeight: 600 }}>
+                    ✅ Thanks for your feedback!
+                  </p>
+                  <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "8px" }}>
+                    This helps us improve the simulator.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 style={{ fontSize: "18px", fontWeight: 600, marginBottom: "16px" }}>
+                    How is your experience so far?
+                  </h3>
 
-                {/* Emoji rating */}
-                <div className="flex justify-center gap-3 text-3xl mb-4">
-                  {ratings.map((r) => (
+                  {/* Emoji rating */}
+                  <div style={{ display: "flex", gap: "12px", fontSize: "28px", marginBottom: "16px" }}>
+                    {ratings.map((r) => (
+                      <button
+                        key={r.value}
+                        onClick={() => setRating(r.value)}
+                        style={{
+                          transform: rating === r.value ? "scale(1.25)" : "scale(1)",
+                          opacity: rating === r.value ? 1 : 0.5,
+                          transition: "all 0.2s",
+                          cursor: "pointer",
+                          background: "none",
+                          border: "none",
+                        }}
+                      >
+                        {r.emoji}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Textarea */}
+                  {rating && (
+                    <textarea
+                      style={{
+                        width: "100%",
+                        border: "1px solid #ddd",
+                        borderRadius: "8px",
+                        padding: "8px",
+                        fontSize: "14px",
+                        marginBottom: "16px",
+                      }}
+                      placeholder={
+                        rating <= 3
+                          ? "What went wrong?"
+                          : "What did you like?"
+                      }
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                    />
+                  )}
+
+                  {/* Button */}
+                  {rating && (
                     <button
-                      key={r.value}
-                      onClick={() => setRating(r.value)}
-                      className={`transition transform ${
-                        rating === r.value
-                          ? 'scale-125'
-                          : 'opacity-50 hover:opacity-100'
-                      }`}
+                      onClick={submit}
+                      disabled={loading}
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        borderRadius: "10px",
+                        background: "#2563eb",
+                        color: "white",
+                        fontWeight: 500,
+                        border: "none",
+                        cursor: "pointer",
+                        opacity: loading ? 0.6 : 1,
+                      }}
                     >
-                      {r.emoji}
+                      {loading ? "Sending..." : "Send feedback"}
                     </button>
-                  ))}
-                </div>
-
-                {/* Conditional textarea */}
-                {rating && (
-                  <textarea
-                    className="w-full border rounded-lg p-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-black"
-                    placeholder={
-                      rating <= 3
-                        ? 'What went wrong?'
-                        : 'What did you like?'
-                    }
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                  />
-                )}
-
-                {/* Actions */}
-                {rating && (
-                  <button
-                    onClick={submit}
-                    disabled={loading}
-                    className="w-full py-3 rounded-xl bg-blue-600 text-white font-medium shadow-md 
-                              hover:bg-blue-700 active:scale-[0.98] transition-all duration-150
-                              disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? 'Sending...' : 'Send feedback'}
-                  </button>
-                )}
-              </>
-            )}
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}

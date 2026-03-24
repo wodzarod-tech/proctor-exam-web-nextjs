@@ -3,6 +3,7 @@
 import styles from "./ExamResultComponent.module.css";
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import FeedbackModal from "./feedback/FeedbackModal";
 
 /***************************
 Types
@@ -416,6 +417,11 @@ Render
         </div>
       </div>
     </div>
+
+    <FeedbackModal 
+      userId={userId}
+      examId={id}
+    />
     </>
   )
 }

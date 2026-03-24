@@ -6,9 +6,16 @@ import ExamResultComponent from "@/components/ExamResultComponent";
 
 export default function ResultDetailsPage() {
   const router = useRouter();
+  const [userId, setUserId] = useState("")
+  const [examId, setExamId] = useState("")
   const [questions, setQuestions] = useState<any[]>([]);
 
   useEffect(() => {
+    const userId = sessionStorage.getItem("userId")
+    const examId = sessionStorage.getItem("examId")
+    if (userId) setUserId(userId)
+    if (examId) setExamId(examId)
+
     const userAnswers = sessionStorage.getItem("examReview");
 
     if (!userAnswers) {
@@ -32,9 +39,9 @@ export default function ResultDetailsPage() {
 
   return (
     <ExamResultComponent
-      id={""}
+      id={examId}
       userAnswers={questions}
-      userId={""}
+      userId={userId}
       readOnly
     />
   )

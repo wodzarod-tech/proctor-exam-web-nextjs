@@ -13,14 +13,21 @@ import ImageUploadModal from "./ImageUploadModal/ImageUploadModal";
 import { useDeleteExam } from "@/hooks/useDeleteExam"
 import DeleteExamModal from "@/components/DeleteExamModal/DeleteExamModal"
 import SettingsModal from "@/components/SettingsModal/SettingsModal"
+import FeedbackModal from "./feedback/FeedbackModal";
 
 /***************************
 Types
 ***************************/
+type Profile = {
+  name?: string;
+  email?: string;
+};
+
 interface ExamSessionProps {
   id: any; // exam id
   exam: any; // exam info, questions, answers
   userId: string; // user auth
+  profile: Profile | null; // name, email
 }
 
 type Question = {
@@ -79,9 +86,12 @@ Page
 ***************************/
 let uuid = "";
 
-const ExamComponent = ({ id, exam, userId }: ExamSessionProps) => {
+const ExamComponent = ({ id, exam, userId, profile }: ExamSessionProps) => {
   const router = useRouter()
-  
+  console.log("ExamComponent exam.id=",id);
+  console.log("ExamComponent userId=",userId);
+  console.log("ExamComponent profile=",profile);
+
   let formattedQuestions = null;
 
   // To edit exam
@@ -287,6 +297,7 @@ Effects
 Actions
 ***************************/
   let saveExamDB;
+  let saved;
   async function saveExam(flag: boolean = false): Promise<string | null> {
     
     // prevent spam clicks
@@ -321,11 +332,9 @@ Actions
         return null;
       }
 
-      let saved
-
       // CREATE only if no examId yet
       if (!examId) {
-        saved = await createExam(userId, examPayload)
+        saved = await createExam(userId, profile, examPayload)
         setExamId(saved.id) // store it for future updates
         console.log("create exam: saved.id=",saved.id)
         if (flag) setMsg("Saved successfully ✓")
@@ -951,6 +960,11 @@ Render
         // close modal after selecting
         setImageModal({ open: false })
       }}
+    />
+
+    <FeedbackModal 
+      userId={userId}
+      examId={examId}
     />
     </>
   )

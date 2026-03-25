@@ -6,7 +6,7 @@ import { useDeleteExam } from "@/hooks/useDeleteExam"
 import DeleteExamModal from "@/components/DeleteExamModal/DeleteExamModal"
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
-import { setUser, User } from "@sentry/nextjs";
+import { User } from "@supabase/supabase-js";
 
 /***************************
 Types

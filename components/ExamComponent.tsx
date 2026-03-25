@@ -14,6 +14,8 @@ import { useDeleteExam } from "@/hooks/useDeleteExam"
 import DeleteExamModal from "@/components/DeleteExamModal/DeleteExamModal"
 import SettingsModal from "@/components/SettingsModal/SettingsModal"
 import FeedbackModal from "./feedback/FeedbackModal";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
+import { User } from "@supabase/supabase-js";
 
 /***************************
 Types
@@ -87,6 +89,17 @@ Page
 let uuid = "";
 
 const ExamComponent = ({ id, exam, userId, profile }: ExamSessionProps) => {
+
+  // get user
+  const [user, setUser] = useState<User | null>(null)
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient()
+  
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+    })
+  }, [])
+
   const router = useRouter()
   console.log("ExamComponent exam.id=",id);
   console.log("ExamComponent userId=",userId);
@@ -539,7 +552,7 @@ Actions
   }, [msg])
 
   // Delete exam
-  const { isDeleteOpen, setIsDeleteOpen, deleting, handleDelete } = useDeleteExam()
+  const { isDeleteOpen, setIsDeleteOpen, deleting, handleDelete } = useDeleteExam(user)
 
 /***************************
 Render

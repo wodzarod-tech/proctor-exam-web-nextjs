@@ -851,6 +851,7 @@ Actions
     const total = questions.reduce((sum, q) => sum + q.points, 0);
 
     // Store for review page
+    sessionStorage.setItem("examTitle", title);
     sessionStorage.setItem("userId", userId);
     sessionStorage.setItem("examId", id);
 

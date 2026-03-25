@@ -9,6 +9,7 @@ export default function ResultPage() {
 
   const router = useRouter()
 
+  const [examTitle, setExamTitle] = useState("")
   const [userId, setUserId] = useState("")
   const [examId, setExamId] = useState("")
   const [score, setScore] = useState(0)
@@ -18,6 +19,9 @@ export default function ResultPage() {
 
   // get values
   useEffect(() => {
+    const examTitle = sessionStorage.getItem("examTitle")
+    if (examTitle) setExamTitle(examTitle)
+
     const userId = sessionStorage.getItem("userId")
     const examId = sessionStorage.getItem("examId")
     if (userId) setUserId(userId)
@@ -34,7 +38,7 @@ export default function ResultPage() {
 
   // trigger confetti if passed
   useEffect(() => {
-    if (score >= scoreMin && scoreMin !== 0) {
+    if (score >= scoreMin /*&& scoreMin !== 0*/) {
       setTimeout(() => {
         fireConfetti()
       }, 500)
@@ -108,6 +112,11 @@ export default function ResultPage() {
     </nav>
 
     <div className="card">
+      
+    <h1 className="examTitle">
+      <strong>{examTitle}</strong>
+    </h1>
+
       <h2><strong>Exam Result</strong></h2>
 
       <div className="score">

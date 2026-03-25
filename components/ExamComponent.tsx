@@ -667,11 +667,67 @@ Render
                     step="0.1"
                     placeholder="0"
                     value={q.points}
-                    onChange={(e) =>
+                    onKeyDown={(e) => {
+                      const invalidKeys = [, ",", "-", "e", "E", "+"];
+
+                      if (invalidKeys.includes(e.key)) {
+                          e.preventDefault();
+                          return;
+                      }
+
+                      const input = e.currentTarget;
+                      const value = input.value;
+
+                      // Allow control keys (backspace, arrows, tab, etc.)
+                      if (
+                          e.key === "Backspace" ||
+                          e.key === "Delete" ||
+                          e.key === "ArrowLeft" ||
+                          e.key === "ArrowRight" ||
+                          e.key === "Tab"
+                      ) {
+                          return;
+                      }
+
+                      // Allow only one decimal point
+                      if (e.key === ".") {
+                        if (value.includes(".")) {
+                          e.preventDefault();
+                        }
+                        return;
+                      }
+
+                      // If already has decimal, limit to 2 decimal places
+                      if (value.includes(".")) {
+                        const decimals = value.split(".")[1];
+                        if (decimals.length >= 2) {
+                          e.preventDefault();
+                        }
+                      }
+
+                      // Prevent typing more than 2 digits
+                      if (input.value.length >= 4) {
+                          e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                        const paste = e.clipboardData.getData("text");
+
+                        // Allow numbers with up to 2 decimals
+                        if (!/^\d+(\.\d{0,2})?$/.test(paste)) {
+                          e.preventDefault();
+                        }
+                    }}
+                    onChange={(e) => {
+                      let value = e.target.value;
+
+                      // Extra safety validation
+                      if (!/^\d*(\.\d{0,2})?$/.test(value)) return;
+
                       updateQuestion(q.id, {
-                        points: Number(e.target.value) || 0
+                        points: Number(value) || 0
                       })
-                    }
+                    }}
                   />
                   <span>points</span>
                 </div>

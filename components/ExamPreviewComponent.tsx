@@ -558,7 +558,7 @@ Effects
   // ---------------------------
   const [timeLeft, setTimeLeft] = useState(0);
   const [timerInitialized, setTimerInitialized] = useState(false);
-
+    
   const hoursTimer = Math.max(0, Math.floor(timeLeft / 3600));
   const minutesTimer = Math.max(0, Math.floor((timeLeft % 3600) / 60));
   const secondsTimer = Math.max(0, timeLeft % 60);
@@ -569,6 +569,14 @@ Effects
 
   // Set initial time on load
   useEffect(() => {
+
+    // if time left = 0, then no autosubmit
+    if(settings.timer.hours == 0 && 
+      settings.timer.minutes == 0
+    ) {
+      setAutoSubmitted(true);
+    }
+
     const total =
     (settings.timer.hours || 0) * 3600 +
     (settings.timer.minutes || 0) * 60

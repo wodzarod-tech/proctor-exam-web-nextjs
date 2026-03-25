@@ -138,13 +138,68 @@ const SettingsModal = ({
             min="0"
             step="0.1"
             value={settings.general.scoreMin}
+            onKeyDown={(e) => {
+                const invalidKeys = [, ",", "-", "e", "E", "+"];
+
+                if (invalidKeys.includes(e.key)) {
+                    e.preventDefault();
+                    return;
+                }
+
+                const input = e.currentTarget;
+                const value = input.value;
+
+                // Allow control keys (backspace, arrows, tab, etc.)
+                if (
+                    e.key === "Backspace" ||
+                    e.key === "Delete" ||
+                    e.key === "ArrowLeft" ||
+                    e.key === "ArrowRight" ||
+                    e.key === "Tab"
+                ) {
+                    return;
+                }
+
+                // Allow only one decimal point
+                if (e.key === ".") {
+                if (value.includes(".")) {
+                    e.preventDefault();
+                }
+                return;
+                }
+
+                // If already has decimal, limit to 2 decimal places
+                if (value.includes(".")) {
+                const decimals = value.split(".")[1];
+                if (decimals.length >= 2) {
+                    e.preventDefault();
+                }
+                }
+
+                // Prevent typing more than 2 digits
+                if (input.value.length >= 4) {
+                    e.preventDefault();
+                }
+            }}
+            onPaste={(e) => {
+                const paste = e.clipboardData.getData("text");
+
+                // Allow numbers with up to 2 decimals
+                if (!/^\d+(\.\d{0,2})?$/.test(paste)) {
+                    e.preventDefault();
+                }
+            }}
             onChange={(e) => {
-                const value = Number(e.target.value) || 0
+                let value = e.target.value;
+
+                // Extra safety validation
+                if (!/^\d*(\.\d{0,2})?$/.test(value)) return;
+
                 setSettings((prev:any) => ({
                 ...prev,
                 general: {
                     ...prev.general,
-                    scoreMin: value
+                    scoreMin: Number(value) || 0
                 }
                 }))
             }}
@@ -160,10 +215,10 @@ const SettingsModal = ({
         </span>
         </div>
 
-        {/* Timer Left */}
+        {/* Time Left */}
         <div className={styles.gfToggleRow}>
             <span className={styles.gfLabel}>
-                Timer Left
+                Time Left
             </span>
 
             <div className={styles.qPoints}>
@@ -174,12 +229,58 @@ const SettingsModal = ({
                 max="24"
                 step="1"
                 value={settings.timer.hours}
+                onKeyDown={(e) => {
+                    const invalidKeys = [".", ",", "-", "e", "E", "+"];
+
+                    if (invalidKeys.includes(e.key)) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    const input = e.currentTarget;
+                    
+                    // Allow control keys (backspace, arrows, tab, etc.)
+                    if (
+                        e.key === "Backspace" ||
+                        e.key === "Delete" ||
+                        e.key === "ArrowLeft" ||
+                        e.key === "ArrowRight" ||
+                        e.key === "Tab"
+                    ) {
+                        return;
+                    }
+
+                    // Prevent typing more than 2 digits
+                    if (input.value.length >= 2) {
+                        e.preventDefault();
+                    }
+                }}
+                onPaste={(e) => {
+                    const paste = e.clipboardData.getData("text");
+
+                    // Only allow up to 2 digits
+                    if (!/^\d{1,2}$/.test(paste)) {
+                    e.preventDefault();
+                    }
+                }}
                 onChange={(e) => {
+                    let value = e.target.value;
+
+                    if (value === "") {
+                        setSettings((prev: any) => ({
+                            ...prev,
+                            timer: { ...prev.timer, hours: "" }
+                        }));
+                        return;
+                    }
+
+                    let num = Math.min(24, Number(value));
+
                     setSettings((prev:any) => ({
                     ...prev,
                     timer: {
                         ...prev.timer,
-                        hours: Number(e.target.value)
+                        hours: num
                     }
                     }))
                 }}
@@ -194,12 +295,58 @@ const SettingsModal = ({
                 max="59"
                 step="1"
                 value={settings.timer.minutes}
+                onKeyDown={(e) => {
+                    const invalidKeys = [".", ",", "-", "e", "E", "+"];
+
+                    if (invalidKeys.includes(e.key)) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    const input = e.currentTarget;
+                    
+                    // Allow control keys (backspace, arrows, tab, etc.)
+                    if (
+                        e.key === "Backspace" ||
+                        e.key === "Delete" ||
+                        e.key === "ArrowLeft" ||
+                        e.key === "ArrowRight" ||
+                        e.key === "Tab"
+                    ) {
+                        return;
+                    }
+
+                    // Prevent typing more than 2 digits
+                    if (input.value.length >= 2) {
+                        e.preventDefault();
+                    }
+                }}
+                onPaste={(e) => {
+                    const paste = e.clipboardData.getData("text");
+
+                    // Only allow up to 2 digits
+                    if (!/^\d{1,2}$/.test(paste)) {
+                    e.preventDefault();
+                    }
+                }}
                 onChange={(e) => {
+                    let value = e.target.value;
+
+                    if (value === "") {
+                        setSettings((prev: any) => ({
+                            ...prev,
+                            timer: { ...prev.timer, minutes: "" }
+                        }));
+                        return;
+                    }
+
+                    let num = Math.min(59, Number(value));
+
                     setSettings((prev:any) => ({
                     ...prev,
                     timer: {
                         ...prev.timer,
-                        minutes: Number(e.target.value)
+                        minutes: num
                     }
                     }))
                 }}
@@ -210,7 +357,7 @@ const SettingsModal = ({
         {/* Camera */}
         <div className={styles.gfToggleRow}>
             <span className={styles.gfLabel}>
-                Camera{" "}
+                Camera:{" "}
                 <span className={styles.noRecordingWrapper}>
                 <span className={styles.noRecording}>(no recording)</span>
                 <span className={styles.tooltip}>
@@ -322,7 +469,7 @@ const SettingsModal = ({
         {/* Screen */}
         <div>
         <span className={styles.gfLabel}>
-            Screen
+            Screen:
         </span>
         </div>
 

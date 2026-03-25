@@ -619,6 +619,7 @@ Render
               className={`${styles.textUnderlineInput} ${styles.formTitle}`}
               placeholder="Title"
               value={title}
+              maxLength={250}
               onChange={(e) => setTitle(e.target.value)}
             />
 
@@ -627,6 +628,7 @@ Render
               rows={1}
               placeholder="Form description"
               value={description}
+              maxLength={250}
               onChange={(e) => {
                 setDescription(e.target.value)
                 // auto-resize

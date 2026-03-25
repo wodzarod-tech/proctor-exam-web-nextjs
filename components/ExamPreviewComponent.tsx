@@ -979,7 +979,7 @@ Render
             <textarea
               className={`${styles.textUnderlineInput} ${styles.formDescription}`}
               rows={1}
-              placeholder="Form description"
+              placeholder=""
               value={description}
               disabled={readOnly}
               onChange={(e) => {
@@ -1047,7 +1047,7 @@ Render
                 <textarea
                   className={`${styles.textUnderlineInput} ${styles.qTitle}`}
                   rows={1}
-                  placeholder="Question"
+                  placeholder=""
                   value={q.text}
                   disabled={readOnly}
                   onChange={(e) => {

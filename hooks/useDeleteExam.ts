@@ -39,7 +39,8 @@ export function useDeleteExam(user: any)  {
 
   return {
     isDeleteOpen,
-    setIsDeleteOpen: handleOpenDelete,
+    openDelete: handleOpenDelete, // for opening
+    closeDelete: () => setIsDeleteOpen(false), // for closing
     deleting,
     handleDelete
   }

@@ -552,7 +552,7 @@ Actions
   }, [msg])
 
   // Delete exam
-  const { isDeleteOpen, setIsDeleteOpen, deleting, handleDelete } = useDeleteExam(user)
+  const { isDeleteOpen, openDelete, closeDelete, deleting, handleDelete } = useDeleteExam(user)
 
 /***************************
 Render
@@ -595,7 +595,7 @@ Render
           <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={() => saveExam(true)} disabled={saving}><i className="fa fa-save"></i></button>
           <button className={styles.gTooltip} data-tooltip="Get URL to Take exam" onClick={getUrl}><i className="fa fa-link"></i></button>
           <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={previewExam}><i className="fa fa-eye"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Delete exam" onClick={() => setIsDeleteOpen(true)}><i className="fa fa-trash"></i></button>
+          <button className={styles.gTooltip} data-tooltip="Delete exam" onClick={openDelete}><i className="fa fa-trash"></i></button>
           {/*<button className={`${styles.toolbarBtn} ${styles.primary}`}>Publish</button>*/}
         </nav>
 
@@ -1010,10 +1010,10 @@ Render
     <DeleteExamModal
       open={isDeleteOpen}
       deleting={deleting}
-      onCancel={() => setIsDeleteOpen(false)}
+      onCancel={closeDelete}
       onConfirm={async () => {
         await handleDelete(id)
-        setIsDeleteOpen(false)
+        closeDelete()
       }}
     />
 

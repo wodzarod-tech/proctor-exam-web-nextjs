@@ -65,7 +65,7 @@ const durationLabel = (() => {
 })()
 
 // Delete exam
-const { isDeleteOpen, setIsDeleteOpen, deleting, handleDelete } = useDeleteExam(user)
+const { isDeleteOpen, openDelete, closeDelete, deleting, handleDelete } = useDeleteExam(user)
 
 /***************************
 Render
@@ -91,7 +91,7 @@ return (
         <button
           className="icon-btn g-tooltip"
           data-tooltip="Delete exam"
-          onClick={() => setIsDeleteOpen(true)}>
+          onClick={openDelete}>
           <i className="fa fa-trash text-sm"></i>
         </button>
 
@@ -124,10 +124,10 @@ return (
   <DeleteExamModal
     open={isDeleteOpen}
     deleting={deleting}
-    onCancel={() => setIsDeleteOpen(false)}
+    onCancel={closeDelete}
     onConfirm={async () => {
       await handleDelete(id)
-      setIsDeleteOpen(false)
+      closeDelete()
     }}
   />
   </>

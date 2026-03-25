@@ -49,14 +49,20 @@ const DeleteExamModal = ({
 
           <button
             className={styles.modalCancel}
-            onClick={onCancel}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancel();
+            }}
           >
             Cancel
           </button>
 
           <button
             className={styles.modalDelete}
-            onClick={onConfirm}
+            onClick={(e) => {
+              e.stopPropagation();
+              onConfirm();
+            }}
             disabled={deleting}
           >
             {deleting ? "Deleting..." : "Delete"}

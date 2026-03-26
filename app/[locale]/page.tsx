@@ -10,6 +10,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { getUser } from "@/lib/auth/user-server";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
 import { getUserProfile } from "@/lib/auth/user-client";
+import { getTranslations } from "next-intl/server";
+//import { useTranslations } from "next-intl";
 
 const Page = async ({ searchParams }: SearchParams) => {
   const filters = await searchParams;
@@ -34,14 +36,16 @@ const Page = async ({ searchParams }: SearchParams) => {
   const MAX_EXAMS = 20;
   const examCount = exams?.length || 0;
   const canCreate = examCount < MAX_EXAMS;
-
+  const t = await getTranslations()
+  //const t = useTranslations();
+  
   return (
     <>
     <Navbar user={user} />
     <main>
       <section className="flex items-center gap-6">
         <h1 className="whitespace-nowrap">
-          My Exams 
+          {t('search')}
           {user && (
             <span className="ml-2 px-2 py-0.5 text-xs bg-gray-200 rounded-full">
               ({examCount})

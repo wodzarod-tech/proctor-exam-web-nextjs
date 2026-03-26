@@ -4,6 +4,7 @@ import NavItems from "./NavItems"
 //import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import { User } from "@supabase/supabase-js";
 import UserMenu from "./UserMenu";
+//import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 type Props = {
   user: User | null;
@@ -30,6 +31,7 @@ export default function Navbar({ user }: Props) {
         </Link>
 
         <div className="flex items-center gap-8">
+        {/*<LanguageSwitcher />*/}
         <NavItems />
 
         {!user ? (

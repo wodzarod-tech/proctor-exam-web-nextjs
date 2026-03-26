@@ -1,5 +1,6 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   typescript: {
@@ -17,7 +18,14 @@ const nextConfig: NextConfig = {
   //reactCompiler: true,
 };
 
-export default withSentryConfig(nextConfig, {
+// Initialize next-intl plugin
+const withNextIntl = createNextIntlPlugin(); // go to ./i18n/request.ts
+
+// Wrap config FIRST with next-intl
+const nextIntlConfig = withNextIntl(nextConfig);
+
+// THEN wrap with Sentry
+export default withSentryConfig(nextIntlConfig, {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
@@ -54,3 +62,4 @@ export default withSentryConfig(nextConfig, {
     },
   },
 });
+

@@ -108,3 +108,6 @@ npm install @fortawesome/fontawesome-free
 - Deploy in Vercel:
 https://proctor-exam-web-nextjs.vercel.app/
 https://proctor-exam-web-nextjs-uuf5.vercel.app/
+
+- Add Language:
+Install i18n library: npm install next-intl

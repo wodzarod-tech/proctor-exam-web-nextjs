@@ -1,4 +1,4 @@
-/*"use client"
+"use client"
 
 import { useRouter, usePathname } from "next/navigation"
 
@@ -7,7 +7,12 @@ export default function LanguageSwitcher() {
   const pathname = usePathname()
 
   function changeLanguage(locale: string) {
-    router.push(`/${locale}${pathname}`)
+    // Remove current locale (en or es) from pathname
+    const segments = pathname.split("/");
+    const newPath = segments.slice(2).join("/"); 
+    // ["", "en", "edit"] → ["edit"]
+
+    router.push(`/${locale}/${newPath}`);
   }
 
   return (
@@ -20,4 +25,4 @@ export default function LanguageSwitcher() {
       <option value="es">Español</option>
     </select>
   )
-}*/
+}

@@ -111,3 +111,21 @@ https://proctor-exam-web-nextjs-uuf5.vercel.app/
 
 - Add Language:
 Install i18n library: npm install next-intl
+
+/app
+  /[locale]
+    layout.tsx
+	  page.tsx
+/components
+  LanguageSwitcher.tsx
+/messages
+  en.json
+  es.json
+/i18n
+  request.ts
+next.config.ts
+proxy.ts
+
+ref:
+https://next-intl.dev/docs/getting-started/app-router
+https://learn.next-intl.dev/chapters/03-translations/01-setup

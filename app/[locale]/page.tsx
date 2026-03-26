@@ -45,7 +45,7 @@ const Page = async ({ searchParams }: SearchParams) => {
     <main>
       <section className="flex items-center gap-6">
         <h1 className="whitespace-nowrap">
-          {t('search')}
+          {t('home.search')}
           {user && (
             <span className="ml-2 px-2 py-0.5 text-xs bg-gray-200 rounded-full">
               ({examCount})

@@ -135,3 +135,78 @@ https://resend.com/
 https://resend.com/domains
 
 login: zarod2019@gmail.com
+
+- Add my domain in Vercel:
+1. Go Vercel project, Settings/Domains
+
+Vercel show you the DNS records
+
+2. Go to Spaceship (my domain provider)
+
+Domain List, winyourexam.site, Manage -> DNS/Nameservers
+
+Add DNS record from Vercel to Spaceship
+
+Finally go your page: https://winyourexam.site
+
+- Configure Supabase Authentication: Email + Password:
+
+Go Supabase/Authentication/URL Configuration:
+  Site URL:
+    for local: http://localhost:3000
+    for production: https://winyourexam.site
+    
+  redirect URLs:
+    for local:
+      http://localhost:3000/login
+      http://localhost:3000/auth/callback
+
+    for production:
+      https://winyourexam.site/login
+      https://winyourexam.site/auth/callback   
+
+- Configure Google Login (Google Provider): Google Auth
+app/components/AuthDemoPage.tsx
+app/email-password/EmailPasswordDemo.tsx
+
+Register our Supabase app in Google Cloud:
+  https://cloud.google.com/
+  https://console.cloud.google.com/apis/credentials?project=proctor-simulator
+
+  organization: wodzarod
+  project: proctor-simulator
+  $300 in free credit
+
+  APIs & Services/Credentials
+    Configure consent screen
+    Click Get Started
+
+    App name: Supabase
+    User support email: zarod2019@gmail.com
+    Audience: External
+    Contact Information: zarod2019@gmail.com
+    Finish, Create
+
+  Create our OAuth client:
+    Overview/Create OAuth client
+    Clients:
+      Application type: Web application
+      Name: Supabase Client
+
+    Go Supabase/Authentication/Sign In Providers
+      Google, click Disabled, copy Callback URL (for OAuth)
+      and paste in Google Cloud console in Authorized redirect URIs
+
+      Copy Client ID and Client secret into Supabase (Client IDs and Client Secret (for OAuth))
+
+      check Enable Sign in with Google
+
+  APIs & Services/Credentials, Authorized redirect URIs:
+    for local:
+      http://localhost:3000/auth/callback
+      https://rkckmenanotanktyzbjf.supabase.co/auth/v1/callback
+    
+    for production:
+      https://winyourexam.site/auth/callback
+
+app/google-login

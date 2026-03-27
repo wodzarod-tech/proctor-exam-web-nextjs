@@ -4,7 +4,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client";
 import { User } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 type LoginDemoProps = {
   user: User | null;
@@ -21,6 +21,7 @@ export default function LoginDemo({ user }: LoginDemoProps) {
   const supabase = getSupabaseBrowserClient();
   const [currentUser, setCurrentUser] = useState<User | null>(user);
   const [resetSent, setResetSent] = useState(false); // forgot password
+  const pathname = usePathname();
 
   const router = useRouter();
   /*
@@ -47,6 +48,8 @@ export default function LoginDemo({ user }: LoginDemoProps) {
     setStatus("Signed out successfully");
   }
 */
+  const locale = pathname.split("/")[1] || "en";
+
   // onAuthStateChange listener
   useEffect(() => {
     const { 
@@ -57,23 +60,28 @@ export default function LoginDemo({ user }: LoginDemoProps) {
 
         // redirect when the session changes
         if (session?.user) {
-          router.replace("/"); // prevents the login page staying in browser history
+          const locale = pathname.split("/")[1] || "en";
+          router.replace(`/${locale}`);
+          //router.replace("/"); // prevents the login page staying in browser history
           router.refresh();
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [supabase, router])
+  }, [supabase, router, pathname])
 
   // Google OAuth
   //-------------------------
   async function handleGoogleLogin() {
+    const locale = pathname.split("/")[1] || "en";
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         //redirectTo: `${window.location.origin}/google-login`,
-        redirectTo: `${window.location.origin}/auth/callback`,
+        //redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/${locale}/auth/callback?next=${pathname}`,
         //skipBrowserRedirect: false,
       },
     });

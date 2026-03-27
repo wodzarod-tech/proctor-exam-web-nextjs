@@ -505,6 +505,13 @@ useEffect(() => {
 
   // Set initial time on load
   useEffect(() => {
+    // if time left = 0, then no autosubmit
+    if(settings.timer.hours == 0 && 
+      settings.timer.minutes == 0
+    ) {
+      setAutoSubmitted(true);
+    }
+
     const total =
     (settings.timer.hours || 0) * 3600 +
     (settings.timer.minutes || 0) * 60
@@ -722,7 +729,11 @@ Actions
       }
     });
 
-    if (missingRequired.length > 0) {
+    if (!auto) {
+      setInvalidQuestions(missingRequired);
+    }
+
+    if (missingRequired.length > 0 && !auto) {
       setInvalidQuestions(missingRequired);
       setMsgNav(fmsg,"Some questions still need attention because they are required");
       return;

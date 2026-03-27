@@ -815,7 +815,11 @@ Actions
       }
     });
 
-    if (missingRequired.length > 0) {
+    if (!auto) {
+      setInvalidQuestions(missingRequired);
+    }
+
+    if (missingRequired.length > 0 && !auto) {
       setInvalidQuestions(missingRequired);
       setMsgNav("Some questions still need attention because they are required");
       return;

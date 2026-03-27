@@ -15,7 +15,7 @@ export default function UserMenu({ user }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  console.log("UserMenu.user=",user);
+  //console.log("UserMenu.user=",user);
   //console.log(user.user_metadata);
   const profile = getUserProfile(user);
   console.log("UserMenu.profile=",profile);

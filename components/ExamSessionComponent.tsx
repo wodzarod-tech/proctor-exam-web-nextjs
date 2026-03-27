@@ -511,7 +511,7 @@ useEffect(() => {
     ) {
       setAutoSubmitted(true);
     }
-
+    
     const total =
     (settings.timer.hours || 0) * 3600 +
     (settings.timer.minutes || 0) * 60

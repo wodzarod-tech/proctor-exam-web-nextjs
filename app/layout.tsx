@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import "@fortawesome/fontawesome-free/css/all.min.css"
-//import Navbar from "@/components/Navbar";
-import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import Navbar from "@/components/Navbar";
 //import { ClerkProvider } from "@clerk/nextjs";
 
 const bricolage = Bricolage_Grotesque({
@@ -12,28 +10,23 @@ const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
 });
 
-type Props = {
-  children: React.ReactNode;
-  params: { locale: string };
-};
-
 export const metadata: Metadata = {
   title: "Proctor Exam Simulator",
   description: "Real-time Proctor Exam SimulatorPlatform",
 };
 
-export default async function Layout({ children, params }) {
-  const { locale } = await params;
-  console.log("locale=",locale);
-  const messages = await getMessages(); // ✅ loads messages automatically
-
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang={locale}>
+    <html lang="en">
       <body className={`${bricolage.variable} antialiased`}>
-        {/*{<Navbar />}*/}
-        <NextIntlClientProvider messages={messages}>
+        {/*<ClerkProvider appearance={{ variables: { colorPrimary: "#fe5933" }} }>*/}
+          {/*{<Navbar />}*/}
           {children}
-        </NextIntlClientProvider>
+        {/*</ClerkProvider>*/}
       </body>
     </html>
   );

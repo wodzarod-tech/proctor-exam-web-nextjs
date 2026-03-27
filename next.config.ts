@@ -1,6 +1,5 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
-import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   typescript: {
@@ -11,29 +10,14 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      //{ hostname: 'img.clerk.com' }, // our profile image is store in Clerk
-      { 
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com' // ✅ Add this for Google Login
-      },
-      { 
-        protocol: 'https',
-        hostname: '*.googleusercontent.com' // ✅ Extra safety for other Google subdomains
-      }
+      { hostname: 'img.clerk.com' } // our profile image is store in Clerk
     ]
   }
   /* config options here */
   //reactCompiler: true,
 };
 
-// Initialize next-intl plugin
-const withNextIntl = createNextIntlPlugin(); // go to ./i18n/request.ts
-
-// Wrap config FIRST with next-intl
-const nextIntlConfig = withNextIntl(nextConfig);
-
-// THEN wrap with Sentry
-export default withSentryConfig(nextIntlConfig, {
+export default withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
@@ -70,4 +54,3 @@ export default withSentryConfig(nextIntlConfig, {
     },
   },
 });
-

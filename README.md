@@ -129,3 +129,9 @@ proxy.ts
 ref:
 https://next-intl.dev/docs/getting-started/app-router
 https://learn.next-intl.dev/chapters/03-translations/01-setup
+
+- Resend:
+https://resend.com/
+https://resend.com/domains
+
+login: zarod2019@gmail.com

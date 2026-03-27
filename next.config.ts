@@ -11,7 +11,15 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      { hostname: 'img.clerk.com' } // our profile image is store in Clerk
+      //{ hostname: 'img.clerk.com' }, // our profile image is store in Clerk
+      { 
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com' // ✅ Add this for Google Login
+      },
+      { 
+        protocol: 'https',
+        hostname: '*.googleusercontent.com' // ✅ Extra safety for other Google subdomains
+      }
     ]
   }
   /* config options here */

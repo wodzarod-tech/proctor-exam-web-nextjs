@@ -75,7 +75,37 @@ export default function LoginDemo({ user }: LoginDemoProps) {
   //-------------------------
   async function handleGoogleLogin() {
     const locale = pathname.split("/")[1] || "en";
+  
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        // Pass "/" as the next destination so it goes to the dashboard/home
+        redirectTo: `${window.location.origin}/${locale}/auth/callback?next=/`,
+      },
+    });
 
+    /*
+    const locale = pathname.split("/")[1] || "en";
+
+    // 1. Determine the base callback URL
+    const callbackUrl = `${window.location.origin}/${locale}/auth/callback`;
+
+    // 2. Add the 'next' parameter correctly
+    // Use "/" to go to the home page after login
+    const redirectTo = `${callbackUrl}?next=/`;
+
+    console.log("Redirecting to Supabase with:", redirectTo);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectTo,
+      },
+    });
+
+    if (error) console.error("OAuth Error:", error.message);
+    */
+    /*
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -84,7 +114,7 @@ export default function LoginDemo({ user }: LoginDemoProps) {
         redirectTo: `${window.location.origin}/${locale}/auth/callback?next=${pathname}`,
         //skipBrowserRedirect: false,
       },
-    });
+    });*/
   }
 
   // Email/password login

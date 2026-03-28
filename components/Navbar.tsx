@@ -19,13 +19,13 @@ export default function Navbar({ user }: Props) {
         <Link href="/" className="flex items-center gap-3">
         <Image
             src="/images/logo.png"
-            alt="EasyExam logo"
+            alt="Win your exam logo"
             width={46}
             height={44}
             priority
         />
         <span className="text-2xl font-semibold tracking-tight">
-            EasyExam
+          Win your exam
         </span>
         </Link>
 

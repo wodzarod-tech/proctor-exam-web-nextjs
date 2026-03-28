@@ -130,13 +130,45 @@ ref:
 https://next-intl.dev/docs/getting-started/app-router
 https://learn.next-intl.dev/chapters/03-translations/01-setup
 
-- Resend:
+- When Forgot Password, use my email with my domain: Resend:
+
+1. Go spaceship (domain provider):
+Domain/Domain Manager/Nameservers & DNS/Manage DNS settings
+https://www.spaceship.com/application/domain-list-application/
+
+2. Go Resend:
 https://resend.com/
 https://resend.com/domains
 
 login: zarod2019@gmail.com
 
+Domains/Add Domain
+  Name: winyourexam.site
+  Region: North Virginia (us-east-1)
+
+Add the DNS Records of Resend in Spaceship
+
+Finally DNS Verified:
+  noreply@winyourexam.site
+
+3. Go to Supabase:
+Authentication/Email/SMTP Settings
+  Sender email address: noreply@winyourexam.site
+  Sender name: WinYourExam
+  Host: smtp.resend.com
+  Port number: 465
+  Minimum interval per user: 60
+  Username: resend
+  Password: Resend API Key
+
+    This value is the Resend API Key:
+      Go Resend/API Keys/Create API Key
+        Name: Supabase Auth
+        Permission: Full Access
+        Domain: All Domains
+
 - Add my domain in Vercel:
+
 1. Go Vercel project, Settings/Domains
 
 Vercel show you the DNS records

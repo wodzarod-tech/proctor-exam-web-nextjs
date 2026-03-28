@@ -208,5 +208,6 @@ Register our Supabase app in Google Cloud:
     
     for production:
       https://winyourexam.site/auth/callback
+      https://rkckmenanotanktyzbjf.supabase.co/auth/v1/callback
 
 app/google-login

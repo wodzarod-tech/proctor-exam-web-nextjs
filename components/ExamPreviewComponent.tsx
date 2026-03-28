@@ -399,8 +399,6 @@ Effects
     const now = Date.now();
     let currentDirection = "center";
 
-    console.log("offset=", offset);
-
     if (offset < offsetMin) currentDirection = "right";
     else if (offset > offsetMax) currentDirection = "left";
 
@@ -776,7 +774,7 @@ Actions
     setMsgNav(`Violation: ${reason}`);
     //setMsgNav(`Violation ${violationCountRef.current}: ${reason}`);
 
-    /*console.log("violationCountRef.current = ", violationCountRef.current);
+    /*
     if (violationCountRef.current >= MAX_VIOLATIONS) {
       submitExam(true);
     }*/

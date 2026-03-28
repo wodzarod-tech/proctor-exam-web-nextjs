@@ -4,7 +4,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    console.log("BODY:", body);
 
     const supabase = await createSupabaseServerClient();
 

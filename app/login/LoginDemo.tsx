@@ -99,7 +99,6 @@ export default function LoginDemo({ user }: LoginDemoProps) {
       } else {
         setStatus("If this email isn't registered yet, you'll receive a confirmation email shortly.");
       }
-      console.log({data});
     } else {
       // Sign In (Login)
       const { error, data } = await supabase.auth.signInWithPassword({

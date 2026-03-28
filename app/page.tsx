@@ -1,35 +1,29 @@
 //localhost:3000
 
-import { getAllExams, getUserExams } from "@/lib/actions/exam.actions";
+import { getUserExams } from "@/lib/actions/exam.actions";
 import { getSubjectColor } from "@/lib/utils";
 import SearchInput from "@/components/SearchInput";
 import ExamCard from "@/components/ExamCard";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { getUser } from "@/lib/auth/user-server";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
-import { getUserProfile } from "@/lib/auth/user-client";
 
 const Page = async ({ searchParams }: SearchParams) => {
   const filters = await searchParams;
   /*
   filters: get the parameters from the URL
   http://localhost:3000/?title=APX
-  console.log('PARAMS: ', filters);
   */
 
   const title = filters.title ? filters.title : '';
   //const exams = await getAllExams({ title });
   const user = await getUser();
-  console.log("Page user=", user);
-  //let profile = null;
 
   // Get ONLY user's exams
   let exams = null;
   if(user)
     exams = await getUserExams(user.id, title);
-    //profile = getUserProfile(user);
   
   const MAX_EXAMS = 20;
   const examCount = exams?.length || 0;

@@ -22,7 +22,6 @@ export function useDeleteExam(user: any)  {
   }
 
   const handleDelete = async (id: string) => {
-    console.log("id=", id);
     
     try {
       setDeleting(true)

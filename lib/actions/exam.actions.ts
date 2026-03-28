@@ -111,7 +111,6 @@ export const getUserExams = async (userId: string, title?: string) => {
 
 export const getExam = async (id: string) => {
     const supabase = await createSupabaseServerClient();
-    //const supabase = createSupabaseClient();
 
     const { data, error } = await supabase
         .from('exams')
@@ -125,7 +124,6 @@ export const getExam = async (id: string) => {
 
 export const deleteExam = async (id: string) => {
     const supabase = await createSupabaseServerClient();
-    //const supabase = createSupabaseClient();
 
     const { error } = await supabase
         .from('exams')

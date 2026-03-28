@@ -101,9 +101,6 @@ const ExamComponent = ({ id, exam, userId, profile }: ExamSessionProps) => {
   }, [])
 
   const router = useRouter()
-  console.log("ExamComponent exam.id=",id);
-  console.log("ExamComponent userId=",userId);
-  console.log("ExamComponent profile=",profile);
 
   let formattedQuestions = null;
 
@@ -349,14 +346,12 @@ Actions
       if (!examId) {
         saved = await createExam(userId, profile, examPayload)
         setExamId(saved.id) // store it for future updates
-        console.log("create exam: saved.id=",saved.id)
         if (flag) setMsg("Saved successfully ✓")
         return saved.id;
       } 
       // UPDATE if already exists
       else {
         saved = await updateExam(examId, examPayload)
-        console.log("update exam: saved.id=",saved.id)
         if (flag) setMsg("Saved successfully ✓")
         return examId;
       }  

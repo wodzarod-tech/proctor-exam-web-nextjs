@@ -1,5 +1,4 @@
 import { getExam } from "@/lib/actions/exam.actions";
-import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import ExamPreviewComponent from "@/components/ExamPreviewComponent";
 import { getUser } from "@/lib/auth/user-server";
@@ -11,10 +10,7 @@ interface ExamSessionPageProps {
 const ExamSession = async({ params }: ExamSessionPageProps) => {
   const { id } = await params;
   const exam = await getExam(id);
-  console.log('exam preview = ', exam);
 
-  //const user = await currentUser();
-  //if(!user) redirect('/sign-in');
   const user = await getUser();
   if(!user) redirect('/login');
 

@@ -40,7 +40,6 @@ type OptionType = 'radio' | 'checkbox'
 Page
 ***************************/
 const ExamResultComponent = ({ id, userAnswers, userId, readOnly = false }: ExamPreviewProps) => {
-  console.log('userAnswers=', userAnswers);
 
   const router = useRouter()
 

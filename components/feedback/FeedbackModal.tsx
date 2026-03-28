@@ -18,7 +18,6 @@ type Props = {
 };
 
 export default function FeedbackModal({ userId, examId }: Props) {
-  console.log("FeedbackModal=", userId, examId);
 
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
@@ -36,7 +35,6 @@ export default function FeedbackModal({ userId, examId }: Props) {
   ];
 
   const submit = async () => {
-    console.log("submit rating=",rating);
     if (!rating) return;
 
     setLoading(true);

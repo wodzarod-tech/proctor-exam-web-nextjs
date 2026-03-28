@@ -70,7 +70,6 @@ type Settings = {
 Page
 ***************************/
 const ExamSessionComponent = ({ id, exam, userId, readOnly = false }: ExamPreviewProps) => {
-  console.log('exam=', exam);
 
   const router = useRouter()
 
@@ -374,8 +373,6 @@ useEffect(() => {
     const offsetMax = 0.57; // antes 0.68
     const now = Date.now();
     let currentDirection = "center";
-
-    console.log("offset=", offset);
 
     if (offset < offsetMin) currentDirection = "right";
     else if (offset > offsetMax) currentDirection = "left";
@@ -690,7 +687,7 @@ Actions
     setMsgNav(flag, `Violation: ${reason}`);
     //setMsgNav(flag, `Violation ${violationCountRef.current}: ${reason}`);
 
-    /*console.log("violationCountRef.current = ", violationCountRef.current);
+    /*
     if (violationCountRef.current >= MAX_VIOLATIONS) {
       submitExam(true);
     }*/
@@ -777,11 +774,6 @@ Actions
     sessionStorage.setItem("examScore", String(score));
     sessionStorage.setItem("examTotal", String(total));
     sessionStorage.setItem("scoreMin", exam.settings.general.scoreMin);
-
-    console.log("ExamSessionComponent.examReview=",JSON.stringify(reviewData));
-    console.log("ExamSessionComponent.examScore=",score);
-    console.log("ExamSessionComponent.examTotal=",total);
-    console.log("ExamSessionComponent.scoreMin=",exam.settings.general.scoreMin);
 
     router.push("/result");
   }

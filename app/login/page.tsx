@@ -7,6 +7,5 @@ export default async function EmailPasswordPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log( { user });
   return <LoginDemo user={user} />;
 }

@@ -24,10 +24,9 @@ export default function ResultDetailsPage() {
     }
 
     try {
-      console.log("userAnswers=", JSON.parse(userAnswers));
       setQuestions(JSON.parse(userAnswers));
     } catch (error) {
-      console.error("Failed to parse examReview:", error);
+      //console.error("Failed to parse examReview:", error);
       router.push("/");
     }
   }, []);

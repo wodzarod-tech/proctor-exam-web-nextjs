@@ -25,7 +25,7 @@ export default function Navbar({ user }: Props) {
             priority
         />
         <span className="text-2xl font-semibold tracking-tight">
-          Win Your Exam
+          Win your exam
         </span>
         </Link>
 

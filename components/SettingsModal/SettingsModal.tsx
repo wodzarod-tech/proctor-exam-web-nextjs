@@ -1,6 +1,7 @@
 "use client"
 
 import styles from "./SettingsModal.module.css";
+import { useEffect } from "react";
 
 interface SettingsModalProps {
   open: boolean
@@ -15,6 +16,20 @@ const SettingsModal = ({
   setSettings,
   onClose
 }: SettingsModalProps) => {
+
+  // Handle Body Scroll Lock
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    // Cleanup function to restore scroll if component unmounts
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [open]);
 
   if (!open) return null
 

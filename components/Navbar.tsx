@@ -37,9 +37,12 @@ export default function Navbar({ user }: Props) {
           {!user ? (
             <Link 
               href="/login"
-              className="btn-signin"
-              >
-              Start Free Now
+              className="btn-signin text-xs sm:text-sm md:text-base whitespace-nowrap">
+              {/* Show on mobile, hide on small screens and up */}
+              <span className="sm:hidden">Start Free</span>
+
+              {/* Hide on mobile, show on small screens and up */}
+              <span className="hidden sm:inline">Start Free Now</span>
               {/*<button className="btn-signin">Start Free Now</button>*/}
             </Link>
           ) : (

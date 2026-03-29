@@ -20,7 +20,8 @@ export default function AnimatedBrand() {
   }, []);
 
   return (
-    <span className="text-2xl font-semibold tracking-tight transition-all duration-500 ease-in-out">
+    <span className="text-lg sm:text-xl md:text-2xl font-semibold tracking-tight transition-all duration-500 ease-in-out whitespace-nowrap">
+    {/*<span className="text-2xl font-semibold tracking-tight transition-all duration-500 ease-in-out">*/}
       <span className={`${sequence[index].color} transition-colors duration-500`}>
         {sequence[index].text}
       </span>

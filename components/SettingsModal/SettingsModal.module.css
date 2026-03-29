@@ -262,3 +262,26 @@
 .gTooltip:focus-visible::after{
     opacity: 1;
 }
+
+/* Mobile specific overrides */
+@media (max-width: 480px) {
+    .settingsModal {
+        padding: 0; /* Full screen feel on tiny phones */
+        align-items: flex-end; /* Slide up from bottom feel */
+    }
+
+    .settingsCard {
+        width: 100%;
+        max-height: 85dvh;
+        border-radius: 16px 16px 0 0; /* Rounded top corners only */
+    }
+
+    .subSetting {
+        padding-left: 16px; /* Less indentation on mobile to save space */
+    }
+
+    /* Hide tooltips on mobile as they often get stuck or cover inputs */
+    .gTooltip::after {
+        display: none !important;
+    }
+}

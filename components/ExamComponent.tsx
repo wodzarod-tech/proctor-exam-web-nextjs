@@ -556,14 +556,16 @@ Render
     <>
     {/* Navbar */}
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
-    <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        
+      {/*<div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">*/}       
+      <div className={`${styles.navContainer} max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between`}>
+
         <button 
-        className={styles.navBtn} 
-        data-tooltip="Back to editor" 
-        onClick={async () => {
-          window.location.href = `/`
-        }}>⬅ Back</button>
+          className={styles.navBtn} 
+          data-tooltip="Back to editor" 
+          onClick={async () => {
+            window.location.href = `/`
+          }}>⬅ <span className="hidden md:inline">Back</span>
+        </button>
 
         {/*<Link href="/" className="flex items-center gap-3">
         <Image
@@ -578,21 +580,25 @@ Render
         </span>
         </Link>*/}
 
-        <div className="flex-1 text-center text-blue-600">{msg}</div>
+        {/*<div className="flex-1 text-center text-blue-600">{msg}</div>*/}
+        <div className="flex-1 text-center text-blue-600 text-sm md:text-base font-medium">{msg}</div>
 
+        {/* Desktop Toolbar (Hidden on Mobile) */}
+        {/*<div className="hidden md:flex items-center gap-4">*/}
         <div className="flex items-center gap-8">
         
-        {/* NavItems */}
-        <nav className={styles.toolbarNav}>
-          <button className={styles.gTooltip} data-tooltip="Add question" onClick={addQuestion}><i className="fa fa-plus"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Settings" onClick={() => setIsSettingsOpen(true)}><i className="fa fa-gear"></i></button>
-          {/*<button className={styles.gTooltip} data-tooltip="Import Exam"><i className="fa fa-upload"></i></button>*/}
-          <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={() => saveExam(true)} disabled={saving}><i className="fa fa-save"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Get URL to Take exam" onClick={getUrl}><i className="fa fa-link"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={previewExam}><i className="fa fa-eye"></i></button>
-          <button className={styles.gTooltip} data-tooltip="Delete exam" onClick={openDelete}><i className="fa fa-trash"></i></button>
-          {/*<button className={`${styles.toolbarBtn} ${styles.primary}`}>Publish</button>*/}
-        </nav>
+          {/* NavItems */}
+          <nav className={styles.toolbarNav}>
+            <button className={styles.gTooltip} data-tooltip="Add question" onClick={addQuestion}><i className="fa fa-plus"></i></button>
+            <button className={styles.gTooltip} data-tooltip="Settings" onClick={() => setIsSettingsOpen(true)}><i className="fa fa-gear"></i></button>
+            {/*<button className={styles.gTooltip} data-tooltip="Import Exam"><i className="fa fa-upload"></i></button>*/}
+            <button className={styles.gTooltip} data-tooltip="Save Exam" onClick={() => saveExam(true)} disabled={saving}><i className="fa fa-save"></i></button>
+            <button className={styles.gTooltip} data-tooltip="Get URL to Take exam" onClick={getUrl}><i className="fa fa-link"></i></button>
+            <button className={styles.gTooltip} data-tooltip="Preview exam" onClick={previewExam}><i className="fa fa-eye"></i></button>
+            <button className={styles.gTooltip} data-tooltip="Delete exam" onClick={openDelete}><i className="fa fa-trash"></i></button>
+            {/*<button className={`${styles.toolbarBtn} ${styles.primary}`}>Publish</button>*/}
+          </nav>
+        </div>
 
         {/*<SignedOut>
             <SignInButton>
@@ -603,9 +609,17 @@ Render
         <SignedIn>
             <UserButton />
         </SignedIn>*/}
-        </div>
-    </div>
+      </div>
     </nav>
+
+    {/* Mobile Floating Action Bar (Visible only on Mobile) */}
+    {/*<div className={styles.mobileActionsBar}>
+      <button onClick={addQuestion} className={styles.fab}><i className="fa fa-plus"></i></button>
+      <button onClick={() => setIsSettingsOpen(true)}><i className="fa fa-gear"></i></button>
+      <button onClick={() => saveExam(true)} disabled={saving}><i className="fa fa-save"></i></button>
+      <button onClick={previewExam}><i className="fa fa-eye"></i></button>
+      <button onClick={getUrl}><i className="fa fa-link"></i></button>
+    </div>*/}
 
     <div className={styles.createPage}>
       

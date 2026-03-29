@@ -196,38 +196,41 @@ Render
     <>
     {/* Navbar */}
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white border-b border-gray-200 shadow-sm">
-    <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-
-      <button className={styles.navBtn} data-tooltip="Back to editor" onClick={() => router.push(`/result/`)}>⬅ Back</button>
+    <div className={`${styles.navContainer} max-w-7xl mx-auto px-6 py-4 flex items-center justify-between`}>
       
+      <button className={styles.navBtn} onClick={() => router.push(`/result/`)}>⬅ Back</button>      
       <div className="flex-1 text-center">
         <div className={styles.resultFilters}>
           <button
             className={filter === "all" ? styles.activeFilter : ""}
             onClick={() => setFilter("all")}
           >
-            📋 All ({totalCount})
+          <span className={styles.fullText}>📋 All ({totalCount})</span>
+          <span className={styles.mobileText}>All ({totalCount})</span>
           </button>
 
           <button
             className={filter === "correct" ? styles.activeFilter : ""}
             onClick={() => setFilter("correct")}
           >
-            ✅ Correct ({correctCount})
+          <span className={styles.fullText}>✅ Correct ({correctCount})</span>
+          <span className={styles.mobileText}>Ok ({correctCount})</span>
           </button>
 
           <button
             className={filter === "incorrect" ? styles.activeFilter : ""}
             onClick={() => setFilter("incorrect")}
           >
-            ❌ Incorrect ({incorrectCount})
+          <span className={styles.fullText}>❌ Incorrect ({incorrectCount})</span>
+          <span className={styles.mobileText}>Bad ({incorrectCount})</span>
           </button>
 
           <button
             className={filter === "not-answered" ? styles.activeFilter : ""}
             onClick={() => setFilter("not-answered")}
           >
-            Not Answered ({notAnsweredCount})
+          <span className={styles.fullText}>Not Answered ({notAnsweredCount})</span>
+          <span className={styles.mobileText}>Empty ({notAnsweredCount})</span>
           </button>
         </div>
       </div>

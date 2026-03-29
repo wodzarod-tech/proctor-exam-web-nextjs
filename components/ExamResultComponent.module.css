@@ -858,3 +858,69 @@
   color: white;
   border: none;
 }
+
+/* Add these to your existing CSS file */
+
+.fullText {
+  display: inline;
+}
+
+.mobileText {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  /* Hide long text, show short text */
+  .fullText {
+    display: none;
+  }
+  .mobileText {
+    display: inline;
+  }
+
+  /* Adjust Navbar Container */
+  .navContainer {
+    max-width: 80rem; /* equivalent to max-w-7xl */
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .navContainer {
+    padding: 8px !important;
+    gap: 8px;
+  }
+
+  /* Make filters scrollable horizontally instead of wrapping */
+  .resultFilters {
+    justify-content: flex-start !important;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+  }
+
+  .resultFilters::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome/Safari */
+  }
+
+  .resultFilters button {
+    padding: 6px 8px;
+    font-size: 12px;
+    flex-shrink: 0; /* Prevent buttons from squishing */
+  }
+
+  /* Adjust Back Button */
+  .navBtn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}

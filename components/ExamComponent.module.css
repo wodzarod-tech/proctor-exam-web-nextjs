@@ -28,17 +28,113 @@
     justify-content: flex-end;
 }
 
+/* Mobile Floating Bar */
+.mobileActionsBar {
+  display: none;
+}
+
 /* for mobile */
 @media (max-width: 600px){
-    .headerRow{
-    flex-direction: column;
+  .navContainer {
+    max-width: 80rem;
+    margin: 0 auto; /* Shorthand for margin-left/right auto */
+    padding: 8px !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 8px;
-    }
+  }
 
-    .totalPoints{
-    margin-left: 0;
-    align-self: flex-end;
-    }
+  .toolbarNav {
+    gap: 12px;
+    padding: 0 7px;
+  }
+  
+  .container {
+    padding: 10px !important;
+    width: 100% !important;
+  }
+
+  .card {
+    padding: 15px !important;
+    margin-bottom: 12px !important;
+    border-radius: 8px !important;
+  }
+
+  /* Header fields stacking */
+  .headerFields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Question Header: Move points and counter */
+  .questionHeader {
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .qPoints {
+    width: 100%;
+    justify-content: flex-end;
+    background: #f8f9fa;
+    padding: 5px 10px;
+    border-radius: 4px;
+  }
+
+  /* Type Selector: Make it full width */
+  .qType {
+    width: 100% !important;
+    margin: 10px 0 !important;
+    padding: 10px !important;
+  }
+
+  /* Floating Bottom Bar */
+  .mobileActionsBar {
+    display: flex;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    padding: 10px 20px;
+    border-radius: 50px;
+    z-index: 100;
+    gap: 20px;
+    border: 1px solid #eee;
+    width: 90%;
+    justify-content: space-around;
+  }
+
+  .mobileActionsBar button {
+    border: none;
+    background: none;
+    font-size: 20px;
+    color: #5f6368;
+    padding: 8px;
+  }
+
+  .fab {
+    color: #4285f4 !important;
+    font-weight: bold;
+  }
+
+  /* Drag handles larger for thumbs */
+  .drag, .optDrag {
+    padding: 10px !important;
+    cursor: row-resize;
+  }
+
+  /* Option inputs */
+  .option {
+    align-items: flex-start !important;
+  }
+  
+  .optIcon {
+    margin-top: 12px !important;
+  }
 }
 
 /* Total points aligned right */
@@ -68,14 +164,6 @@
     padding:20px;
     margin-bottom:10px;
     position:relative;
-}
-
-/* for mobile */
-@media (max-width: 600px){
-    .card{
-    padding: 16px;
-    border-radius: 10px;
-    }
 }
 
 .card.active{
@@ -434,18 +522,6 @@
 .feedbackIcon {
     font-size: 14px;
     line-height: 1;
-}
-
-/* for mobile */
-@media (max-width: 600px){
-    /*textarea,
-    input[type="text"] REVIEW{
-    font-size: 16px; /* prevents iOS zoom *//*
-    }*/
-
-    .optDrag{
-    left: -10px;
-    }
 }
 
 /* Google Forms style toggle row */

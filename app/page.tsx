@@ -109,7 +109,7 @@ const Page = async ({ searchParams }: SearchParams) => {
             <h3 className="text-xl font-bold mb-2">Create Your Exam</h3>
             <p className="text-gray-600 mb-6">Build custom question banks with images and multiple choice options.</p>
             <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-md border">
-              <Image src="/images/step-1.png" alt="Create Exam" fill className="object-cover" />
+              <Image src="/images/step-1.png" alt="Create Exam" fill className="object-contain" />
             </div>
           </div>
 
@@ -119,7 +119,7 @@ const Page = async ({ searchParams }: SearchParams) => {
             <h3 className="text-xl font-bold mb-2">Test Your Exam</h3>
             <p className="text-gray-600 mb-6">Simulate real proctor conditions with timers and distraction-free mode.</p>
             <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-md border">
-              <Image src="/images/step-2.png" alt="Test Exam" fill className="object-cover" />
+              <Image src="/images/step-2.png" alt="Test Exam" fill className="object-contain" />
             </div>
           </div>
 
@@ -129,7 +129,7 @@ const Page = async ({ searchParams }: SearchParams) => {
             <h3 className="text-xl font-bold mb-2">Win Your Exam</h3>
             <p className="text-gray-600 mb-6">Analyze your results and pass your real certification with ease.</p>
             <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-md border">
-              <Image src="/images/step-3.png" alt="Win Exam" fill className="object-cover" />
+              <Image src="/images/step-3.png" alt="Win Exam" fill className="object-contain" />
             </div>
           </div>
 
@@ -144,7 +144,7 @@ const Page = async ({ searchParams }: SearchParams) => {
               src="/images/all-exams.png" // Make sure to put your image in /public/images/
               alt="Exam Dashboard Preview"
               fill
-              className="object-cover"
+              className="object-contain"
               priority
             />
             {/* Optional Overlay to make it look "Locked" */}
